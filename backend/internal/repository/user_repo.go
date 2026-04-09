@@ -62,6 +62,12 @@ func (r *userRepository) Create(ctx context.Context, userIn *service.User) error
 		SetBalance(userIn.Balance).
 		SetConcurrency(userIn.Concurrency).
 		SetStatus(userIn.Status).
+		SetSubscriptionLimitFallbackToBalance(userIn.SubscriptionLimitFallbackToBalance).
+		SetNillableInviterID(userIn.InviterID).
+		SetReferralCode(userIn.ReferralCode).
+		SetNillableCustomFirstCommissionRate(userIn.CustomFirstCommissionRate).
+		SetNillableCustomRecurringCommissionRate(userIn.CustomRecurringCommissionRate).
+		SetRecurringCommissionEnabled(userIn.RecurringCommissionEnabled).
 		SetSoraStorageQuotaBytes(userIn.SoraStorageQuotaBytes).
 		Save(ctx)
 	if err != nil {
@@ -145,6 +151,12 @@ func (r *userRepository) Update(ctx context.Context, userIn *service.User) error
 		SetBalance(userIn.Balance).
 		SetConcurrency(userIn.Concurrency).
 		SetStatus(userIn.Status).
+		SetSubscriptionLimitFallbackToBalance(userIn.SubscriptionLimitFallbackToBalance).
+		SetNillableInviterID(userIn.InviterID).
+		SetReferralCode(userIn.ReferralCode).
+		SetNillableCustomFirstCommissionRate(userIn.CustomFirstCommissionRate).
+		SetNillableCustomRecurringCommissionRate(userIn.CustomRecurringCommissionRate).
+		SetRecurringCommissionEnabled(userIn.RecurringCommissionEnabled).
 		SetSoraStorageQuotaBytes(userIn.SoraStorageQuotaBytes).
 		SetSoraStorageUsedBytes(userIn.SoraStorageUsedBytes).
 		Save(ctx)
@@ -560,6 +572,12 @@ func applyUserEntityToService(dst *service.User, src *dbent.User) {
 	dst.ID = src.ID
 	dst.CreatedAt = src.CreatedAt
 	dst.UpdatedAt = src.UpdatedAt
+	dst.InviterID = src.InviterID
+	dst.ReferralCode = src.ReferralCode
+	dst.CustomFirstCommissionRate = src.CustomFirstCommissionRate
+	dst.CustomRecurringCommissionRate = src.CustomRecurringCommissionRate
+	dst.RecurringCommissionEnabled = src.RecurringCommissionEnabled
+	dst.SubscriptionLimitFallbackToBalance = src.SubscriptionLimitFallbackToBalance
 }
 
 // UpdateTotpSecret 更新用户的 TOTP 加密密钥

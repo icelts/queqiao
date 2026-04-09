@@ -6,6 +6,7 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/googleapi"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/ip"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -42,9 +43,19 @@ func APIKeyAuthWithSubscriptionGoogle(apiKeyService *service.APIKeyService, subs
 			return
 		}
 
-		if !apiKey.IsActive() {
+		if !apiKey.IsActive() &&
+			apiKey.Status != service.StatusAPIKeyExpired &&
+			apiKey.Status != service.StatusAPIKeyQuotaExhausted {
 			abortWithGoogleError(c, 401, "API key is disabled")
 			return
+		}
+		if len(apiKey.IPWhitelist) > 0 || len(apiKey.IPBlacklist) > 0 {
+			clientIP := ip.GetTrustedClientIP(c)
+			allowed, _ := ip.CheckIPRestrictionWithCompiledRules(clientIP, apiKey.CompiledIPWhitelist, apiKey.CompiledIPBlacklist)
+			if !allowed {
+				abortWithGoogleError(c, 403, "Access denied")
+				return
+			}
 		}
 		if apiKey.User == nil {
 			abortWithGoogleError(c, 401, "User associated with API key not found")
@@ -70,6 +81,23 @@ func APIKeyAuthWithSubscriptionGoogle(apiKeyService *service.APIKeyService, subs
 		}
 
 		isSubscriptionType := apiKey.Group != nil && apiKey.Group.IsSubscriptionType()
+		switch apiKey.Status {
+		case service.StatusAPIKeyQuotaExhausted:
+			abortWithGoogleError(c, 429, "API key quota exhausted")
+			return
+		case service.StatusAPIKeyExpired:
+			abortWithGoogleError(c, 403, "API key has expired")
+			return
+		}
+		if apiKey.IsExpired() {
+			abortWithGoogleError(c, 403, "API key has expired")
+			return
+		}
+		if apiKey.IsQuotaExhausted() {
+			abortWithGoogleError(c, 429, "API key quota exhausted")
+			return
+		}
+
 		if isSubscriptionType && subscriptionService != nil {
 			subscription, err := subscriptionService.GetActiveSubscription(
 				c.Request.Context(),
@@ -81,22 +109,27 @@ func APIKeyAuthWithSubscriptionGoogle(apiKeyService *service.APIKeyService, subs
 				return
 			}
 
+			maintenanceTarget := subscription
 			needsMaintenance, err := subscriptionService.ValidateAndCheckLimits(subscription, apiKey.Group)
 			if err != nil {
-				status := 403
-				if errors.Is(err, service.ErrDailyLimitExceeded) ||
-					errors.Is(err, service.ErrWeeklyLimitExceeded) ||
-					errors.Is(err, service.ErrMonthlyLimitExceeded) {
-					status = 429
+				if shouldFallbackToBalanceOnSubscriptionLimit(apiKey, err) {
+					subscription = nil
+				} else {
+					status := 403
+					if isSubscriptionUsageLimitExceeded(err) {
+						status = 429
+					}
+					abortWithGoogleError(c, status, err.Error())
+					return
 				}
-				abortWithGoogleError(c, status, err.Error())
-				return
 			}
 
-			c.Set(string(ContextKeySubscription), subscription)
+			if subscription != nil {
+				c.Set(string(ContextKeySubscription), subscription)
+			}
 
-			if needsMaintenance {
-				maintenanceCopy := *subscription
+			if needsMaintenance && maintenanceTarget != nil {
+				maintenanceCopy := *maintenanceTarget
 				subscriptionService.DoWindowMaintenance(&maintenanceCopy)
 			}
 		} else {

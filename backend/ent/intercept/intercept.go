@@ -20,7 +20,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/tlsfingerprintprofile"
@@ -386,6 +389,33 @@ func (f TraverseProxy) Traverse(ctx context.Context, q ent.Query) error {
 	return fmt.Errorf("unexpected query type %T. expect *ent.ProxyQuery", q)
 }
 
+// The RechargeOrderFunc type is an adapter to allow the use of ordinary function as a Querier.
+type RechargeOrderFunc func(context.Context, *ent.RechargeOrderQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f RechargeOrderFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.RechargeOrderQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.RechargeOrderQuery", q)
+}
+
+// The TraverseRechargeOrder type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseRechargeOrder func(context.Context, *ent.RechargeOrderQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseRechargeOrder) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseRechargeOrder) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.RechargeOrderQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.RechargeOrderQuery", q)
+}
+
 // The RedeemCodeFunc type is an adapter to allow the use of ordinary function as a Querier.
 type RedeemCodeFunc func(context.Context, *ent.RedeemCodeQuery) (ent.Value, error)
 
@@ -411,6 +441,60 @@ func (f TraverseRedeemCode) Traverse(ctx context.Context, q ent.Query) error {
 		return f(ctx, q)
 	}
 	return fmt.Errorf("unexpected query type %T. expect *ent.RedeemCodeQuery", q)
+}
+
+// The ReferralCommissionFunc type is an adapter to allow the use of ordinary function as a Querier.
+type ReferralCommissionFunc func(context.Context, *ent.ReferralCommissionQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f ReferralCommissionFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.ReferralCommissionQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.ReferralCommissionQuery", q)
+}
+
+// The TraverseReferralCommission type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseReferralCommission func(context.Context, *ent.ReferralCommissionQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseReferralCommission) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseReferralCommission) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ReferralCommissionQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.ReferralCommissionQuery", q)
+}
+
+// The ReferralWithdrawalRequestFunc type is an adapter to allow the use of ordinary function as a Querier.
+type ReferralWithdrawalRequestFunc func(context.Context, *ent.ReferralWithdrawalRequestQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f ReferralWithdrawalRequestFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.ReferralWithdrawalRequestQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.ReferralWithdrawalRequestQuery", q)
+}
+
+// The TraverseReferralWithdrawalRequest type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseReferralWithdrawalRequest func(context.Context, *ent.ReferralWithdrawalRequestQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseReferralWithdrawalRequest) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseReferralWithdrawalRequest) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ReferralWithdrawalRequestQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.ReferralWithdrawalRequestQuery", q)
 }
 
 // The SecuritySecretFunc type is an adapter to allow the use of ordinary function as a Querier.
@@ -708,8 +792,14 @@ func NewQuery(q ent.Query) (Query, error) {
 		return &query[*ent.PromoCodeUsageQuery, predicate.PromoCodeUsage, promocodeusage.OrderOption]{typ: ent.TypePromoCodeUsage, tq: q}, nil
 	case *ent.ProxyQuery:
 		return &query[*ent.ProxyQuery, predicate.Proxy, proxy.OrderOption]{typ: ent.TypeProxy, tq: q}, nil
+	case *ent.RechargeOrderQuery:
+		return &query[*ent.RechargeOrderQuery, predicate.RechargeOrder, rechargeorder.OrderOption]{typ: ent.TypeRechargeOrder, tq: q}, nil
 	case *ent.RedeemCodeQuery:
 		return &query[*ent.RedeemCodeQuery, predicate.RedeemCode, redeemcode.OrderOption]{typ: ent.TypeRedeemCode, tq: q}, nil
+	case *ent.ReferralCommissionQuery:
+		return &query[*ent.ReferralCommissionQuery, predicate.ReferralCommission, referralcommission.OrderOption]{typ: ent.TypeReferralCommission, tq: q}, nil
+	case *ent.ReferralWithdrawalRequestQuery:
+		return &query[*ent.ReferralWithdrawalRequestQuery, predicate.ReferralWithdrawalRequest, referralwithdrawalrequest.OrderOption]{typ: ent.TypeReferralWithdrawalRequest, tq: q}, nil
 	case *ent.SecuritySecretQuery:
 		return &query[*ent.SecuritySecretQuery, predicate.SecuritySecret, securitysecret.OrderOption]{typ: ent.TypeSecuritySecret, tq: q}, nil
 	case *ent.SettingQuery:

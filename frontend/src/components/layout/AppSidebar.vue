@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, onMounted, ref, watch } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAdminSettingsStore, useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
@@ -452,21 +452,6 @@ const ChevronDoubleLeftIcon = {
     )
 }
 
-const SoraIcon = {
-  render: () =>
-    h(
-      'svg',
-      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
-      [
-        h('path', {
-          'stroke-linecap': 'round',
-          'stroke-linejoin': 'round',
-          d: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z'
-        })
-      ]
-    )
-}
-
 const ChevronDoubleRightIcon = {
   render: () =>
     h(
@@ -489,10 +474,8 @@ const userNavItems = computed((): NavItem[] => {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
-    ...(appStore.cachedPublicSettings?.sora_client_enabled
-      ? [{ path: '/sora', label: t('nav.sora'), icon: SoraIcon }]
-      : []),
-    ...(appStore.cachedPublicSettings?.purchase_subscription_enabled
+    ...(appStore.cachedPublicSettings?.purchase_subscription_enabled ||
+    appStore.cachedPublicSettings?.xunhupay_enabled
       ? [
           {
             path: '/purchase',
@@ -503,6 +486,9 @@ const userNavItems = computed((): NavItem[] => {
         ]
       : []),
     { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
+    ...(appStore.cachedPublicSettings?.affiliate_enabled
+      ? [{ path: '/referral', label: t('nav.referral'), icon: UsersIcon }]
+      : []),
     { path: '/profile', label: t('nav.profile'), icon: UserIcon },
     ...customMenuItemsForUser.value.map((item): NavItem => ({
       path: `/custom/${item.id}`,
@@ -520,10 +506,8 @@ const personalNavItems = computed((): NavItem[] => {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
-    ...(appStore.cachedPublicSettings?.sora_client_enabled
-      ? [{ path: '/sora', label: t('nav.sora'), icon: SoraIcon }]
-      : []),
-    ...(appStore.cachedPublicSettings?.purchase_subscription_enabled
+    ...(appStore.cachedPublicSettings?.purchase_subscription_enabled ||
+    appStore.cachedPublicSettings?.xunhupay_enabled
       ? [
           {
             path: '/purchase',
@@ -534,6 +518,9 @@ const personalNavItems = computed((): NavItem[] => {
         ]
       : []),
     { path: '/redeem', label: t('nav.redeem'), icon: GiftIcon, hideInSimpleMode: true },
+    ...(appStore.cachedPublicSettings?.affiliate_enabled
+      ? [{ path: '/referral', label: t('nav.referral'), icon: UsersIcon }]
+      : []),
     { path: '/profile', label: t('nav.profile'), icon: UserIcon },
     ...customMenuItemsForUser.value.map((item): NavItem => ({
       path: `/custom/${item.id}`,
@@ -567,6 +554,8 @@ const adminNavItems = computed((): NavItem[] => {
       ? [{ path: '/admin/ops', label: t('nav.ops'), icon: ChartIcon }]
       : []),
     { path: '/admin/users', label: t('nav.users'), icon: UsersIcon, hideInSimpleMode: true },
+    { path: '/admin/recharge-orders', label: t('nav.rechargeOrders'), icon: RechargeSubscriptionIcon, hideInSimpleMode: true },
+    { path: '/admin/referral-withdrawals', label: t('nav.referralWithdrawals'), icon: CreditCardIcon, hideInSimpleMode: true },
     { path: '/admin/groups', label: t('nav.groups'), icon: FolderIcon, hideInSimpleMode: true },
     { path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
     { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon },
@@ -635,6 +624,16 @@ function isActive(path: string): boolean {
   return route.path === path || route.path.startsWith(path + '/')
 }
 
+const refreshPublicSettings = () => {
+  void appStore.fetchPublicSettings(true)
+}
+
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    refreshPublicSettings()
+  }
+}
+
 // Initialize theme
 const savedTheme = localStorage.getItem('theme')
 if (
@@ -657,9 +656,18 @@ watch(
 )
 
 onMounted(() => {
+  refreshPublicSettings()
   if (isAdmin.value) {
     adminSettingsStore.fetch()
   }
+
+  window.addEventListener('focus', refreshPublicSettings)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('focus', refreshPublicSettings)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 

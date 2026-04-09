@@ -91,6 +91,9 @@ type CreateGroupRequest struct {
 	DailyLimitUSD    optionalLimitField `json:"daily_limit_usd"`
 	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
 	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
+	DefaultValidityDays int      `json:"default_validity_days"`
+	PurchaseEnabled     bool     `json:"purchase_enabled"`
+	PurchasePrice       *float64 `json:"purchase_price"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	ImagePrice1K                    *float64 `json:"image_price_1k"`
 	ImagePrice2K                    *float64 `json:"image_price_2k"`
@@ -131,6 +134,9 @@ type UpdateGroupRequest struct {
 	DailyLimitUSD    optionalLimitField `json:"daily_limit_usd"`
 	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
 	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
+	DefaultValidityDays *int     `json:"default_validity_days"`
+	PurchaseEnabled     *bool    `json:"purchase_enabled"`
+	PurchasePrice       *float64 `json:"purchase_price"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	ImagePrice1K                    *float64 `json:"image_price_1k"`
 	ImagePrice2K                    *float64 `json:"image_price_2k"`
@@ -255,6 +261,9 @@ func (h *GroupHandler) Create(c *gin.Context) {
 		DailyLimitUSD:                   req.DailyLimitUSD.ToServiceInput(),
 		WeeklyLimitUSD:                  req.WeeklyLimitUSD.ToServiceInput(),
 		MonthlyLimitUSD:                 req.MonthlyLimitUSD.ToServiceInput(),
+		DefaultValidityDays:             req.DefaultValidityDays,
+		PurchaseEnabled:                 req.PurchaseEnabled,
+		PurchasePrice:                   req.PurchasePrice,
 		ImagePrice1K:                    req.ImagePrice1K,
 		ImagePrice2K:                    req.ImagePrice2K,
 		ImagePrice4K:                    req.ImagePrice4K,
@@ -310,6 +319,9 @@ func (h *GroupHandler) Update(c *gin.Context) {
 		DailyLimitUSD:                   req.DailyLimitUSD.ToServiceInput(),
 		WeeklyLimitUSD:                  req.WeeklyLimitUSD.ToServiceInput(),
 		MonthlyLimitUSD:                 req.MonthlyLimitUSD.ToServiceInput(),
+		DefaultValidityDays:             req.DefaultValidityDays,
+		PurchaseEnabled:                 req.PurchaseEnabled,
+		PurchasePrice:                   req.PurchasePrice,
 		ImagePrice1K:                    req.ImagePrice1K,
 		ImagePrice2K:                    req.ImagePrice2K,
 		ImagePrice4K:                    req.ImagePrice4K,

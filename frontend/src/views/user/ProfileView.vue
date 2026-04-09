@@ -13,7 +13,10 @@
           <div><h3 class="font-semibold text-primary-800 dark:text-primary-200">{{ t('common.contactSupport') }}</h3><p class="text-sm font-medium">{{ contactInfo }}</p></div>
         </div>
       </div>
-      <ProfileEditForm :initial-username="user?.username || ''" />
+      <ProfileEditForm
+        :initial-username="user?.username || ''"
+        :initial-subscription-limit-fallback-to-balance="user?.subscription_limit_fallback_to_balance ?? false"
+      />
       <ProfilePasswordForm />
       <ProfileTotpCard />
     </div>

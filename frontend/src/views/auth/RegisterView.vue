@@ -389,6 +389,17 @@ onMounted(async () => {
         await validatePromoCodeDebounced(promoParam)
       }
     }
+
+    const invitationParam =
+      (route.query.invitation_code as string) ||
+      (route.query.invite as string) ||
+      (route.query.ref as string)
+    if (invitationParam) {
+      formData.invitation_code = invitationParam
+      if (invitationCodeEnabled.value) {
+        await validateInvitationCodeDebounced(invitationParam)
+      }
+    }
   } catch (error) {
     console.error('Failed to load public settings:', error)
   } finally {

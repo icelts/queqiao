@@ -111,6 +111,23 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		SoraClientEnabled:                    settings.SoraClientEnabled,
 		CustomMenuItems:                      dto.ParseCustomMenuItems(settings.CustomMenuItems),
 		CustomEndpoints:                      dto.ParseCustomEndpoints(settings.CustomEndpoints),
+		XunhuPayEnabled:                      settings.XunhuPayEnabled,
+		XunhuPayBaseURL:                      settings.XunhuPayBaseURL,
+		XunhuPayAppID:                        settings.XunhuPayAppID,
+		XunhuPayAppSecretConfigured:          settings.XunhuPayAppSecretConfigured,
+		XunhuPayNotifyURL:                    settings.XunhuPayNotifyURL,
+		XunhuPayReturnURL:                    settings.XunhuPayReturnURL,
+		XunhuPayCallbackURL:                  settings.XunhuPayCallbackURL,
+		XunhuPayPlugins:                      settings.XunhuPayPlugins,
+		BalanceRechargeRatio:                 settings.BalanceRechargeRatio,
+		AffiliateEnabled:                     settings.AffiliateEnabled,
+		FirstCommissionEnabled:               settings.FirstCommissionEnabled,
+		RecurringCommissionEnabled:           settings.RecurringCommissionEnabled,
+		DefaultFirstCommissionRate:           settings.DefaultFirstCommissionRate,
+		DefaultRecurringCommissionRate:       settings.DefaultRecurringCommissionRate,
+		AffiliateWithdrawEnabled:             settings.AffiliateWithdrawEnabled,
+		AffiliateWithdrawMinAmount:           settings.AffiliateWithdrawMinAmount,
+		AffiliateWithdrawMinInvitees:         settings.AffiliateWithdrawMinInvitees,
 		DefaultConcurrency:                   settings.DefaultConcurrency,
 		DefaultBalance:                       settings.DefaultBalance,
 		DefaultSubscriptions:                 defaultSubscriptions,
@@ -167,19 +184,36 @@ type UpdateSettingsRequest struct {
 	LinuxDoConnectRedirectURL  string `json:"linuxdo_connect_redirect_url"`
 
 	// OEM设置
-	SiteName                    string                `json:"site_name"`
-	SiteLogo                    string                `json:"site_logo"`
-	SiteSubtitle                string                `json:"site_subtitle"`
-	APIBaseURL                  string                `json:"api_base_url"`
-	ContactInfo                 string                `json:"contact_info"`
-	DocURL                      string                `json:"doc_url"`
-	HomeContent                 string                `json:"home_content"`
-	HideCcsImportButton         bool                  `json:"hide_ccs_import_button"`
-	PurchaseSubscriptionEnabled *bool                 `json:"purchase_subscription_enabled"`
-	PurchaseSubscriptionURL     *string               `json:"purchase_subscription_url"`
-	SoraClientEnabled           bool                  `json:"sora_client_enabled"`
-	CustomMenuItems             *[]dto.CustomMenuItem `json:"custom_menu_items"`
-	CustomEndpoints             *[]dto.CustomEndpoint `json:"custom_endpoints"`
+	SiteName                       string                `json:"site_name"`
+	SiteLogo                       string                `json:"site_logo"`
+	SiteSubtitle                   string                `json:"site_subtitle"`
+	APIBaseURL                     string                `json:"api_base_url"`
+	ContactInfo                    string                `json:"contact_info"`
+	DocURL                         string                `json:"doc_url"`
+	HomeContent                    string                `json:"home_content"`
+	HideCcsImportButton            bool                  `json:"hide_ccs_import_button"`
+	PurchaseSubscriptionEnabled    *bool                 `json:"purchase_subscription_enabled"`
+	PurchaseSubscriptionURL        *string               `json:"purchase_subscription_url"`
+	SoraClientEnabled              bool                  `json:"sora_client_enabled"`
+	CustomMenuItems                *[]dto.CustomMenuItem `json:"custom_menu_items"`
+	CustomEndpoints                *[]dto.CustomEndpoint `json:"custom_endpoints"`
+	XunhuPayEnabled                bool                  `json:"xunhupay_enabled"`
+	XunhuPayBaseURL                string                `json:"xunhupay_base_url"`
+	XunhuPayAppID                  string                `json:"xunhupay_appid"`
+	XunhuPayAppSecret              string                `json:"xunhupay_appsecret"`
+	XunhuPayNotifyURL              string                `json:"xunhupay_notify_url"`
+	XunhuPayReturnURL              string                `json:"xunhupay_return_url"`
+	XunhuPayCallbackURL            string                `json:"xunhupay_callback_url"`
+	XunhuPayPlugins                string                `json:"xunhupay_plugins"`
+	BalanceRechargeRatio           float64               `json:"balance_recharge_ratio"`
+	AffiliateEnabled               bool                  `json:"affiliate_enabled"`
+	FirstCommissionEnabled         bool                  `json:"first_commission_enabled"`
+	RecurringCommissionEnabled     bool                  `json:"recurring_commission_enabled"`
+	DefaultFirstCommissionRate     float64               `json:"default_first_commission_rate"`
+	DefaultRecurringCommissionRate float64               `json:"default_recurring_commission_rate"`
+	AffiliateWithdrawEnabled       bool                  `json:"affiliate_withdraw_enabled"`
+	AffiliateWithdrawMinAmount     float64               `json:"affiliate_withdraw_min_amount"`
+	AffiliateWithdrawMinInvitees   int64                 `json:"affiliate_withdraw_min_invitees"`
 
 	// 默认配置
 	DefaultConcurrency   int                              `json:"default_concurrency"`
@@ -238,6 +272,19 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	}
 	if req.DefaultBalance < 0 {
 		req.DefaultBalance = 0
+	}
+	if req.DefaultFirstCommissionRate < 0 || req.DefaultFirstCommissionRate > 100 ||
+		req.DefaultRecurringCommissionRate < 0 || req.DefaultRecurringCommissionRate > 100 {
+		response.BadRequest(c, "Commission rate must be between 0 and 100")
+		return
+	}
+	if req.AffiliateWithdrawMinAmount < 0 || req.AffiliateWithdrawMinInvitees < 0 {
+		response.BadRequest(c, "Affiliate withdraw thresholds must be non-negative")
+		return
+	}
+	if req.BalanceRechargeRatio <= 0 {
+		response.BadRequest(c, "Balance recharge ratio must be greater than 0")
+		return
 	}
 	req.SMTPHost = strings.TrimSpace(req.SMTPHost)
 	req.SMTPUsername = strings.TrimSpace(req.SMTPUsername)
@@ -350,6 +397,41 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	} else if purchaseURL != "" {
 		if err := config.ValidateAbsoluteHTTPURL(purchaseURL); err != nil {
 			response.BadRequest(c, "Purchase Subscription URL must be an absolute http(s) URL")
+			return
+		}
+	}
+
+	req.XunhuPayBaseURL = strings.TrimSpace(req.XunhuPayBaseURL)
+	req.XunhuPayAppID = strings.TrimSpace(req.XunhuPayAppID)
+	req.XunhuPayAppSecret = strings.TrimSpace(req.XunhuPayAppSecret)
+	req.XunhuPayNotifyURL = strings.TrimSpace(req.XunhuPayNotifyURL)
+	req.XunhuPayReturnURL = strings.TrimSpace(req.XunhuPayReturnURL)
+	req.XunhuPayCallbackURL = strings.TrimSpace(req.XunhuPayCallbackURL)
+	req.XunhuPayPlugins = strings.TrimSpace(req.XunhuPayPlugins)
+	if req.XunhuPayEnabled {
+		if req.XunhuPayAppID == "" {
+			response.BadRequest(c, "XunhuPay APPID is required when enabled")
+			return
+		}
+		if req.XunhuPayAppSecret == "" && previousSettings.XunhuPayAppSecret == "" {
+			response.BadRequest(c, "XunhuPay APPSECRET is required when enabled")
+			return
+		}
+	}
+	for _, item := range []struct {
+		name  string
+		value string
+	}{
+		{name: "XunhuPay Base URL", value: req.XunhuPayBaseURL},
+		{name: "XunhuPay Notify URL", value: req.XunhuPayNotifyURL},
+		{name: "XunhuPay Return URL", value: req.XunhuPayReturnURL},
+		{name: "XunhuPay Callback URL", value: req.XunhuPayCallbackURL},
+	} {
+		if item.value == "" {
+			continue
+		}
+		if err := config.ValidateAbsoluteHTTPURL(item.value); err != nil {
+			response.BadRequest(c, item.name+" must be an absolute http(s) URL")
 			return
 		}
 	}
@@ -569,6 +651,23 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SoraClientEnabled:                req.SoraClientEnabled,
 		CustomMenuItems:                  customMenuJSON,
 		CustomEndpoints:                  customEndpointsJSON,
+		XunhuPayEnabled:                  req.XunhuPayEnabled,
+		XunhuPayBaseURL:                  req.XunhuPayBaseURL,
+		XunhuPayAppID:                    req.XunhuPayAppID,
+		XunhuPayAppSecret:                req.XunhuPayAppSecret,
+		XunhuPayNotifyURL:                req.XunhuPayNotifyURL,
+		XunhuPayReturnURL:                req.XunhuPayReturnURL,
+		XunhuPayCallbackURL:              req.XunhuPayCallbackURL,
+		XunhuPayPlugins:                  req.XunhuPayPlugins,
+		BalanceRechargeRatio:             req.BalanceRechargeRatio,
+		AffiliateEnabled:                 req.AffiliateEnabled,
+		FirstCommissionEnabled:           req.FirstCommissionEnabled,
+		RecurringCommissionEnabled:       req.RecurringCommissionEnabled,
+		DefaultFirstCommissionRate:       req.DefaultFirstCommissionRate,
+		DefaultRecurringCommissionRate:   req.DefaultRecurringCommissionRate,
+		AffiliateWithdrawEnabled:         req.AffiliateWithdrawEnabled,
+		AffiliateWithdrawMinAmount:       req.AffiliateWithdrawMinAmount,
+		AffiliateWithdrawMinInvitees:     req.AffiliateWithdrawMinInvitees,
 		DefaultConcurrency:               req.DefaultConcurrency,
 		DefaultBalance:                   req.DefaultBalance,
 		DefaultSubscriptions:             defaultSubscriptions,
@@ -679,6 +778,23 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SoraClientEnabled:                    updatedSettings.SoraClientEnabled,
 		CustomMenuItems:                      dto.ParseCustomMenuItems(updatedSettings.CustomMenuItems),
 		CustomEndpoints:                      dto.ParseCustomEndpoints(updatedSettings.CustomEndpoints),
+		XunhuPayEnabled:                      updatedSettings.XunhuPayEnabled,
+		XunhuPayBaseURL:                      updatedSettings.XunhuPayBaseURL,
+		XunhuPayAppID:                        updatedSettings.XunhuPayAppID,
+		XunhuPayAppSecretConfigured:          updatedSettings.XunhuPayAppSecretConfigured,
+		XunhuPayNotifyURL:                    updatedSettings.XunhuPayNotifyURL,
+		XunhuPayReturnURL:                    updatedSettings.XunhuPayReturnURL,
+		XunhuPayCallbackURL:                  updatedSettings.XunhuPayCallbackURL,
+		XunhuPayPlugins:                      updatedSettings.XunhuPayPlugins,
+		BalanceRechargeRatio:                 updatedSettings.BalanceRechargeRatio,
+		AffiliateEnabled:                     updatedSettings.AffiliateEnabled,
+		FirstCommissionEnabled:               updatedSettings.FirstCommissionEnabled,
+		RecurringCommissionEnabled:           updatedSettings.RecurringCommissionEnabled,
+		DefaultFirstCommissionRate:           updatedSettings.DefaultFirstCommissionRate,
+		DefaultRecurringCommissionRate:       updatedSettings.DefaultRecurringCommissionRate,
+		AffiliateWithdrawEnabled:             updatedSettings.AffiliateWithdrawEnabled,
+		AffiliateWithdrawMinAmount:           updatedSettings.AffiliateWithdrawMinAmount,
+		AffiliateWithdrawMinInvitees:         updatedSettings.AffiliateWithdrawMinInvitees,
 		DefaultConcurrency:                   updatedSettings.DefaultConcurrency,
 		DefaultBalance:                       updatedSettings.DefaultBalance,
 		DefaultSubscriptions:                 updatedDefaultSubscriptions,

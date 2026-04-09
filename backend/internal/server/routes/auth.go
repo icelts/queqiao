@@ -73,6 +73,11 @@ func RegisterAuthRoutes(
 	}
 
 	// 公开设置（无需认证）
+	payments := v1.Group("/payments")
+	{
+		payments.POST("/webhook/:channel", h.Recharge.HandleWebhook)
+	}
+
 	settings := v1.Group("/settings")
 	{
 		settings.GET("/public", h.Setting.GetPublicSettings)

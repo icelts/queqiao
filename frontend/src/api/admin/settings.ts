@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from '../client'
-import type { CustomMenuItem, CustomEndpoint } from '@/types'
+import type { CustomEndpoint, CustomMenuItem } from '@/types'
 
 export interface DefaultSubscriptionSetting {
   group_id: number
@@ -23,12 +23,35 @@ export interface SystemSettings {
   password_reset_enabled: boolean
   frontend_url: string
   invitation_code_enabled: boolean
-  totp_enabled: boolean // TOTP 双因素认证
-  totp_encryption_key_configured: boolean // TOTP 加密密钥是否已配置
+  totp_enabled: boolean
+  totp_encryption_key_configured: boolean
+
   // Default settings
   default_balance: number
   default_concurrency: number
   default_subscriptions: DefaultSubscriptionSetting[]
+
+  // Payment provider settings
+  xunhupay_enabled: boolean
+  xunhupay_base_url: string
+  xunhupay_appid: string
+  xunhupay_appsecret_configured: boolean
+  xunhupay_notify_url: string
+  xunhupay_return_url: string
+  xunhupay_callback_url: string
+  xunhupay_plugins: string
+  balance_recharge_ratio: number
+
+  // Affiliate settings
+  affiliate_enabled: boolean
+  first_commission_enabled: boolean
+  recurring_commission_enabled: boolean
+  default_first_commission_rate: number
+  default_recurring_commission_rate: number
+  affiliate_withdraw_enabled: boolean
+  affiliate_withdraw_min_amount: number
+  affiliate_withdraw_min_invitees: number
+
   // OEM settings
   site_name: string
   site_logo: string
@@ -44,6 +67,7 @@ export interface SystemSettings {
   backend_mode_enabled: boolean
   custom_menu_items: CustomMenuItem[]
   custom_endpoints: CustomEndpoint[]
+
   // SMTP settings
   smtp_host: string
   smtp_port: number
@@ -52,6 +76,7 @@ export interface SystemSettings {
   smtp_from_email: string
   smtp_from_name: string
   smtp_use_tls: boolean
+
   // Cloudflare Turnstile settings
   turnstile_enabled: boolean
   turnstile_site_key: string
@@ -70,11 +95,11 @@ export interface SystemSettings {
   fallback_model_gemini: string
   fallback_model_antigravity: string
 
-  // Identity patch configuration (Claude -> Gemini)
+  // Identity patch configuration
   enable_identity_patch: boolean
   identity_patch_prompt: string
 
-  // Ops Monitoring (vNext)
+  // Ops Monitoring
   ops_monitoring_enabled: boolean
   ops_realtime_monitoring_enabled: boolean
   ops_query_mode_default: 'auto' | 'raw' | 'preagg' | string
@@ -84,7 +109,7 @@ export interface SystemSettings {
   min_claude_code_version: string
   max_claude_code_version: string
 
-  // 分组隔离
+  // Scheduling
   allow_ungrouped_key_scheduling: boolean
 
   // Gateway forwarding behavior
@@ -100,10 +125,31 @@ export interface UpdateSettingsRequest {
   password_reset_enabled?: boolean
   frontend_url?: string
   invitation_code_enabled?: boolean
-  totp_enabled?: boolean // TOTP 双因素认证
+  totp_enabled?: boolean
+
   default_balance?: number
   default_concurrency?: number
   default_subscriptions?: DefaultSubscriptionSetting[]
+
+  xunhupay_enabled?: boolean
+  xunhupay_base_url?: string
+  xunhupay_appid?: string
+  xunhupay_appsecret?: string
+  xunhupay_notify_url?: string
+  xunhupay_return_url?: string
+  xunhupay_callback_url?: string
+  xunhupay_plugins?: string
+  balance_recharge_ratio?: number
+
+  affiliate_enabled?: boolean
+  first_commission_enabled?: boolean
+  recurring_commission_enabled?: boolean
+  default_first_commission_rate?: number
+  default_recurring_commission_rate?: number
+  affiliate_withdraw_enabled?: boolean
+  affiliate_withdraw_min_amount?: number
+  affiliate_withdraw_min_invitees?: number
+
   site_name?: string
   site_logo?: string
   site_subtitle?: string
@@ -118,6 +164,7 @@ export interface UpdateSettingsRequest {
   backend_mode_enabled?: boolean
   custom_menu_items?: CustomMenuItem[]
   custom_endpoints?: CustomEndpoint[]
+
   smtp_host?: string
   smtp_port?: number
   smtp_username?: string
@@ -125,24 +172,30 @@ export interface UpdateSettingsRequest {
   smtp_from_email?: string
   smtp_from_name?: string
   smtp_use_tls?: boolean
+
   turnstile_enabled?: boolean
   turnstile_site_key?: string
   turnstile_secret_key?: string
+
   linuxdo_connect_enabled?: boolean
   linuxdo_connect_client_id?: string
   linuxdo_connect_client_secret?: string
   linuxdo_connect_redirect_url?: string
+
   enable_model_fallback?: boolean
   fallback_model_anthropic?: string
   fallback_model_openai?: string
   fallback_model_gemini?: string
   fallback_model_antigravity?: string
+
   enable_identity_patch?: boolean
   identity_patch_prompt?: string
+
   ops_monitoring_enabled?: boolean
   ops_realtime_monitoring_enabled?: boolean
   ops_query_mode_default?: 'auto' | 'raw' | 'preagg' | string
   ops_metrics_interval_seconds?: number
+
   min_claude_code_version?: string
   max_claude_code_version?: string
   allow_ungrouped_key_scheduling?: boolean
@@ -150,28 +203,16 @@ export interface UpdateSettingsRequest {
   enable_metadata_passthrough?: boolean
 }
 
-/**
- * Get all system settings
- * @returns System settings
- */
 export async function getSettings(): Promise<SystemSettings> {
   const { data } = await apiClient.get<SystemSettings>('/admin/settings')
   return data
 }
 
-/**
- * Update system settings
- * @param settings - Partial settings to update
- * @returns Updated settings
- */
 export async function updateSettings(settings: UpdateSettingsRequest): Promise<SystemSettings> {
   const { data } = await apiClient.put<SystemSettings>('/admin/settings', settings)
   return data
 }
 
-/**
- * Test SMTP connection request
- */
 export interface TestSmtpRequest {
   smtp_host: string
   smtp_port: number
@@ -180,19 +221,11 @@ export interface TestSmtpRequest {
   smtp_use_tls: boolean
 }
 
-/**
- * Test SMTP connection with provided config
- * @param config - SMTP configuration to test
- * @returns Test result message
- */
 export async function testSmtpConnection(config: TestSmtpRequest): Promise<{ message: string }> {
   const { data } = await apiClient.post<{ message: string }>('/admin/settings/test-smtp', config)
   return data
 }
 
-/**
- * Send test email request
- */
 export interface SendTestEmailRequest {
   email: string
   smtp_host: string
@@ -204,11 +237,6 @@ export interface SendTestEmailRequest {
   smtp_use_tls: boolean
 }
 
-/**
- * Send test email with provided SMTP config
- * @param request - Email address and SMTP config
- * @returns Test result message
- */
 export async function sendTestEmail(request: SendTestEmailRequest): Promise<{ message: string }> {
   const { data } = await apiClient.post<{ message: string }>(
     '/admin/settings/send-test-email',
@@ -217,36 +245,21 @@ export async function sendTestEmail(request: SendTestEmailRequest): Promise<{ me
   return data
 }
 
-/**
- * Admin API Key status response
- */
 export interface AdminApiKeyStatus {
   exists: boolean
   masked_key: string
 }
 
-/**
- * Get admin API key status
- * @returns Status indicating if key exists and masked version
- */
 export async function getAdminApiKey(): Promise<AdminApiKeyStatus> {
   const { data } = await apiClient.get<AdminApiKeyStatus>('/admin/settings/admin-api-key')
   return data
 }
 
-/**
- * Regenerate admin API key
- * @returns The new full API key (only shown once)
- */
 export async function regenerateAdminApiKey(): Promise<{ key: string }> {
   const { data } = await apiClient.post<{ key: string }>('/admin/settings/admin-api-key/regenerate')
   return data
 }
 
-/**
- * Delete admin API key
- * @returns Success message
- */
 export async function deleteAdminApiKey(): Promise<{ message: string }> {
   const { data } = await apiClient.delete<{ message: string }>('/admin/settings/admin-api-key')
   return data
@@ -254,9 +267,6 @@ export async function deleteAdminApiKey(): Promise<{ message: string }> {
 
 // ==================== Overload Cooldown Settings ====================
 
-/**
- * Overload cooldown settings interface (529 handling)
- */
 export interface OverloadCooldownSettings {
   enabled: boolean
   cooldown_minutes: number
@@ -279,9 +289,6 @@ export async function updateOverloadCooldownSettings(
 
 // ==================== Stream Timeout Settings ====================
 
-/**
- * Stream timeout settings interface
- */
 export interface StreamTimeoutSettings {
   enabled: boolean
   action: 'temp_unsched' | 'error' | 'none'
@@ -290,20 +297,11 @@ export interface StreamTimeoutSettings {
   threshold_window_minutes: number
 }
 
-/**
- * Get stream timeout settings
- * @returns Stream timeout settings
- */
 export async function getStreamTimeoutSettings(): Promise<StreamTimeoutSettings> {
   const { data } = await apiClient.get<StreamTimeoutSettings>('/admin/settings/stream-timeout')
   return data
 }
 
-/**
- * Update stream timeout settings
- * @param settings - Stream timeout settings to update
- * @returns Updated settings
- */
 export async function updateStreamTimeoutSettings(
   settings: StreamTimeoutSettings
 ): Promise<StreamTimeoutSettings> {
@@ -316,9 +314,6 @@ export async function updateStreamTimeoutSettings(
 
 // ==================== Rectifier Settings ====================
 
-/**
- * Rectifier settings interface
- */
 export interface RectifierSettings {
   enabled: boolean
   thinking_signature_enabled: boolean
@@ -327,35 +322,20 @@ export interface RectifierSettings {
   apikey_signature_patterns: string[]
 }
 
-/**
- * Get rectifier settings
- * @returns Rectifier settings
- */
 export async function getRectifierSettings(): Promise<RectifierSettings> {
   const { data } = await apiClient.get<RectifierSettings>('/admin/settings/rectifier')
   return data
 }
 
-/**
- * Update rectifier settings
- * @param settings - Rectifier settings to update
- * @returns Updated settings
- */
 export async function updateRectifierSettings(
   settings: RectifierSettings
 ): Promise<RectifierSettings> {
-  const { data } = await apiClient.put<RectifierSettings>(
-    '/admin/settings/rectifier',
-    settings
-  )
+  const { data } = await apiClient.put<RectifierSettings>('/admin/settings/rectifier', settings)
   return data
 }
 
 // ==================== Beta Policy Settings ====================
 
-/**
- * Beta policy rule interface
- */
 export interface BetaPolicyRule {
   beta_token: string
   action: 'pass' | 'filter' | 'block'
@@ -363,34 +343,19 @@ export interface BetaPolicyRule {
   error_message?: string
 }
 
-/**
- * Beta policy settings interface
- */
 export interface BetaPolicySettings {
   rules: BetaPolicyRule[]
 }
 
-/**
- * Get beta policy settings
- * @returns Beta policy settings
- */
 export async function getBetaPolicySettings(): Promise<BetaPolicySettings> {
   const { data } = await apiClient.get<BetaPolicySettings>('/admin/settings/beta-policy')
   return data
 }
 
-/**
- * Update beta policy settings
- * @param settings - Beta policy settings to update
- * @returns Updated settings
- */
 export async function updateBetaPolicySettings(
   settings: BetaPolicySettings
 ): Promise<BetaPolicySettings> {
-  const { data } = await apiClient.put<BetaPolicySettings>(
-    '/admin/settings/beta-policy',
-    settings
-  )
+  const { data } = await apiClient.put<BetaPolicySettings>('/admin/settings/beta-policy', settings)
   return data
 }
 
@@ -494,7 +459,9 @@ export async function getSoraS3Settings(): Promise<SoraS3Settings> {
   return data
 }
 
-export async function updateSoraS3Settings(settings: UpdateSoraS3SettingsRequest): Promise<SoraS3Settings> {
+export async function updateSoraS3Settings(
+  settings: UpdateSoraS3SettingsRequest
+): Promise<SoraS3Settings> {
   const { data } = await apiClient.put<SoraS3Settings>('/admin/settings/sora-s3', settings)
   return data
 }
@@ -511,13 +478,21 @@ export async function listSoraS3Profiles(): Promise<ListSoraS3ProfilesResponse> 
   return data
 }
 
-export async function createSoraS3Profile(request: CreateSoraS3ProfileRequest): Promise<SoraS3Profile> {
+export async function createSoraS3Profile(
+  request: CreateSoraS3ProfileRequest
+): Promise<SoraS3Profile> {
   const { data } = await apiClient.post<SoraS3Profile>('/admin/settings/sora-s3/profiles', request)
   return data
 }
 
-export async function updateSoraS3Profile(profileID: string, request: UpdateSoraS3ProfileRequest): Promise<SoraS3Profile> {
-  const { data } = await apiClient.put<SoraS3Profile>(`/admin/settings/sora-s3/profiles/${profileID}`, request)
+export async function updateSoraS3Profile(
+  profileID: string,
+  request: UpdateSoraS3ProfileRequest
+): Promise<SoraS3Profile> {
+  const { data } = await apiClient.put<SoraS3Profile>(
+    `/admin/settings/sora-s3/profiles/${profileID}`,
+    request
+  )
   return data
 }
 
@@ -526,7 +501,9 @@ export async function deleteSoraS3Profile(profileID: string): Promise<void> {
 }
 
 export async function setActiveSoraS3Profile(profileID: string): Promise<SoraS3Profile> {
-  const { data } = await apiClient.post<SoraS3Profile>(`/admin/settings/sora-s3/profiles/${profileID}/activate`)
+  const { data } = await apiClient.post<SoraS3Profile>(
+    `/admin/settings/sora-s3/profiles/${profileID}/activate`
+  )
   return data
 }
 

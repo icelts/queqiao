@@ -33,10 +33,22 @@ const (
 	FieldConcurrency = "concurrency"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldSubscriptionLimitFallbackToBalance holds the string denoting the subscription_limit_fallback_to_balance field in the database.
+	FieldSubscriptionLimitFallbackToBalance = "subscription_limit_fallback_to_balance"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
 	// FieldNotes holds the string denoting the notes field in the database.
 	FieldNotes = "notes"
+	// FieldInviterID holds the string denoting the inviter_id field in the database.
+	FieldInviterID = "inviter_id"
+	// FieldReferralCode holds the string denoting the referral_code field in the database.
+	FieldReferralCode = "referral_code"
+	// FieldCustomFirstCommissionRate holds the string denoting the custom_first_commission_rate field in the database.
+	FieldCustomFirstCommissionRate = "custom_first_commission_rate"
+	// FieldCustomRecurringCommissionRate holds the string denoting the custom_recurring_commission_rate field in the database.
+	FieldCustomRecurringCommissionRate = "custom_recurring_commission_rate"
+	// FieldRecurringCommissionEnabled holds the string denoting the recurring_commission_enabled field in the database.
+	FieldRecurringCommissionEnabled = "recurring_commission_enabled"
 	// FieldTotpSecretEncrypted holds the string denoting the totp_secret_encrypted field in the database.
 	FieldTotpSecretEncrypted = "totp_secret_encrypted"
 	// FieldTotpEnabled holds the string denoting the totp_enabled field in the database.
@@ -65,6 +77,20 @@ const (
 	EdgeAttributeValues = "attribute_values"
 	// EdgePromoCodeUsages holds the string denoting the promo_code_usages edge name in mutations.
 	EdgePromoCodeUsages = "promo_code_usages"
+	// EdgeInvitees holds the string denoting the invitees edge name in mutations.
+	EdgeInvitees = "invitees"
+	// EdgeInviter holds the string denoting the inviter edge name in mutations.
+	EdgeInviter = "inviter"
+	// EdgeRechargeOrders holds the string denoting the recharge_orders edge name in mutations.
+	EdgeRechargeOrders = "recharge_orders"
+	// EdgePromoterCommissions holds the string denoting the promoter_commissions edge name in mutations.
+	EdgePromoterCommissions = "promoter_commissions"
+	// EdgeReferredCommissions holds the string denoting the referred_commissions edge name in mutations.
+	EdgeReferredCommissions = "referred_commissions"
+	// EdgeReferralWithdrawalRequests holds the string denoting the referral_withdrawal_requests edge name in mutations.
+	EdgeReferralWithdrawalRequests = "referral_withdrawal_requests"
+	// EdgeReviewedReferralWithdrawals holds the string denoting the reviewed_referral_withdrawals edge name in mutations.
+	EdgeReviewedReferralWithdrawals = "reviewed_referral_withdrawals"
 	// EdgeUserAllowedGroups holds the string denoting the user_allowed_groups edge name in mutations.
 	EdgeUserAllowedGroups = "user_allowed_groups"
 	// Table holds the table name of the user in the database.
@@ -130,6 +156,49 @@ const (
 	PromoCodeUsagesInverseTable = "promo_code_usages"
 	// PromoCodeUsagesColumn is the table column denoting the promo_code_usages relation/edge.
 	PromoCodeUsagesColumn = "user_id"
+	// InviteesTable is the table that holds the invitees relation/edge.
+	InviteesTable = "users"
+	// InviteesColumn is the table column denoting the invitees relation/edge.
+	InviteesColumn = "inviter_id"
+	// InviterTable is the table that holds the inviter relation/edge.
+	InviterTable = "users"
+	// InviterColumn is the table column denoting the inviter relation/edge.
+	InviterColumn = "inviter_id"
+	// RechargeOrdersTable is the table that holds the recharge_orders relation/edge.
+	RechargeOrdersTable = "recharge_orders"
+	// RechargeOrdersInverseTable is the table name for the RechargeOrder entity.
+	// It exists in this package in order to avoid circular dependency with the "rechargeorder" package.
+	RechargeOrdersInverseTable = "recharge_orders"
+	// RechargeOrdersColumn is the table column denoting the recharge_orders relation/edge.
+	RechargeOrdersColumn = "user_id"
+	// PromoterCommissionsTable is the table that holds the promoter_commissions relation/edge.
+	PromoterCommissionsTable = "referral_commissions"
+	// PromoterCommissionsInverseTable is the table name for the ReferralCommission entity.
+	// It exists in this package in order to avoid circular dependency with the "referralcommission" package.
+	PromoterCommissionsInverseTable = "referral_commissions"
+	// PromoterCommissionsColumn is the table column denoting the promoter_commissions relation/edge.
+	PromoterCommissionsColumn = "promoter_user_id"
+	// ReferredCommissionsTable is the table that holds the referred_commissions relation/edge.
+	ReferredCommissionsTable = "referral_commissions"
+	// ReferredCommissionsInverseTable is the table name for the ReferralCommission entity.
+	// It exists in this package in order to avoid circular dependency with the "referralcommission" package.
+	ReferredCommissionsInverseTable = "referral_commissions"
+	// ReferredCommissionsColumn is the table column denoting the referred_commissions relation/edge.
+	ReferredCommissionsColumn = "referred_user_id"
+	// ReferralWithdrawalRequestsTable is the table that holds the referral_withdrawal_requests relation/edge.
+	ReferralWithdrawalRequestsTable = "referral_withdrawal_requests"
+	// ReferralWithdrawalRequestsInverseTable is the table name for the ReferralWithdrawalRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "referralwithdrawalrequest" package.
+	ReferralWithdrawalRequestsInverseTable = "referral_withdrawal_requests"
+	// ReferralWithdrawalRequestsColumn is the table column denoting the referral_withdrawal_requests relation/edge.
+	ReferralWithdrawalRequestsColumn = "promoter_user_id"
+	// ReviewedReferralWithdrawalsTable is the table that holds the reviewed_referral_withdrawals relation/edge.
+	ReviewedReferralWithdrawalsTable = "referral_withdrawal_requests"
+	// ReviewedReferralWithdrawalsInverseTable is the table name for the ReferralWithdrawalRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "referralwithdrawalrequest" package.
+	ReviewedReferralWithdrawalsInverseTable = "referral_withdrawal_requests"
+	// ReviewedReferralWithdrawalsColumn is the table column denoting the reviewed_referral_withdrawals relation/edge.
+	ReviewedReferralWithdrawalsColumn = "reviewer_user_id"
 	// UserAllowedGroupsTable is the table that holds the user_allowed_groups relation/edge.
 	UserAllowedGroupsTable = "user_allowed_groups"
 	// UserAllowedGroupsInverseTable is the table name for the UserAllowedGroup entity.
@@ -151,8 +220,14 @@ var Columns = []string{
 	FieldBalance,
 	FieldConcurrency,
 	FieldStatus,
+	FieldSubscriptionLimitFallbackToBalance,
 	FieldUsername,
 	FieldNotes,
+	FieldInviterID,
+	FieldReferralCode,
+	FieldCustomFirstCommissionRate,
+	FieldCustomRecurringCommissionRate,
+	FieldRecurringCommissionEnabled,
 	FieldTotpSecretEncrypted,
 	FieldTotpEnabled,
 	FieldTotpEnabledAt,
@@ -206,12 +281,20 @@ var (
 	DefaultStatus string
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(string) error
+	// DefaultSubscriptionLimitFallbackToBalance holds the default value on creation for the "subscription_limit_fallback_to_balance" field.
+	DefaultSubscriptionLimitFallbackToBalance bool
 	// DefaultUsername holds the default value on creation for the "username" field.
 	DefaultUsername string
 	// UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	UsernameValidator func(string) error
 	// DefaultNotes holds the default value on creation for the "notes" field.
 	DefaultNotes string
+	// DefaultReferralCode holds the default value on creation for the "referral_code" field.
+	DefaultReferralCode string
+	// ReferralCodeValidator is a validator for the "referral_code" field. It is called by the builders before save.
+	ReferralCodeValidator func(string) error
+	// DefaultRecurringCommissionEnabled holds the default value on creation for the "recurring_commission_enabled" field.
+	DefaultRecurringCommissionEnabled bool
 	// DefaultTotpEnabled holds the default value on creation for the "totp_enabled" field.
 	DefaultTotpEnabled bool
 	// DefaultSoraStorageQuotaBytes holds the default value on creation for the "sora_storage_quota_bytes" field.
@@ -273,6 +356,11 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
+// BySubscriptionLimitFallbackToBalance orders the results by the subscription_limit_fallback_to_balance field.
+func BySubscriptionLimitFallbackToBalance(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubscriptionLimitFallbackToBalance, opts...).ToFunc()
+}
+
 // ByUsername orders the results by the username field.
 func ByUsername(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUsername, opts...).ToFunc()
@@ -281,6 +369,31 @@ func ByUsername(opts ...sql.OrderTermOption) OrderOption {
 // ByNotes orders the results by the notes field.
 func ByNotes(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNotes, opts...).ToFunc()
+}
+
+// ByInviterID orders the results by the inviter_id field.
+func ByInviterID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInviterID, opts...).ToFunc()
+}
+
+// ByReferralCode orders the results by the referral_code field.
+func ByReferralCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReferralCode, opts...).ToFunc()
+}
+
+// ByCustomFirstCommissionRate orders the results by the custom_first_commission_rate field.
+func ByCustomFirstCommissionRate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCustomFirstCommissionRate, opts...).ToFunc()
+}
+
+// ByCustomRecurringCommissionRate orders the results by the custom_recurring_commission_rate field.
+func ByCustomRecurringCommissionRate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCustomRecurringCommissionRate, opts...).ToFunc()
+}
+
+// ByRecurringCommissionEnabled orders the results by the recurring_commission_enabled field.
+func ByRecurringCommissionEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRecurringCommissionEnabled, opts...).ToFunc()
 }
 
 // ByTotpSecretEncrypted orders the results by the totp_secret_encrypted field.
@@ -434,6 +547,97 @@ func ByPromoCodeUsages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByInviteesCount orders the results by invitees count.
+func ByInviteesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newInviteesStep(), opts...)
+	}
+}
+
+// ByInvitees orders the results by invitees terms.
+func ByInvitees(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInviteesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByInviterField orders the results by inviter field.
+func ByInviterField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInviterStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByRechargeOrdersCount orders the results by recharge_orders count.
+func ByRechargeOrdersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRechargeOrdersStep(), opts...)
+	}
+}
+
+// ByRechargeOrders orders the results by recharge_orders terms.
+func ByRechargeOrders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRechargeOrdersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByPromoterCommissionsCount orders the results by promoter_commissions count.
+func ByPromoterCommissionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPromoterCommissionsStep(), opts...)
+	}
+}
+
+// ByPromoterCommissions orders the results by promoter_commissions terms.
+func ByPromoterCommissions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPromoterCommissionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByReferredCommissionsCount orders the results by referred_commissions count.
+func ByReferredCommissionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReferredCommissionsStep(), opts...)
+	}
+}
+
+// ByReferredCommissions orders the results by referred_commissions terms.
+func ByReferredCommissions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReferredCommissionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByReferralWithdrawalRequestsCount orders the results by referral_withdrawal_requests count.
+func ByReferralWithdrawalRequestsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReferralWithdrawalRequestsStep(), opts...)
+	}
+}
+
+// ByReferralWithdrawalRequests orders the results by referral_withdrawal_requests terms.
+func ByReferralWithdrawalRequests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReferralWithdrawalRequestsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByReviewedReferralWithdrawalsCount orders the results by reviewed_referral_withdrawals count.
+func ByReviewedReferralWithdrawalsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReviewedReferralWithdrawalsStep(), opts...)
+	}
+}
+
+// ByReviewedReferralWithdrawals orders the results by reviewed_referral_withdrawals terms.
+func ByReviewedReferralWithdrawals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReviewedReferralWithdrawalsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserAllowedGroupsCount orders the results by user_allowed_groups count.
 func ByUserAllowedGroupsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -508,6 +712,55 @@ func newPromoCodeUsagesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PromoCodeUsagesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PromoCodeUsagesTable, PromoCodeUsagesColumn),
+	)
+}
+func newInviteesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, InviteesTable, InviteesColumn),
+	)
+}
+func newInviterStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, InviterTable, InviterColumn),
+	)
+}
+func newRechargeOrdersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RechargeOrdersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RechargeOrdersTable, RechargeOrdersColumn),
+	)
+}
+func newPromoterCommissionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PromoterCommissionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PromoterCommissionsTable, PromoterCommissionsColumn),
+	)
+}
+func newReferredCommissionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReferredCommissionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReferredCommissionsTable, ReferredCommissionsColumn),
+	)
+}
+func newReferralWithdrawalRequestsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReferralWithdrawalRequestsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReferralWithdrawalRequestsTable, ReferralWithdrawalRequestsColumn),
+	)
+}
+func newReviewedReferralWithdrawalsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReviewedReferralWithdrawalsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReviewedReferralWithdrawalsTable, ReviewedReferralWithdrawalsColumn),
 	)
 }
 func newUserAllowedGroupsStep() *sqlgraph.Step {

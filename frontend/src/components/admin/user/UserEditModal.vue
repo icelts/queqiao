@@ -33,6 +33,56 @@
         <label class="input-label">{{ t('admin.users.notes') }}</label>
         <textarea v-model="form.notes" rows="3" class="input"></textarea>
       </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label class="input-label">{{ t('admin.users.customFirstCommissionRate') }}</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="form.custom_first_commission_rate"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              class="input"
+              :placeholder="t('admin.users.commissionRatePlaceholder')"
+            />
+            <span class="shrink-0 text-sm text-gray-500">%</span>
+          </div>
+        </div>
+        <div>
+          <label class="input-label">{{ t('admin.users.customRecurringCommissionRate') }}</label>
+          <div class="flex items-center gap-2">
+            <input
+              v-model="form.custom_recurring_commission_rate"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              class="input"
+              :placeholder="t('admin.users.commissionRatePlaceholder')"
+            />
+            <span class="shrink-0 text-sm text-gray-500">%</span>
+          </div>
+        </div>
+      </div>
+      <label class="flex items-start gap-3 rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 dark:border-dark-700 dark:text-gray-300">
+        <input
+          v-model="form.recurring_commission_enabled"
+          type="checkbox"
+          class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        <span>
+          <span class="block font-medium text-gray-900 dark:text-white">
+            {{ textOr('admin.users.recurringCommissionEnabled', '开启二次返佣') }}
+          </span>
+          <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+            {{ textOr('admin.users.recurringCommissionEnabledHint', '普通用户默认只有首充返佣，只有针对专门推广用户才建议开启二次返佣。') }}
+          </span>
+        </span>
+      </label>
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        {{ t('admin.users.commissionRateHint') }}
+      </p>
       <div>
         <label class="input-label">{{ t('admin.users.columns.concurrency') }}</label>
         <input v-model.number="form.concurrency" type="number" class="input" />
@@ -73,12 +123,41 @@ const props = defineProps<{ show: boolean, user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])
 const { t } = useI18n(); const appStore = useAppStore(); const { copyToClipboard } = useClipboard()
 
+const textOr = (key: string, fallback: string) => {
+  const text = t(key)
+  return text === key ? fallback : text
+}
+
 const submitting = ref(false); const passwordCopied = ref(false)
-const form = reactive({ email: '', password: '', username: '', notes: '', concurrency: 1, sora_storage_quota_gb: 0, customAttributes: {} as UserAttributeValuesMap })
+const form = reactive({
+  email: '',
+  password: '',
+  username: '',
+  notes: '',
+  concurrency: 1,
+  sora_storage_quota_gb: 0,
+  custom_first_commission_rate: '',
+  custom_recurring_commission_rate: '',
+  recurring_commission_enabled: false,
+  customAttributes: {} as UserAttributeValuesMap
+})
 
 watch(() => props.user, (u) => {
   if (u) {
-    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', concurrency: u.concurrency, sora_storage_quota_gb: Number(((u.sora_storage_quota_bytes || 0) / (1024 * 1024 * 1024)).toFixed(2)), customAttributes: {} })
+    Object.assign(form, {
+      email: u.email,
+      password: '',
+      username: u.username || '',
+      notes: u.notes || '',
+      concurrency: u.concurrency,
+      sora_storage_quota_gb: Number(((u.sora_storage_quota_bytes || 0) / (1024 * 1024 * 1024)).toFixed(2)),
+      custom_first_commission_rate:
+        u.custom_first_commission_rate == null ? '' : String(u.custom_first_commission_rate),
+      custom_recurring_commission_rate:
+        u.custom_recurring_commission_rate == null ? '' : String(u.custom_recurring_commission_rate),
+      recurring_commission_enabled: !!u.recurring_commission_enabled,
+      customAttributes: {}
+    })
     passwordCopied.value = false
   }
 }, { immediate: true })
@@ -103,10 +182,37 @@ const handleUpdateUser = async () => {
     appStore.showError(t('admin.users.concurrencyMin'))
     return
   }
+  if (
+    form.custom_first_commission_rate !== '' &&
+    (Number(form.custom_first_commission_rate) < 0 || Number(form.custom_first_commission_rate) > 100)
+  ) {
+    appStore.showError(t('admin.users.commissionRateInvalid'))
+    return
+  }
+  if (
+    form.custom_recurring_commission_rate !== '' &&
+    (Number(form.custom_recurring_commission_rate) < 0 || Number(form.custom_recurring_commission_rate) > 100)
+  ) {
+    appStore.showError(t('admin.users.commissionRateInvalid'))
+    return
+  }
   submitting.value = true
   try {
-    const data: any = { email: form.email, username: form.username, notes: form.notes, concurrency: form.concurrency, sora_storage_quota_bytes: Math.round((form.sora_storage_quota_gb || 0) * 1024 * 1024 * 1024) }
+    const data: any = {
+      email: form.email,
+      username: form.username,
+      notes: form.notes,
+      concurrency: form.concurrency,
+      sora_storage_quota_bytes: Math.round((form.sora_storage_quota_gb || 0) * 1024 * 1024 * 1024),
+      recurring_commission_enabled: form.recurring_commission_enabled
+    }
     if (form.password.trim()) data.password = form.password.trim()
+    if (form.custom_first_commission_rate !== '') {
+      data.custom_first_commission_rate = Number(form.custom_first_commission_rate)
+    }
+    if (form.custom_recurring_commission_rate !== '') {
+      data.custom_recurring_commission_rate = Number(form.custom_recurring_commission_rate)
+    }
     await adminAPI.users.update(props.user.id, data)
     if (Object.keys(form.customAttributes).length > 0) await adminAPI.userAttributes.updateUserAttributeValues(props.user.id, form.customAttributes)
     appStore.showSuccess(t('admin.users.userUpdated'))

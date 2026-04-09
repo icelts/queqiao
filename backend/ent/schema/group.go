@@ -72,6 +72,12 @@ func (Group) Fields() []ent.Field {
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
 		field.Int("default_validity_days").
 			Default(30),
+		field.Bool("purchase_enabled").
+			Default(false),
+		field.Float("purchase_price").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
 
 		// 图片生成计费配置（antigravity 和 gemini 平台使用）
 		field.Float("image_price_1k").

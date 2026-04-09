@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
@@ -33,13 +35,27 @@ type SubscriptionProgressInfo struct {
 // SubscriptionHandler handles user subscription operations
 type SubscriptionHandler struct {
 	subscriptionService *service.SubscriptionService
+	referralService     *service.ReferralService
+	xunhuPayService     *service.XunhuPayService
 }
 
 // NewSubscriptionHandler creates a new user subscription handler
-func NewSubscriptionHandler(subscriptionService *service.SubscriptionService) *SubscriptionHandler {
+func NewSubscriptionHandler(subscriptionService *service.SubscriptionService, referralService *service.ReferralService, xunhuPayService *service.XunhuPayService) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		subscriptionService: subscriptionService,
+		referralService:     referralService,
+		xunhuPayService:     xunhuPayService,
 	}
+}
+
+type SubscriptionPurchaseOrderRequest struct {
+	GroupID int64 `json:"group_id" binding:"required"`
+}
+
+type SubscriptionPurchaseOrderResponse struct {
+	Product *service.SubscriptionPurchaseOption `json:"product,omitempty"`
+	Order   *service.RechargeOrder              `json:"order"`
+	Payment *service.XunhuCreatePaymentResult   `json:"payment,omitempty"`
 }
 
 // List handles listing current user's subscriptions
@@ -185,4 +201,112 @@ func (h *SubscriptionHandler) GetSummary(c *gin.Context) {
 	}
 
 	response.Success(c, summary)
+}
+
+// ListPurchaseOptions handles listing purchasable subscription groups for the current user.
+// GET /api/v1/subscriptions/purchase-options
+func (h *SubscriptionHandler) ListPurchaseOptions(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not found in context")
+		return
+	}
+
+	items, err := h.subscriptionService.ListPurchaseOptions(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, items)
+}
+
+// CreatePurchaseOrder handles creating a subscription purchase or renewal order.
+// POST /api/v1/subscriptions/purchase-orders
+func (h *SubscriptionHandler) CreatePurchaseOrder(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not found in context")
+		return
+	}
+	if !requireIdempotencyKey(c) {
+		return
+	}
+	if h.referralService == nil {
+		response.InternalError(c, "Recharge order service is unavailable")
+		return
+	}
+	if h.xunhuPayService == nil {
+		response.InternalError(c, "xunhupay service is unavailable")
+		return
+	}
+
+	var req SubscriptionPurchaseOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	payload := struct {
+		GroupID int64 `json:"group_id"`
+	}{
+		GroupID: req.GroupID,
+	}
+
+	executeUserIdempotentJSON(
+		c,
+		"user.subscription.create_purchase_order",
+		payload,
+		service.DefaultWriteIdempotencyTTL(),
+		func(ctx context.Context) (any, error) {
+			product, err := h.subscriptionService.GetPurchaseOption(ctx, subject.UserID, req.GroupID)
+			if err != nil {
+				return nil, err
+			}
+
+			metadata, err := service.BuildSubscriptionPurchaseMetadata(product)
+			if err != nil {
+				return nil, err
+			}
+
+			order, err := h.referralService.CreateRechargeOrder(ctx, &service.CreateRechargeOrderInput{
+				UserID:         subject.UserID,
+				Amount:         product.PurchasePrice,
+				CreditedAmount: 0,
+				Channel:        service.XunhuPayChannel,
+				Currency:       product.Currency,
+				Source:         service.RechargeOrderSourceSubscriptionPurchase,
+				Notes:          metadata,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			title := product.GroupName + " Subscription"
+			if product.IsRenewal {
+				title = product.GroupName + " Renewal"
+			}
+
+			payment, err := h.xunhuPayService.CreatePayment(ctx, &service.XunhuCreatePaymentInput{
+				OrderNo: order.OrderNo,
+				Amount:  order.Amount,
+				Title:   title,
+				Attach:  metadata,
+			})
+			if err != nil {
+				return nil, markOrderFailedOnPaymentInitialization(ctx, h.referralService, order.OrderNo, service.XunhuPayChannel, err)
+			}
+
+			if payment.OpenOrderID != "" {
+				if updatedOrder, updateErr := h.referralService.SetRechargeOrderExternalOrderID(ctx, order.OrderNo, service.XunhuPayChannel, payment.OpenOrderID); updateErr == nil {
+					order = updatedOrder
+				}
+			}
+
+			return SubscriptionPurchaseOrderResponse{
+				Product: product,
+				Order:   order,
+				Payment: payment,
+			}, nil
+		},
+	)
 }

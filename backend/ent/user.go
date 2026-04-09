@@ -35,10 +35,22 @@ type User struct {
 	Concurrency int `json:"concurrency,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// SubscriptionLimitFallbackToBalance holds the value of the "subscription_limit_fallback_to_balance" field.
+	SubscriptionLimitFallbackToBalance bool `json:"subscription_limit_fallback_to_balance,omitempty"`
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Notes holds the value of the "notes" field.
 	Notes string `json:"notes,omitempty"`
+	// InviterID holds the value of the "inviter_id" field.
+	InviterID *int64 `json:"inviter_id,omitempty"`
+	// ReferralCode holds the value of the "referral_code" field.
+	ReferralCode string `json:"referral_code,omitempty"`
+	// CustomFirstCommissionRate holds the value of the "custom_first_commission_rate" field.
+	CustomFirstCommissionRate *float64 `json:"custom_first_commission_rate,omitempty"`
+	// CustomRecurringCommissionRate holds the value of the "custom_recurring_commission_rate" field.
+	CustomRecurringCommissionRate *float64 `json:"custom_recurring_commission_rate,omitempty"`
+	// RecurringCommissionEnabled holds the value of the "recurring_commission_enabled" field.
+	RecurringCommissionEnabled bool `json:"recurring_commission_enabled,omitempty"`
 	// TotpSecretEncrypted holds the value of the "totp_secret_encrypted" field.
 	TotpSecretEncrypted *string `json:"totp_secret_encrypted,omitempty"`
 	// TotpEnabled holds the value of the "totp_enabled" field.
@@ -75,11 +87,25 @@ type UserEdges struct {
 	AttributeValues []*UserAttributeValue `json:"attribute_values,omitempty"`
 	// PromoCodeUsages holds the value of the promo_code_usages edge.
 	PromoCodeUsages []*PromoCodeUsage `json:"promo_code_usages,omitempty"`
+	// Invitees holds the value of the invitees edge.
+	Invitees []*User `json:"invitees,omitempty"`
+	// Inviter holds the value of the inviter edge.
+	Inviter *User `json:"inviter,omitempty"`
+	// RechargeOrders holds the value of the recharge_orders edge.
+	RechargeOrders []*RechargeOrder `json:"recharge_orders,omitempty"`
+	// PromoterCommissions holds the value of the promoter_commissions edge.
+	PromoterCommissions []*ReferralCommission `json:"promoter_commissions,omitempty"`
+	// ReferredCommissions holds the value of the referred_commissions edge.
+	ReferredCommissions []*ReferralCommission `json:"referred_commissions,omitempty"`
+	// ReferralWithdrawalRequests holds the value of the referral_withdrawal_requests edge.
+	ReferralWithdrawalRequests []*ReferralWithdrawalRequest `json:"referral_withdrawal_requests,omitempty"`
+	// ReviewedReferralWithdrawals holds the value of the reviewed_referral_withdrawals edge.
+	ReviewedReferralWithdrawals []*ReferralWithdrawalRequest `json:"reviewed_referral_withdrawals,omitempty"`
 	// UserAllowedGroups holds the value of the user_allowed_groups edge.
 	UserAllowedGroups []*UserAllowedGroup `json:"user_allowed_groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [10]bool
+	loadedTypes [17]bool
 }
 
 // APIKeysOrErr returns the APIKeys value or an error if the edge
@@ -163,10 +189,75 @@ func (e UserEdges) PromoCodeUsagesOrErr() ([]*PromoCodeUsage, error) {
 	return nil, &NotLoadedError{edge: "promo_code_usages"}
 }
 
+// InviteesOrErr returns the Invitees value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) InviteesOrErr() ([]*User, error) {
+	if e.loadedTypes[9] {
+		return e.Invitees, nil
+	}
+	return nil, &NotLoadedError{edge: "invitees"}
+}
+
+// InviterOrErr returns the Inviter value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) InviterOrErr() (*User, error) {
+	if e.Inviter != nil {
+		return e.Inviter, nil
+	} else if e.loadedTypes[10] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "inviter"}
+}
+
+// RechargeOrdersOrErr returns the RechargeOrders value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) RechargeOrdersOrErr() ([]*RechargeOrder, error) {
+	if e.loadedTypes[11] {
+		return e.RechargeOrders, nil
+	}
+	return nil, &NotLoadedError{edge: "recharge_orders"}
+}
+
+// PromoterCommissionsOrErr returns the PromoterCommissions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PromoterCommissionsOrErr() ([]*ReferralCommission, error) {
+	if e.loadedTypes[12] {
+		return e.PromoterCommissions, nil
+	}
+	return nil, &NotLoadedError{edge: "promoter_commissions"}
+}
+
+// ReferredCommissionsOrErr returns the ReferredCommissions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReferredCommissionsOrErr() ([]*ReferralCommission, error) {
+	if e.loadedTypes[13] {
+		return e.ReferredCommissions, nil
+	}
+	return nil, &NotLoadedError{edge: "referred_commissions"}
+}
+
+// ReferralWithdrawalRequestsOrErr returns the ReferralWithdrawalRequests value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReferralWithdrawalRequestsOrErr() ([]*ReferralWithdrawalRequest, error) {
+	if e.loadedTypes[14] {
+		return e.ReferralWithdrawalRequests, nil
+	}
+	return nil, &NotLoadedError{edge: "referral_withdrawal_requests"}
+}
+
+// ReviewedReferralWithdrawalsOrErr returns the ReviewedReferralWithdrawals value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReviewedReferralWithdrawalsOrErr() ([]*ReferralWithdrawalRequest, error) {
+	if e.loadedTypes[15] {
+		return e.ReviewedReferralWithdrawals, nil
+	}
+	return nil, &NotLoadedError{edge: "reviewed_referral_withdrawals"}
+}
+
 // UserAllowedGroupsOrErr returns the UserAllowedGroups value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) UserAllowedGroupsOrErr() ([]*UserAllowedGroup, error) {
-	if e.loadedTypes[9] {
+	if e.loadedTypes[16] {
 		return e.UserAllowedGroups, nil
 	}
 	return nil, &NotLoadedError{edge: "user_allowed_groups"}
@@ -177,13 +268,13 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldTotpEnabled:
+		case user.FieldSubscriptionLimitFallbackToBalance, user.FieldRecurringCommissionEnabled, user.FieldTotpEnabled:
 			values[i] = new(sql.NullBool)
-		case user.FieldBalance:
+		case user.FieldBalance, user.FieldCustomFirstCommissionRate, user.FieldCustomRecurringCommissionRate:
 			values[i] = new(sql.NullFloat64)
-		case user.FieldID, user.FieldConcurrency, user.FieldSoraStorageQuotaBytes, user.FieldSoraStorageUsedBytes:
+		case user.FieldID, user.FieldConcurrency, user.FieldInviterID, user.FieldSoraStorageQuotaBytes, user.FieldSoraStorageUsedBytes:
 			values[i] = new(sql.NullInt64)
-		case user.FieldEmail, user.FieldPasswordHash, user.FieldRole, user.FieldStatus, user.FieldUsername, user.FieldNotes, user.FieldTotpSecretEncrypted:
+		case user.FieldEmail, user.FieldPasswordHash, user.FieldRole, user.FieldStatus, user.FieldUsername, user.FieldNotes, user.FieldReferralCode, user.FieldTotpSecretEncrypted:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldDeletedAt, user.FieldTotpEnabledAt:
 			values[i] = new(sql.NullTime)
@@ -263,6 +354,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = value.String
 			}
+		case user.FieldSubscriptionLimitFallbackToBalance:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field subscription_limit_fallback_to_balance", values[i])
+			} else if value.Valid {
+				_m.SubscriptionLimitFallbackToBalance = value.Bool
+			}
 		case user.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field username", values[i])
@@ -274,6 +371,39 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field notes", values[i])
 			} else if value.Valid {
 				_m.Notes = value.String
+			}
+		case user.FieldInviterID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field inviter_id", values[i])
+			} else if value.Valid {
+				_m.InviterID = new(int64)
+				*_m.InviterID = value.Int64
+			}
+		case user.FieldReferralCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field referral_code", values[i])
+			} else if value.Valid {
+				_m.ReferralCode = value.String
+			}
+		case user.FieldCustomFirstCommissionRate:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field custom_first_commission_rate", values[i])
+			} else if value.Valid {
+				_m.CustomFirstCommissionRate = new(float64)
+				*_m.CustomFirstCommissionRate = value.Float64
+			}
+		case user.FieldCustomRecurringCommissionRate:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field custom_recurring_commission_rate", values[i])
+			} else if value.Valid {
+				_m.CustomRecurringCommissionRate = new(float64)
+				*_m.CustomRecurringCommissionRate = value.Float64
+			}
+		case user.FieldRecurringCommissionEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field recurring_commission_enabled", values[i])
+			} else if value.Valid {
+				_m.RecurringCommissionEnabled = value.Bool
 			}
 		case user.FieldTotpSecretEncrypted:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -365,6 +495,41 @@ func (_m *User) QueryPromoCodeUsages() *PromoCodeUsageQuery {
 	return NewUserClient(_m.config).QueryPromoCodeUsages(_m)
 }
 
+// QueryInvitees queries the "invitees" edge of the User entity.
+func (_m *User) QueryInvitees() *UserQuery {
+	return NewUserClient(_m.config).QueryInvitees(_m)
+}
+
+// QueryInviter queries the "inviter" edge of the User entity.
+func (_m *User) QueryInviter() *UserQuery {
+	return NewUserClient(_m.config).QueryInviter(_m)
+}
+
+// QueryRechargeOrders queries the "recharge_orders" edge of the User entity.
+func (_m *User) QueryRechargeOrders() *RechargeOrderQuery {
+	return NewUserClient(_m.config).QueryRechargeOrders(_m)
+}
+
+// QueryPromoterCommissions queries the "promoter_commissions" edge of the User entity.
+func (_m *User) QueryPromoterCommissions() *ReferralCommissionQuery {
+	return NewUserClient(_m.config).QueryPromoterCommissions(_m)
+}
+
+// QueryReferredCommissions queries the "referred_commissions" edge of the User entity.
+func (_m *User) QueryReferredCommissions() *ReferralCommissionQuery {
+	return NewUserClient(_m.config).QueryReferredCommissions(_m)
+}
+
+// QueryReferralWithdrawalRequests queries the "referral_withdrawal_requests" edge of the User entity.
+func (_m *User) QueryReferralWithdrawalRequests() *ReferralWithdrawalRequestQuery {
+	return NewUserClient(_m.config).QueryReferralWithdrawalRequests(_m)
+}
+
+// QueryReviewedReferralWithdrawals queries the "reviewed_referral_withdrawals" edge of the User entity.
+func (_m *User) QueryReviewedReferralWithdrawals() *ReferralWithdrawalRequestQuery {
+	return NewUserClient(_m.config).QueryReviewedReferralWithdrawals(_m)
+}
+
 // QueryUserAllowedGroups queries the "user_allowed_groups" edge of the User entity.
 func (_m *User) QueryUserAllowedGroups() *UserAllowedGroupQuery {
 	return NewUserClient(_m.config).QueryUserAllowedGroups(_m)
@@ -422,11 +587,35 @@ func (_m *User) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(_m.Status)
 	builder.WriteString(", ")
+	builder.WriteString("subscription_limit_fallback_to_balance=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SubscriptionLimitFallbackToBalance))
+	builder.WriteString(", ")
 	builder.WriteString("username=")
 	builder.WriteString(_m.Username)
 	builder.WriteString(", ")
 	builder.WriteString("notes=")
 	builder.WriteString(_m.Notes)
+	builder.WriteString(", ")
+	if v := _m.InviterID; v != nil {
+		builder.WriteString("inviter_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("referral_code=")
+	builder.WriteString(_m.ReferralCode)
+	builder.WriteString(", ")
+	if v := _m.CustomFirstCommissionRate; v != nil {
+		builder.WriteString("custom_first_commission_rate=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.CustomRecurringCommissionRate; v != nil {
+		builder.WriteString("custom_recurring_commission_rate=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("recurring_commission_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RecurringCommissionEnabled))
 	builder.WriteString(", ")
 	if v := _m.TotpSecretEncrypted; v != nil {
 		builder.WriteString("totp_secret_encrypted=")

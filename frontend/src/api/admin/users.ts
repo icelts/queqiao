@@ -73,9 +73,15 @@ export async function getById(id: number): Promise<AdminUser> {
 export async function create(userData: {
   email: string
   password: string
+  username?: string
+  notes?: string
   balance?: number
   concurrency?: number
   allowed_groups?: number[] | null
+  inviter_id?: number | null
+  custom_first_commission_rate?: number
+  custom_recurring_commission_rate?: number
+  sora_storage_quota_bytes?: number
 }): Promise<AdminUser> {
   const { data } = await apiClient.post<AdminUser>('/admin/users', userData)
   return data

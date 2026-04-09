@@ -32,6 +32,7 @@ export interface User {
   balance: number // User balance for API usage
   concurrency: number // Allowed concurrent requests
   status: 'active' | 'disabled' // Account status
+  subscription_limit_fallback_to_balance: boolean
   allowed_groups: number[] | null // Allowed group IDs (null = all non-exclusive groups)
   subscriptions?: UserSubscription[] // User's active subscriptions
   created_at: string
@@ -41,6 +42,11 @@ export interface User {
 export interface AdminUser extends User {
   // 管理员备注（普通用户接口不返回）
   notes: string
+  inviter_id?: number | null
+  referral_code?: string
+  custom_first_commission_rate?: number | null
+  custom_recurring_commission_rate?: number | null
+  recurring_commission_enabled: boolean
   // 用户专属分组倍率配置 (group_id -> rate_multiplier)
   group_rates?: Record<number, number>
   // 当前并发数（仅管理员列表接口返回）
@@ -109,6 +115,9 @@ export interface PublicSettings {
   hide_ccs_import_button: boolean
   purchase_subscription_enabled: boolean
   purchase_subscription_url: string
+  xunhupay_enabled: boolean
+  balance_recharge_ratio: number
+  affiliate_enabled: boolean
   custom_menu_items: CustomMenuItem[]
   custom_endpoints: CustomEndpoint[]
   linuxdo_oauth_enabled: boolean
@@ -382,6 +391,9 @@ export interface Group {
   daily_limit_usd: number | null
   weekly_limit_usd: number | null
   monthly_limit_usd: number | null
+  default_validity_days: number
+  purchase_enabled: boolean
+  purchase_price: number | null
   // 图片生成计费配置（仅 antigravity 平台使用）
   image_price_1k: number | null
   image_price_2k: number | null
@@ -498,6 +510,9 @@ export interface CreateGroupRequest {
   daily_limit_usd?: number | null
   weekly_limit_usd?: number | null
   monthly_limit_usd?: number | null
+  default_validity_days?: number
+  purchase_enabled?: boolean
+  purchase_price?: number | null
   image_price_1k?: number | null
   image_price_2k?: number | null
   image_price_4k?: number | null
@@ -529,6 +544,9 @@ export interface UpdateGroupRequest {
   daily_limit_usd?: number | null
   weekly_limit_usd?: number | null
   monthly_limit_usd?: number | null
+  default_validity_days?: number
+  purchase_enabled?: boolean
+  purchase_price?: number | null
   image_price_1k?: number | null
   image_price_2k?: number | null
   image_price_4k?: number | null
@@ -1273,10 +1291,9 @@ export interface ApiKeyUsageTrendPoint {
 // ==================== Admin User Management ====================
 
 export interface UpdateUserRequest {
-  email?: string
-  password?: string
   username?: string
   notes?: string
+  email?: string
   role?: 'admin' | 'user'
   balance?: number
   concurrency?: number
@@ -1285,6 +1302,10 @@ export interface UpdateUserRequest {
   // 用户专属分组倍率配置 (group_id -> rate_multiplier | null)
   // null 表示删除该分组的专属倍率
   group_rates?: Record<number, number | null>
+  inviter_id?: number | null
+  custom_first_commission_rate?: number
+  custom_recurring_commission_rate?: number
+  sora_storage_quota_bytes?: number
 }
 
 export interface ChangePasswordRequest {

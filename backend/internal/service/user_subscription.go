@@ -2,6 +2,12 @@ package service
 
 import "time"
 
+const (
+	subscriptionDailyWindowDuration   = 24 * time.Hour
+	subscriptionWeeklyWindowDuration  = 7 * 24 * time.Hour
+	subscriptionMonthlyWindowDuration = 30 * 24 * time.Hour
+)
+
 type UserSubscription struct {
 	ID      int64
 	UserID  int64
@@ -51,31 +57,43 @@ func (s *UserSubscription) IsWindowActivated() bool {
 }
 
 func (s *UserSubscription) NeedsDailyReset() bool {
+	return s.NeedsDailyResetAt(time.Now())
+}
+
+func (s *UserSubscription) NeedsDailyResetAt(now time.Time) bool {
 	if s.DailyWindowStart == nil {
 		return false
 	}
-	return time.Since(*s.DailyWindowStart) >= 24*time.Hour
+	return !now.Before(s.DailyWindowStart.Add(subscriptionDailyWindowDuration))
 }
 
 func (s *UserSubscription) NeedsWeeklyReset() bool {
+	return s.NeedsWeeklyResetAt(time.Now())
+}
+
+func (s *UserSubscription) NeedsWeeklyResetAt(now time.Time) bool {
 	if s.WeeklyWindowStart == nil {
 		return false
 	}
-	return time.Since(*s.WeeklyWindowStart) >= 7*24*time.Hour
+	return !now.Before(s.WeeklyWindowStart.Add(subscriptionWeeklyWindowDuration))
 }
 
 func (s *UserSubscription) NeedsMonthlyReset() bool {
+	return s.NeedsMonthlyResetAt(time.Now())
+}
+
+func (s *UserSubscription) NeedsMonthlyResetAt(now time.Time) bool {
 	if s.MonthlyWindowStart == nil {
 		return false
 	}
-	return time.Since(*s.MonthlyWindowStart) >= 30*24*time.Hour
+	return !now.Before(s.MonthlyWindowStart.Add(subscriptionMonthlyWindowDuration))
 }
 
 func (s *UserSubscription) DailyResetTime() *time.Time {
 	if s.DailyWindowStart == nil {
 		return nil
 	}
-	t := s.DailyWindowStart.Add(24 * time.Hour)
+	t := s.DailyWindowStart.Add(subscriptionDailyWindowDuration)
 	return &t
 }
 
@@ -83,7 +101,7 @@ func (s *UserSubscription) WeeklyResetTime() *time.Time {
 	if s.WeeklyWindowStart == nil {
 		return nil
 	}
-	t := s.WeeklyWindowStart.Add(7 * 24 * time.Hour)
+	t := s.WeeklyWindowStart.Add(subscriptionWeeklyWindowDuration)
 	return &t
 }
 
@@ -91,7 +109,7 @@ func (s *UserSubscription) MonthlyResetTime() *time.Time {
 	if s.MonthlyWindowStart == nil {
 		return nil
 	}
-	t := s.MonthlyWindowStart.Add(30 * 24 * time.Hour)
+	t := s.MonthlyWindowStart.Add(subscriptionMonthlyWindowDuration)
 	return &t
 }
 

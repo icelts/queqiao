@@ -141,6 +141,18 @@ func (f ProxyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProxyMutation", m)
 }
 
+// The RechargeOrderFunc type is an adapter to allow the use of ordinary
+// function as RechargeOrder mutator.
+type RechargeOrderFunc func(context.Context, *ent.RechargeOrderMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RechargeOrderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RechargeOrderMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RechargeOrderMutation", m)
+}
+
 // The RedeemCodeFunc type is an adapter to allow the use of ordinary
 // function as RedeemCode mutator.
 type RedeemCodeFunc func(context.Context, *ent.RedeemCodeMutation) (ent.Value, error)
@@ -151,6 +163,30 @@ func (f RedeemCodeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RedeemCodeMutation", m)
+}
+
+// The ReferralCommissionFunc type is an adapter to allow the use of ordinary
+// function as ReferralCommission mutator.
+type ReferralCommissionFunc func(context.Context, *ent.ReferralCommissionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReferralCommissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ReferralCommissionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReferralCommissionMutation", m)
+}
+
+// The ReferralWithdrawalRequestFunc type is an adapter to allow the use of ordinary
+// function as ReferralWithdrawalRequest mutator.
+type ReferralWithdrawalRequestFunc func(context.Context, *ent.ReferralWithdrawalRequestMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReferralWithdrawalRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ReferralWithdrawalRequestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReferralWithdrawalRequestMutation", m)
 }
 
 // The SecuritySecretFunc type is an adapter to allow the use of ordinary

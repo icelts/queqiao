@@ -332,6 +332,7 @@ export default {
     apiKeys: 'API Keys',
     usage: 'Usage',
     redeem: 'Redeem',
+    referral: 'Referral',
     profile: 'Profile',
     users: 'Users',
     groups: 'Groups',
@@ -341,6 +342,8 @@ export default {
     redeemCodes: 'Redeem Codes',
     ops: 'Ops',
     promoCodes: 'Promo Codes',
+    rechargeOrders: 'Recharge Orders',
+    referralWithdrawals: 'Referral Withdrawals',
     settings: 'Settings',
     myAccount: 'My Account',
     lightMode: 'Light Mode',
@@ -351,6 +354,7 @@ export default {
     github: 'GitHub',
     mySubscriptions: 'My Subscriptions',
     buySubscription: 'Recharge / Subscription',
+    tutorialGuide: 'Redeem Guide',
     docs: 'Docs',
     sora: 'Sora Studio'
   },
@@ -521,6 +525,107 @@ export default {
     checkDetailedLogs: 'Check detailed usage logs',
     redeemCode: 'Redeem Code',
     addBalanceWithCode: 'Add balance with a code'
+  },
+
+  referral: {
+    title: 'Referral Center',
+    description: 'Track invited users and commission performance',
+    shareTitle: 'Share Your Referral Code',
+    shareDescription: 'New users can register with this code or link to bind to your account.',
+    codeLabel: 'Referral Code',
+    linkLabel: 'Registration Link',
+    copyCode: 'Copy Code',
+    copyLink: 'Copy Link',
+    codeCopied: 'Referral code copied',
+    linkCopied: 'Referral link copied',
+    linkHint: 'Only successful paid recharge orders trigger commission settlement. Regular users get first-recharge commission only.',
+    loadFailed: 'Failed to load referral data',
+    summary: {
+      invitees: 'Invited Users',
+      totalCommission: 'Total Commission',
+      firstCommissionCount: 'First Recharge Rewards',
+      totalRecharge: 'Total Recharge',
+      availableCommission: 'Withdrawable',
+      frozenCommission: 'Frozen',
+      pendingWithdrawal: 'Pending Review',
+      approvedWithdrawal: 'Withdrawn'
+    },
+    invitees: {
+      title: 'Invited Users',
+      description: 'See who registered through your code and how much they have recharged.',
+      user: 'User',
+      registeredAt: 'Registered',
+      firstPaid: 'First Paid Order',
+      totalPaid: 'Total Paid',
+      totalCommission: 'Commission'
+    },
+    commissions: {
+      title: 'Commission Records',
+      description: 'Every recorded reward generated from successful recharge orders.',
+      createdAt: 'Created',
+      user: 'Invited User',
+      type: 'Type',
+      sourceAmount: 'Recharge',
+      commissionAmount: 'Commission',
+      order: 'Order'
+    },
+    commissionTypes: {
+      first: 'First Recharge',
+      recurring: 'Recurring Recharge'
+    },
+    statuses: {
+      recorded: 'Recorded',
+      reversed: 'Reversed',
+      pending: 'Pending',
+      approved: 'Approved',
+      rejected: 'Rejected',
+      canceled: 'Canceled'
+    },
+    paymentMethods: {
+      alipay: 'Alipay',
+      wechat: 'WeChat',
+      bank: 'Bank Card',
+      usdt: 'USDT',
+      other: 'Other'
+    },
+    withdraw: {
+      title: 'Commission Withdrawal',
+      description: 'Submit a withdrawal request for your eligible commission.',
+      disabled: 'Withdrawal requests are not enabled by the administrator yet.',
+      rules: 'Threshold: at least {amount} withdrawable commission and {count} effective invitees. Commission becomes withdrawable one month after settlement.',
+      effectiveInvitees: 'Current effective invitees: {count}',
+      frozenHint: 'Frozen commission within the one-month cooling period: {amount}',
+      nextUnlockAt: 'Next commission unlock time: {time}',
+      notEligible: 'You have not met the current withdrawal threshold yet.',
+      amount: 'Withdrawal Amount',
+      amountRequired: 'Please enter a valid withdrawal amount.',
+      method: 'Payment Method',
+      accountName: 'Account Name',
+      accountNamePlaceholder: 'Optional recipient name',
+      account: 'Receiving Account',
+      accountPlaceholder: 'Alipay / WeChat / bank card / wallet address',
+      accountRequired: 'Please enter the receiving account.',
+      notes: 'Notes',
+      notesPlaceholder: 'Optional remarks for the administrator',
+      submit: 'Submit Request',
+      submitSuccess: 'Withdrawal request submitted.',
+      submitFailed: 'Failed to submit withdrawal request.'
+    },
+    withdrawals: {
+      title: 'Withdrawal Requests',
+      description: 'Track your commission withdrawal requests and review results.',
+      createdAt: 'Created',
+      amount: 'Amount',
+      method: 'Method',
+      account: 'Account',
+      status: 'Status',
+      notes: 'Notes',
+      actions: 'Actions',
+      cancel: 'Cancel',
+      cancelConfirm: 'Cancel this withdrawal request?',
+      cancelSuccess: 'Withdrawal request canceled.',
+      cancelFailed: 'Failed to cancel withdrawal request.'
+    }
   },
 
   // Groups (shared)
@@ -831,6 +936,8 @@ export default {
     updateSuccess: 'Profile updated successfully',
     updateFailed: 'Failed to update profile',
     usernameRequired: 'Username is required',
+    subscriptionLimitFallbackToggle: 'Fallback to balance when subscription limit is reached',
+    subscriptionLimitFallbackToggleHint: 'When enabled, requests will continue using account balance after daily/weekly/monthly subscription limits are exhausted',
     changePassword: 'Change Password',
     currentPassword: 'Current Password',
     newPassword: 'New Password',
@@ -995,6 +1102,97 @@ export default {
       requestsShort: 'Req',
       tokensShort: 'Tok',
       failedToLoad: 'Failed to load dashboard statistics'
+    },
+    referralWithdrawals: {
+      title: 'Referral Withdrawals',
+      description: 'Review and process user commission withdrawal requests.',
+      loadFailed: 'Failed to load withdrawal requests',
+      approveSuccess: 'Withdrawal request approved.',
+      approveFailed: 'Failed to approve withdrawal request',
+      rejectSuccess: 'Withdrawal request rejected.',
+      rejectFailed: 'Failed to reject withdrawal request',
+      rejectConfirm: 'Reject this withdrawal request?',
+      filters: {
+        all: 'All Statuses'
+      },
+      columns: {
+        createdAt: 'Created',
+        user: 'User',
+        amount: 'Amount',
+        payment: 'Payment',
+        account: 'Account',
+        status: 'Status',
+        notes: 'Notes',
+        actions: 'Actions'
+      },
+      statuses: {
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        canceled: 'Canceled'
+      },
+      actions: {
+        approve: 'Approve',
+        reject: 'Reject'
+      },
+      prompts: {
+        approve: 'Optional approval note',
+        reject: 'Optional rejection reason'
+      }
+    },
+    rechargeOrders: {
+      title: 'Recharge Orders',
+      description: 'Review user recharge orders, payment outcomes, and commission linkage.',
+      loadFailed: 'Failed to load recharge orders',
+      filters: {
+        search: 'Search order no / external order / email / username',
+        allStatuses: 'All Statuses',
+        allChannels: 'All Channels',
+        withCommission: 'With Commission',
+        refundedOnly: 'Refunded Only'
+      },
+      stats: {
+        totalOrders: 'Total Orders',
+        totalPaidAmount: 'Paid Amount',
+        totalRefundedAmount: 'Refunded Amount',
+        totalCommissionAmount: 'Recorded Commission'
+      },
+      columns: {
+        createdAt: 'Created',
+        user: 'User',
+        order: 'Order',
+        amount: 'Amount',
+        credited: 'Credited',
+        status: 'Status',
+        paidAt: 'Paid',
+        refundedAt: 'Refunded',
+        channel: 'Channel',
+        commission: 'Commission',
+        commissionCount: 'Count',
+        notes: 'Notes',
+        actions: 'Actions'
+      },
+      statuses: {
+        pending: 'Pending',
+        paid: 'Paid',
+        failed: 'Failed',
+        refunded: 'Refunded'
+      },
+      channels: {
+        xunhupay: 'XunhuPay',
+        manual: 'Manual',
+        custom: 'Custom'
+      },
+      details: {
+        title: 'Recharge Order Detail',
+        view: 'Details',
+        loadFailed: 'Failed to load recharge order detail',
+        callbackRaw: 'Callback Raw'
+      },
+      exportCsv: 'Export CSV',
+      exporting: 'Exporting...',
+      exportSuccess: 'Recharge orders exported.',
+      exportFailed: 'Failed to export recharge orders'
     },
 
     backup: {
@@ -1370,6 +1568,15 @@ export default {
       failedToLoadApiKeys: 'Failed to load user API keys',
       emailRequired: 'Please enter email',
       concurrencyMin: 'Concurrency must be at least 1',
+      customFirstCommissionRate: 'Custom First Commission',
+      customRecurringCommissionRate: 'Custom Recurring Commission',
+      recurringCommissionEnabled: 'Enable Recurring Commission',
+      recurringCommissionEnabledHint:
+        'By default, users only receive first-recharge commission. Enable this only for dedicated promoters.',
+      commissionRatePlaceholder: 'Use system default',
+      commissionRateHint:
+        'Set a user-specific override between 0 and 100. Recurring commission only applies when the recurring switch is enabled for this user.',
+      commissionRateInvalid: 'Commission rate must be between 0 and 100',
       soraStorageQuota: 'Sora Storage Quota',
       soraStorageQuotaHint: 'In GB, 0 means use group or system default quota',
       amountRequired: 'Please enter a valid amount',
@@ -1629,6 +1836,10 @@ export default {
         monthlyLimit: 'Monthly Limit (USD)',
         defaultValidityDays: 'Default Validity (Days)',
         validityHint: 'Number of days the subscription is valid when assigned to a user',
+        purchaseEnabled: 'Allow Direct Purchase',
+        purchaseEnabledHint: 'When enabled, users can buy or renew this subscription directly from the purchase page.',
+        purchasePrice: 'Sale Price (CNY)',
+        purchasePriceHint: 'Price used for direct purchase and renewal of this subscription group.',
         noLimit: 'No limit'
       },
       imagePricing: {
@@ -4164,6 +4375,23 @@ export default {
         subscriptionGroup: 'Subscription Group',
         subscriptionValidityDays: 'Validity (days)'
       },
+      affiliate: {
+        title: 'Affiliate Commission Settings',
+        description: 'Configure recharge-based referral commission rules.',
+        enabled: 'Enable Affiliate Mode',
+        enabledHint: 'Only successful paid recharge orders can trigger commission.',
+        firstEnabled: 'Enable First Recharge Commission',
+        firstEnabledHint: 'Use a higher reward rate on the referred user\'s first successful recharge.',
+        firstRate: 'Default First Recharge Rate',
+        recurringEnabled: 'Allow User-Level Recurring Commission',
+        recurringEnabledHint: 'This only enables recurring commission for users you explicitly allow in user management.',
+        recurringRate: 'Default Recurring Rate',
+        rateHint: 'Per-user custom commission rates override these defaults.',
+        withdrawEnabled: 'Enable Withdrawal Requests',
+        withdrawEnabledHint: 'Allow users to submit commission withdrawal requests.',
+        withdrawMinAmount: 'Minimum Withdrawal Amount',
+        withdrawMinInvitees: 'Minimum Effective Invitees'
+      },
       claudeCode: {
         title: 'Claude Code Settings',
         description: 'Control Claude Code client access requirements',
@@ -4237,6 +4465,48 @@ export default {
         homeContentIframeWarning: '⚠️ iframe mode note: Some websites have X-Frame-Options or CSP security policies that prevent embedding in iframes. If the page appears blank or shows an error, please verify the target website allows embedding, or consider using HTML mode to build your own content.',
         hideCcsImportButton: 'Hide CCS Import Button',
         hideCcsImportButtonHint: 'When enabled, the "Import to CCS" button will be hidden on the API Keys page'
+      },
+      xunhupay: {
+        title: 'XunhuPay Settings',
+        description: 'Configure real paid recharge orders through XunhuPay.',
+        enabled: 'Enable XunhuPay Recharge',
+        enabledHint: 'When enabled, users can create real recharge orders on the recharge page.',
+        baseUrl: 'API Base URL',
+        baseUrlPlaceholder: 'https://api.xunhupay.com',
+        baseUrlHint: 'Official API host. Leave the default unless XunhuPay instructs otherwise.',
+        plugins: 'Plugins',
+        pluginsPlaceholder: 'sub2api',
+        pluginsHint: 'Custom plugin identifier sent to XunhuPay.',
+        appId: 'APPID',
+        appIdPlaceholder: 'Enter your XunhuPay APPID',
+        appIdHint: 'Get this from the XunhuPay merchant platform.',
+        appSecret: 'APPSECRET',
+        appSecretPlaceholder: 'Enter APPSECRET',
+        appSecretHint: 'Used for request signing. Keep this secret.',
+        appSecretConfiguredHint: 'APPSECRET is already configured. Leave empty to keep the current value.',
+        notifyUrl: 'Notify URL',
+        notifyUrlPlaceholder: 'https://example.com/api/v1/payments/webhook/xunhupay',
+        notifyUrlHint: 'Server-to-server callback URL used for payment confirmation.',
+        returnUrl: 'Return URL',
+        returnUrlPlaceholder: 'https://example.com/purchase',
+        returnUrlHint: 'Optional browser return URL after payment is completed.',
+        callbackUrl: 'Callback URL',
+        callbackUrlPlaceholder: 'https://example.com/payment/complete',
+        callbackUrlHint: 'Optional front-end callback URL passed to XunhuPay.',
+        docLink: 'Open XunhuPay API Docs',
+        docHint: 'Use the official doc to confirm APPID, APPSECRET, notify URL, and signature rules.',
+        appIdRequired: 'XunhuPay APPID is required when recharge is enabled.',
+        appSecretRequired: 'XunhuPay APPSECRET is required when recharge is enabled.',
+        notifyUrlRequired: 'XunhuPay notify URL is required when recharge is enabled.',
+        baseUrlInvalid: 'XunhuPay API base URL must be an absolute http(s) URL.',
+        notifyUrlInvalid: 'XunhuPay notify URL must be an absolute http(s) URL.',
+        returnUrlInvalid: 'XunhuPay return URL must be an absolute http(s) URL.',
+        callbackUrlInvalid: 'XunhuPay callback URL must be an absolute http(s) URL.',
+        balanceRechargeRatio: 'Balance Recharge Ratio',
+        balanceRechargeRatioPlaceholder: 'Enter the credited balance for 1 CNY',
+        balanceRechargeRatioHint:
+          'Users pay in CNY. Each 1 CNY will credit this many balance units. Referral commissions still use the actual CNY payment amount.',
+        balanceRechargeRatioInvalid: 'Balance recharge ratio must be greater than 0.'
       },
       purchase: {
         title: 'Recharge / Subscription Page',
@@ -4699,13 +4969,105 @@ export default {
   // Recharge / Subscription Page
   purchase: {
     title: 'Recharge / Subscription',
-    description: 'Recharge balance or purchase subscription via the embedded page',
+    description: 'Recharge balance through XunhuPay or open the configured subscription page',
+    embeddedTitle: 'Subscription Page',
+    embeddedDescription: 'Use the embedded page below when you also provide an external subscription or purchase page.',
     openInNewTab: 'Open in new tab',
     notEnabledTitle: 'Feature not enabled',
-    notEnabledDesc: 'The administrator has not enabled the recharge/subscription entry. Please contact admin.',
+    notEnabledDesc: 'The administrator has not enabled recharge or subscription entry points yet. Please contact admin.',
     notConfiguredTitle: 'Recharge / Subscription URL not configured',
     notConfiguredDesc:
-      'The administrator enabled the entry but has not configured a recharge/subscription URL. Please contact admin.'
+      'The administrator enabled the embedded subscription entry but has not configured a valid URL.',
+    statuses: {
+      pending: 'Pending',
+      paid: 'Paid',
+      failed: 'Failed',
+      refunded: 'Refunded'
+    },
+    paymentModal: {
+      title: 'Payment',
+      scanBadge: 'Scan to Pay',
+      reopen: 'Continue Payment',
+      expiresAt: 'Please complete payment before {date}',
+      remainingMs: '{minutes}:{seconds} until expiry',
+      remainingHms: '{hours}:{minutes}:{seconds} until expiry',
+      pendingLabel: 'Pending Payment',
+      expiredLabel: 'Expired',
+      expired: 'Payment QR code expired',
+      unavailable: 'This order no longer has an available payment QR code.',
+      qrUnavailable: 'QR code unavailable, please use the payment page button instead.'
+    },
+    recharge: {
+      title: 'Online Recharge',
+      description: 'Create a real paid recharge order through XunhuPay. Only successful paid orders can trigger referral commissions.',
+      currentBalance: 'Current Balance',
+      channel: 'Payment Channel',
+      channelXunhu: 'XunhuPay',
+      balanceUnit: 'USD Balance',
+      creditedBalance: 'Credited Balance',
+      ratioHint: 'Current ratio: {ratio}',
+      creditedBalancePreview: 'This recharge will credit {amount} USD balance after payment.',
+      commissionRule: 'Commission Rule',
+      commissionRuleHint: 'Promo codes, redeem codes, admin balance adjustments, and gifted subscriptions do not trigger commission.',
+      amount: 'Recharge Amount',
+      amountPlaceholder: 'Enter amount',
+      amountHint: 'Supports CNY recharge orders only.',
+      amountInvalid: 'Please enter a valid recharge amount.',
+      preset: 'Quick amount',
+      notes: 'Order Note',
+      notesPlaceholder: 'Optional note shown on the order record',
+      createOrder: 'Create Recharge Order',
+      creating: 'Creating order...',
+      refreshOrders: 'Refresh Orders',
+      currentOrder: 'Current Order',
+      currentOrderHint: 'Open the payment page or scan the QR code, then come back here to confirm the status.',
+      currentOrderEmpty: 'No active recharge order yet.',
+      scanToPay: 'Scan QR code to pay',
+      openPayment: 'Open Payment Page',
+      checkStatus: 'Check Status',
+      defaultTitle: 'Account Recharge',
+      orderCreated: 'Recharge order created. Complete the payment to credit your balance.',
+      createFailed: 'Failed to create recharge order',
+      statusCheckFailed: 'Failed to check recharge order status',
+      paidSuccess: 'Recharge paid successfully. Your balance has been refreshed.',
+      failed: 'The recharge order failed.',
+      refunded: 'The recharge order was refunded.'
+    },
+    subscription: {
+      title: 'Subscription Plans',
+      description: 'Choose a subscription group and pay directly. Existing subscriptions will automatically renew.',
+      noDescription: 'No extra description for this subscription group.',
+      price: 'Price',
+      buy: 'Buy',
+      renew: 'Renew',
+      buyNow: 'Buy Now',
+      renewNow: 'Renew Now',
+      creating: 'Creating order...',
+      createFailed: 'Failed to create subscription order',
+      loadFailed: 'Failed to load subscription plans',
+      orderCreated: 'Subscription order created. Complete the payment to activate it.',
+      renewCreated: 'Renewal order created. Complete the payment to extend it.',
+      paidSuccess: 'Subscription paid successfully. Your subscription has been updated.',
+      failed: 'The subscription order failed.',
+      refunded: 'The subscription order was refunded.',
+      validityDaysShort: '{days} days',
+      currentExpires: 'Current expiry: {date}',
+      day: 'day',
+      week: 'week',
+      month: 'month',
+      noLimit: 'Unlimited',
+      orderType: 'Subscription order'
+    },
+    orders: {
+      title: 'Recent Orders',
+      description: 'Latest recharge and subscription orders created from this account.',
+      empty: 'No orders yet.',
+      loadFailed: 'Failed to load orders',
+      orderNo: 'Order No.',
+      amount: 'Amount',
+      status: 'Status',
+      createdAt: 'Created At'
+    }
   },
 
   // Custom Page (iframe embed)
@@ -4716,6 +5078,11 @@ export default {
     notFoundDesc: 'This custom page does not exist or has been removed.',
     notConfiguredTitle: 'Page URL not configured',
     notConfiguredDesc: 'The URL for this custom page has not been properly configured.',
+  },
+
+  tutorial: {
+    title: 'Redeem to Local Guide',
+    description: 'End-to-end guide from redeem code, subscription activation, to local client setup',
   },
 
   // Announcements Page

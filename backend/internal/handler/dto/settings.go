@@ -5,24 +5,21 @@ import (
 	"strings"
 )
 
-// CustomMenuItem represents a user-configured custom menu entry.
 type CustomMenuItem struct {
 	ID         string `json:"id"`
 	Label      string `json:"label"`
 	IconSVG    string `json:"icon_svg"`
 	URL        string `json:"url"`
-	Visibility string `json:"visibility"` // "user" or "admin"
+	Visibility string `json:"visibility"`
 	SortOrder  int    `json:"sort_order"`
 }
 
-// CustomEndpoint represents an admin-configured API endpoint for quick copy.
 type CustomEndpoint struct {
 	Name        string `json:"name"`
 	Endpoint    string `json:"endpoint"`
 	Description string `json:"description"`
 }
 
-// SystemSettings represents the admin settings API response payload.
 type SystemSettings struct {
 	RegistrationEnabled              bool     `json:"registration_enabled"`
 	EmailVerifyEnabled               bool     `json:"email_verify_enabled"`
@@ -31,8 +28,8 @@ type SystemSettings struct {
 	PasswordResetEnabled             bool     `json:"password_reset_enabled"`
 	FrontendURL                      string   `json:"frontend_url"`
 	InvitationCodeEnabled            bool     `json:"invitation_code_enabled"`
-	TotpEnabled                      bool     `json:"totp_enabled"`                   // TOTP 双因素认证
-	TotpEncryptionKeyConfigured      bool     `json:"totp_encryption_key_configured"` // TOTP 加密密钥是否已配置
+	TotpEnabled                      bool     `json:"totp_enabled"`
+	TotpEncryptionKeyConfigured      bool     `json:"totp_encryption_key_configured"`
 
 	SMTPHost               string `json:"smtp_host"`
 	SMTPPort               int    `json:"smtp_port"`
@@ -65,22 +62,38 @@ type SystemSettings struct {
 	CustomMenuItems             []CustomMenuItem `json:"custom_menu_items"`
 	CustomEndpoints             []CustomEndpoint `json:"custom_endpoints"`
 
+	XunhuPayEnabled             bool   `json:"xunhupay_enabled"`
+	XunhuPayBaseURL             string `json:"xunhupay_base_url"`
+	XunhuPayAppID               string `json:"xunhupay_appid"`
+	XunhuPayAppSecretConfigured bool   `json:"xunhupay_appsecret_configured"`
+	XunhuPayNotifyURL           string `json:"xunhupay_notify_url"`
+	XunhuPayReturnURL           string `json:"xunhupay_return_url"`
+	XunhuPayCallbackURL         string `json:"xunhupay_callback_url"`
+	XunhuPayPlugins             string `json:"xunhupay_plugins"`
+	BalanceRechargeRatio        float64 `json:"balance_recharge_ratio"`
+
+	AffiliateEnabled               bool    `json:"affiliate_enabled"`
+	FirstCommissionEnabled         bool    `json:"first_commission_enabled"`
+	RecurringCommissionEnabled     bool    `json:"recurring_commission_enabled"`
+	DefaultFirstCommissionRate     float64 `json:"default_first_commission_rate"`
+	DefaultRecurringCommissionRate float64 `json:"default_recurring_commission_rate"`
+	AffiliateWithdrawEnabled       bool    `json:"affiliate_withdraw_enabled"`
+	AffiliateWithdrawMinAmount     float64 `json:"affiliate_withdraw_min_amount"`
+	AffiliateWithdrawMinInvitees   int64   `json:"affiliate_withdraw_min_invitees"`
+
 	DefaultConcurrency   int                          `json:"default_concurrency"`
 	DefaultBalance       float64                      `json:"default_balance"`
 	DefaultSubscriptions []DefaultSubscriptionSetting `json:"default_subscriptions"`
 
-	// Model fallback configuration
 	EnableModelFallback      bool   `json:"enable_model_fallback"`
 	FallbackModelAnthropic   string `json:"fallback_model_anthropic"`
 	FallbackModelOpenAI      string `json:"fallback_model_openai"`
 	FallbackModelGemini      string `json:"fallback_model_gemini"`
 	FallbackModelAntigravity string `json:"fallback_model_antigravity"`
 
-	// Identity patch configuration (Claude -> Gemini)
 	EnableIdentityPatch bool   `json:"enable_identity_patch"`
 	IdentityPatchPrompt string `json:"identity_patch_prompt"`
 
-	// Ops monitoring (vNext)
 	OpsMonitoringEnabled         bool   `json:"ops_monitoring_enabled"`
 	OpsRealtimeMonitoringEnabled bool   `json:"ops_realtime_monitoring_enabled"`
 	OpsQueryModeDefault          string `json:"ops_query_mode_default"`
@@ -89,13 +102,9 @@ type SystemSettings struct {
 	MinClaudeCodeVersion string `json:"min_claude_code_version"`
 	MaxClaudeCodeVersion string `json:"max_claude_code_version"`
 
-	// 分组隔离
 	AllowUngroupedKeyScheduling bool `json:"allow_ungrouped_key_scheduling"`
+	BackendModeEnabled          bool `json:"backend_mode_enabled"`
 
-	// Backend Mode
-	BackendModeEnabled bool `json:"backend_mode_enabled"`
-
-	// Gateway forwarding behavior
 	EnableFingerprintUnification bool `json:"enable_fingerprint_unification"`
 	EnableMetadataPassthrough    bool `json:"enable_metadata_passthrough"`
 }
@@ -112,7 +121,7 @@ type PublicSettings struct {
 	PromoCodeEnabled                 bool             `json:"promo_code_enabled"`
 	PasswordResetEnabled             bool             `json:"password_reset_enabled"`
 	InvitationCodeEnabled            bool             `json:"invitation_code_enabled"`
-	TotpEnabled                      bool             `json:"totp_enabled"` // TOTP 双因素认证
+	TotpEnabled                      bool             `json:"totp_enabled"`
 	TurnstileEnabled                 bool             `json:"turnstile_enabled"`
 	TurnstileSiteKey                 string           `json:"turnstile_site_key"`
 	SiteName                         string           `json:"site_name"`
@@ -125,6 +134,9 @@ type PublicSettings struct {
 	HideCcsImportButton              bool             `json:"hide_ccs_import_button"`
 	PurchaseSubscriptionEnabled      bool             `json:"purchase_subscription_enabled"`
 	PurchaseSubscriptionURL          string           `json:"purchase_subscription_url"`
+	XunhuPayEnabled                  bool             `json:"xunhupay_enabled"`
+	BalanceRechargeRatio             float64          `json:"balance_recharge_ratio"`
+	AffiliateEnabled                 bool             `json:"affiliate_enabled"`
 	CustomMenuItems                  []CustomMenuItem `json:"custom_menu_items"`
 	CustomEndpoints                  []CustomEndpoint `json:"custom_endpoints"`
 	LinuxDoOAuthEnabled              bool             `json:"linuxdo_oauth_enabled"`
@@ -133,7 +145,6 @@ type PublicSettings struct {
 	Version                          string           `json:"version"`
 }
 
-// SoraS3Settings Sora S3 存储配置 DTO（响应用，不含敏感字段）
 type SoraS3Settings struct {
 	Enabled                   bool   `json:"enabled"`
 	Endpoint                  string `json:"endpoint"`
@@ -147,7 +158,6 @@ type SoraS3Settings struct {
 	DefaultStorageQuotaBytes  int64  `json:"default_storage_quota_bytes"`
 }
 
-// SoraS3Profile Sora S3 存储配置项 DTO（响应用，不含敏感字段）
 type SoraS3Profile struct {
 	ProfileID                 string `json:"profile_id"`
 	Name                      string `json:"name"`
@@ -165,19 +175,16 @@ type SoraS3Profile struct {
 	UpdatedAt                 string `json:"updated_at"`
 }
 
-// ListSoraS3ProfilesResponse Sora S3 配置列表响应
 type ListSoraS3ProfilesResponse struct {
 	ActiveProfileID string          `json:"active_profile_id"`
 	Items           []SoraS3Profile `json:"items"`
 }
 
-// OverloadCooldownSettings 529过载冷却配置 DTO
 type OverloadCooldownSettings struct {
 	Enabled         bool `json:"enabled"`
 	CooldownMinutes int  `json:"cooldown_minutes"`
 }
 
-// StreamTimeoutSettings 流超时处理配置 DTO
 type StreamTimeoutSettings struct {
 	Enabled                bool   `json:"enabled"`
 	Action                 string `json:"action"`
@@ -186,7 +193,6 @@ type StreamTimeoutSettings struct {
 	ThresholdWindowMinutes int    `json:"threshold_window_minutes"`
 }
 
-// RectifierSettings 请求整流器配置 DTO
 type RectifierSettings struct {
 	Enabled                  bool     `json:"enabled"`
 	ThinkingSignatureEnabled bool     `json:"thinking_signature_enabled"`
@@ -195,7 +201,6 @@ type RectifierSettings struct {
 	APIKeySignaturePatterns  []string `json:"apikey_signature_patterns"`
 }
 
-// BetaPolicyRule Beta 策略规则 DTO
 type BetaPolicyRule struct {
 	BetaToken    string `json:"beta_token"`
 	Action       string `json:"action"`
@@ -203,13 +208,10 @@ type BetaPolicyRule struct {
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
-// BetaPolicySettings Beta 策略配置 DTO
 type BetaPolicySettings struct {
 	Rules []BetaPolicyRule `json:"rules"`
 }
 
-// ParseCustomMenuItems parses a JSON string into a slice of CustomMenuItem.
-// Returns empty slice on empty/invalid input.
 func ParseCustomMenuItems(raw string) []CustomMenuItem {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || raw == "[]" {
@@ -222,7 +224,6 @@ func ParseCustomMenuItems(raw string) []CustomMenuItem {
 	return items
 }
 
-// ParseUserVisibleMenuItems parses custom menu items and filters out admin-only entries.
 func ParseUserVisibleMenuItems(raw string) []CustomMenuItem {
 	items := ParseCustomMenuItems(raw)
 	filtered := make([]CustomMenuItem, 0, len(items))
@@ -234,8 +235,6 @@ func ParseUserVisibleMenuItems(raw string) []CustomMenuItem {
 	return filtered
 }
 
-// ParseCustomEndpoints parses a JSON string into a slice of CustomEndpoint.
-// Returns empty slice on empty/invalid input.
 func ParseCustomEndpoints(raw string) []CustomEndpoint {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || raw == "[]" {

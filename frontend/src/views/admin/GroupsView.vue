@@ -474,6 +474,56 @@
                 :placeholder="t('admin.groups.subscription.noLimit')"
               />
             </div>
+            <div>
+              <label class="input-label">{{ t('admin.groups.subscription.defaultValidityDays') }}</label>
+              <input
+                v-model.number="createForm.default_validity_days"
+                type="number"
+                min="1"
+                max="36500"
+                class="input"
+              />
+              <p class="input-hint">{{ t('admin.groups.subscription.validityHint') }}</p>
+            </div>
+            <div class="rounded-xl border border-dashed border-gray-200 p-4 dark:border-dark-600">
+              <div class="flex items-center justify-between gap-4">
+                <div>
+                  <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ t('admin.groups.subscription.purchaseEnabled') }}
+                  </div>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.groups.subscription.purchaseEnabledHint') }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="createForm.purchase_enabled = !createForm.purchase_enabled"
+                  :class="[
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    createForm.purchase_enabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                      createForm.purchase_enabled ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
+              </div>
+              <div v-if="createForm.purchase_enabled" class="mt-4">
+                <label class="input-label">{{ t('admin.groups.subscription.purchasePrice') }}</label>
+                <input
+                  v-model.number="createForm.purchase_price"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  class="input"
+                  placeholder="99.00"
+                />
+                <p class="input-hint">{{ t('admin.groups.subscription.purchasePriceHint') }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1263,6 +1313,56 @@
                 class="input"
                 :placeholder="t('admin.groups.subscription.noLimit')"
               />
+            </div>
+            <div>
+              <label class="input-label">{{ t('admin.groups.subscription.defaultValidityDays') }}</label>
+              <input
+                v-model.number="editForm.default_validity_days"
+                type="number"
+                min="1"
+                max="36500"
+                class="input"
+              />
+              <p class="input-hint">{{ t('admin.groups.subscription.validityHint') }}</p>
+            </div>
+            <div class="rounded-xl border border-dashed border-gray-200 p-4 dark:border-dark-600">
+              <div class="flex items-center justify-between gap-4">
+                <div>
+                  <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ t('admin.groups.subscription.purchaseEnabled') }}
+                  </div>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.groups.subscription.purchaseEnabledHint') }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="editForm.purchase_enabled = !editForm.purchase_enabled"
+                  :class="[
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    editForm.purchase_enabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                      editForm.purchase_enabled ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
+              </div>
+              <div v-if="editForm.purchase_enabled" class="mt-4">
+                <label class="input-label">{{ t('admin.groups.subscription.purchasePrice') }}</label>
+                <input
+                  v-model.number="editForm.purchase_price"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  class="input"
+                  placeholder="99.00"
+                />
+                <p class="input-hint">{{ t('admin.groups.subscription.purchasePriceHint') }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -2156,6 +2256,9 @@ const createForm = reactive({
   daily_limit_usd: null as number | null,
   weekly_limit_usd: null as number | null,
   monthly_limit_usd: null as number | null,
+  default_validity_days: 30,
+  purchase_enabled: false,
+  purchase_price: null as number | null,
   // 图片生成计费配置（仅 antigravity 平台使用）
   image_price_1k: null as number | null,
   image_price_2k: null as number | null,
@@ -2403,6 +2506,9 @@ const editForm = reactive({
   daily_limit_usd: null as number | null,
   weekly_limit_usd: null as number | null,
   monthly_limit_usd: null as number | null,
+  default_validity_days: 30,
+  purchase_enabled: false,
+  purchase_price: null as number | null,
   // 图片生成计费配置（仅 antigravity 平台使用）
   image_price_1k: null as number | null,
   image_price_2k: null as number | null,
@@ -2556,6 +2662,9 @@ const closeCreateModal = () => {
   createForm.daily_limit_usd = null
   createForm.weekly_limit_usd = null
   createForm.monthly_limit_usd = null
+  createForm.default_validity_days = 30
+  createForm.purchase_enabled = false
+  createForm.purchase_price = null
   createForm.image_price_1k = null
   createForm.image_price_2k = null
   createForm.image_price_4k = null
@@ -2608,6 +2717,7 @@ const handleCreateGroup = async () => {
       daily_limit_usd: normalizeOptionalLimit(createForm.daily_limit_usd as number | string | null),
       weekly_limit_usd: normalizeOptionalLimit(createForm.weekly_limit_usd as number | string | null),
       monthly_limit_usd: normalizeOptionalLimit(createForm.monthly_limit_usd as number | string | null),
+      purchase_price: normalizeOptionalLimit(createForm.purchase_price as number | string | null),
       sora_storage_quota_bytes: createQuotaGb ? Math.round(createQuotaGb * 1024 * 1024 * 1024) : 0,
       model_routing: convertRoutingRulesToApiFormat(createModelRoutingRules.value)
     }
@@ -2616,6 +2726,7 @@ const handleCreateGroup = async () => {
     requestData.daily_limit_usd = emptyToNull(requestData.daily_limit_usd)
     requestData.weekly_limit_usd = emptyToNull(requestData.weekly_limit_usd)
     requestData.monthly_limit_usd = emptyToNull(requestData.monthly_limit_usd)
+    requestData.purchase_price = emptyToNull(requestData.purchase_price)
     await adminAPI.groups.create(requestData)
     appStore.showSuccess(t('admin.groups.groupCreated'))
     closeCreateModal()
@@ -2645,6 +2756,9 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.daily_limit_usd = group.daily_limit_usd
   editForm.weekly_limit_usd = group.weekly_limit_usd
   editForm.monthly_limit_usd = group.monthly_limit_usd
+  editForm.default_validity_days = group.default_validity_days || 30
+  editForm.purchase_enabled = group.purchase_enabled ?? false
+  editForm.purchase_price = group.purchase_price
   editForm.image_price_1k = group.image_price_1k
   editForm.image_price_2k = group.image_price_2k
   editForm.image_price_4k = group.image_price_4k
@@ -2696,6 +2810,7 @@ const handleUpdateGroup = async () => {
       daily_limit_usd: normalizeOptionalLimit(editForm.daily_limit_usd as number | string | null),
       weekly_limit_usd: normalizeOptionalLimit(editForm.weekly_limit_usd as number | string | null),
       monthly_limit_usd: normalizeOptionalLimit(editForm.monthly_limit_usd as number | string | null),
+      purchase_price: normalizeOptionalLimit(editForm.purchase_price as number | string | null),
       sora_storage_quota_bytes: editQuotaGb ? Math.round(editQuotaGb * 1024 * 1024 * 1024) : 0,
       fallback_group_id: editForm.fallback_group_id === null ? 0 : editForm.fallback_group_id,
       fallback_group_id_on_invalid_request:
@@ -2709,6 +2824,7 @@ const handleUpdateGroup = async () => {
     payload.daily_limit_usd = emptyToNull(payload.daily_limit_usd)
     payload.weekly_limit_usd = emptyToNull(payload.weekly_limit_usd)
     payload.monthly_limit_usd = emptyToNull(payload.monthly_limit_usd)
+    payload.purchase_price = emptyToNull(payload.purchase_price)
     await adminAPI.groups.update(editingGroup.value.id, payload)
     appStore.showSuccess(t('admin.groups.groupUpdated'))
     closeEditModal()
@@ -2753,6 +2869,12 @@ watch(
     if (newVal === 'subscription') {
       createForm.is_exclusive = true
       createForm.fallback_group_id_on_invalid_request = null
+      if (!createForm.default_validity_days || createForm.default_validity_days < 1) {
+        createForm.default_validity_days = 30
+      }
+    } else {
+      createForm.purchase_enabled = false
+      createForm.purchase_price = null
     }
   }
 )

@@ -67,6 +67,34 @@ const (
 	SubscriptionStatusSuspended = "suspended"
 )
 
+// Recharge order status constants
+const (
+	RechargeOrderStatusPending  = "pending"
+	RechargeOrderStatusPaid     = "paid"
+	RechargeOrderStatusFailed   = "failed"
+	RechargeOrderStatusRefunded = "refunded"
+)
+
+// Referral commission type constants
+const (
+	ReferralCommissionTypeFirst     = "first"
+	ReferralCommissionTypeRecurring = "recurring"
+)
+
+// Referral commission status constants
+const (
+	ReferralCommissionStatusRecorded = "recorded"
+	ReferralCommissionStatusReversed = "reversed"
+)
+
+// Referral withdrawal status constants
+const (
+	ReferralWithdrawalStatusPending  = "pending"
+	ReferralWithdrawalStatusApproved = "approved"
+	ReferralWithdrawalStatusRejected = "rejected"
+	ReferralWithdrawalStatusCanceled = "canceled"
+)
+
 // DefaultAntigravityModelMapping 是 Antigravity 平台的默认模型映射
 // 当账号未配置 model_mapping 时使用此默认值
 // 与前端 useModelWhitelist.ts 中的 antigravityDefaultMappings 保持一致

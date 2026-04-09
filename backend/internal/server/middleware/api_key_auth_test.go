@@ -175,6 +175,158 @@ func TestSimpleModeBypassesQuotaCheck(t *testing.T) {
 		require.Equal(t, http.StatusTooManyRequests, w.Code)
 		require.Contains(t, w.Body.String(), "USAGE_LIMIT_EXCEEDED")
 	})
+
+	t.Run("standard_mode_falls_back_to_balance_when_enabled_and_balance_positive", func(t *testing.T) {
+		cfg := &config.Config{RunMode: config.RunModeStandard}
+		limitGroup := &service.Group{
+			ID:               142,
+			Name:             "sub-fallback",
+			Status:           service.StatusActive,
+			Hydrated:         true,
+			SubscriptionType: service.SubscriptionTypeSubscription,
+			DailyLimitUSD:    &limit,
+		}
+		fallbackUser := &service.User{
+			ID:                                 701,
+			Role:                               service.RoleUser,
+			Status:                             service.StatusActive,
+			Balance:                            10,
+			Concurrency:                        3,
+			SubscriptionLimitFallbackToBalance: true,
+		}
+		fallbackKey := &service.APIKey{
+			ID:     1701,
+			UserID: fallbackUser.ID,
+			Key:    "sub-fallback-key",
+			Status: service.StatusActive,
+			User:   fallbackUser,
+			Group:  limitGroup,
+		}
+		fallbackKey.GroupID = &limitGroup.ID
+
+		apiKeyService := service.NewAPIKeyService(&stubApiKeyRepo{
+			getByKey: func(ctx context.Context, key string) (*service.APIKey, error) {
+				if key != fallbackKey.Key {
+					return nil, service.ErrAPIKeyNotFound
+				}
+				clone := *fallbackKey
+				return &clone, nil
+			},
+		}, nil, nil, nil, nil, nil, cfg)
+
+		now := time.Now()
+		sub := &service.UserSubscription{
+			ID:               1702,
+			UserID:           fallbackUser.ID,
+			GroupID:          limitGroup.ID,
+			Status:           service.SubscriptionStatusActive,
+			ExpiresAt:        now.Add(24 * time.Hour),
+			DailyWindowStart: &now,
+			DailyUsageUSD:    10,
+		}
+		subscriptionService := service.NewSubscriptionService(nil, &stubUserSubscriptionRepo{
+			getActive: func(ctx context.Context, userID, groupID int64) (*service.UserSubscription, error) {
+				if userID != sub.UserID || groupID != sub.GroupID {
+					return nil, service.ErrSubscriptionNotFound
+				}
+				clone := *sub
+				return &clone, nil
+			},
+			updateStatus:   func(ctx context.Context, subscriptionID int64, status string) error { return nil },
+			activateWindow: func(ctx context.Context, id int64, start time.Time) error { return nil },
+			resetDaily:     func(ctx context.Context, id int64, start time.Time) error { return nil },
+			resetWeekly:    func(ctx context.Context, id int64, start time.Time) error { return nil },
+			resetMonthly:   func(ctx context.Context, id int64, start time.Time) error { return nil },
+		}, nil, nil, cfg)
+
+		router := gin.New()
+		router.Use(gin.HandlerFunc(NewAPIKeyAuthMiddleware(apiKeyService, subscriptionService, cfg)))
+		router.GET("/t", func(c *gin.Context) {
+			_, ok := GetSubscriptionFromContext(c)
+			c.JSON(http.StatusOK, gin.H{"has_subscription": ok})
+		})
+
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/t", nil)
+		req.Header.Set("x-api-key", fallbackKey.Key)
+		router.ServeHTTP(w, req)
+
+		require.Equal(t, http.StatusOK, w.Code)
+		require.Contains(t, w.Body.String(), `"has_subscription":false`)
+	})
+
+	t.Run("standard_mode_still_blocks_when_enabled_but_balance_empty", func(t *testing.T) {
+		cfg := &config.Config{RunMode: config.RunModeStandard}
+		limitGroup := &service.Group{
+			ID:               143,
+			Name:             "sub-no-fallback",
+			Status:           service.StatusActive,
+			Hydrated:         true,
+			SubscriptionType: service.SubscriptionTypeSubscription,
+			DailyLimitUSD:    &limit,
+		}
+		fallbackUser := &service.User{
+			ID:                                 702,
+			Role:                               service.RoleUser,
+			Status:                             service.StatusActive,
+			Balance:                            0,
+			Concurrency:                        3,
+			SubscriptionLimitFallbackToBalance: true,
+		}
+		fallbackKey := &service.APIKey{
+			ID:     1703,
+			UserID: fallbackUser.ID,
+			Key:    "sub-no-fallback-key",
+			Status: service.StatusActive,
+			User:   fallbackUser,
+			Group:  limitGroup,
+		}
+		fallbackKey.GroupID = &limitGroup.ID
+
+		apiKeyService := service.NewAPIKeyService(&stubApiKeyRepo{
+			getByKey: func(ctx context.Context, key string) (*service.APIKey, error) {
+				if key != fallbackKey.Key {
+					return nil, service.ErrAPIKeyNotFound
+				}
+				clone := *fallbackKey
+				return &clone, nil
+			},
+		}, nil, nil, nil, nil, nil, cfg)
+
+		now := time.Now()
+		sub := &service.UserSubscription{
+			ID:               1704,
+			UserID:           fallbackUser.ID,
+			GroupID:          limitGroup.ID,
+			Status:           service.SubscriptionStatusActive,
+			ExpiresAt:        now.Add(24 * time.Hour),
+			DailyWindowStart: &now,
+			DailyUsageUSD:    10,
+		}
+		subscriptionService := service.NewSubscriptionService(nil, &stubUserSubscriptionRepo{
+			getActive: func(ctx context.Context, userID, groupID int64) (*service.UserSubscription, error) {
+				if userID != sub.UserID || groupID != sub.GroupID {
+					return nil, service.ErrSubscriptionNotFound
+				}
+				clone := *sub
+				return &clone, nil
+			},
+			updateStatus:   func(ctx context.Context, subscriptionID int64, status string) error { return nil },
+			activateWindow: func(ctx context.Context, id int64, start time.Time) error { return nil },
+			resetDaily:     func(ctx context.Context, id int64, start time.Time) error { return nil },
+			resetWeekly:    func(ctx context.Context, id int64, start time.Time) error { return nil },
+			resetMonthly:   func(ctx context.Context, id int64, start time.Time) error { return nil },
+		}, nil, nil, cfg)
+
+		router := newAuthTestRouter(apiKeyService, subscriptionService, cfg)
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/t", nil)
+		req.Header.Set("x-api-key", fallbackKey.Key)
+		router.ServeHTTP(w, req)
+
+		require.Equal(t, http.StatusTooManyRequests, w.Code)
+		require.Contains(t, w.Body.String(), "USAGE_LIMIT_EXCEEDED")
+	})
 }
 
 func TestAPIKeyAuthSetsGroupContext(t *testing.T) {
@@ -490,6 +642,92 @@ func TestAPIKeyAuthTouchesLastUsedInStandardMode(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, w.Code)
 	require.Equal(t, 1, touchCalls)
+}
+
+func TestAPIKeyAuthFallbackWithMaintenanceDoesNotPanic(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	dailyLimit := 1.0
+	monthlyLimit := 1.0
+	group := &service.Group{
+		ID:               144,
+		Name:             "sub-fallback-maintenance",
+		Status:           service.StatusActive,
+		Hydrated:         true,
+		SubscriptionType: service.SubscriptionTypeSubscription,
+		DailyLimitUSD:    &dailyLimit,
+		MonthlyLimitUSD:  &monthlyLimit,
+	}
+	user := &service.User{
+		ID:                                 703,
+		Role:                               service.RoleUser,
+		Status:                             service.StatusActive,
+		Balance:                            10,
+		Concurrency:                        3,
+		SubscriptionLimitFallbackToBalance: true,
+	}
+	apiKey := &service.APIKey{
+		ID:     1705,
+		UserID: user.ID,
+		Key:    "sub-fallback-maintenance-key",
+		Status: service.StatusActive,
+		User:   user,
+		Group:  group,
+	}
+	apiKey.GroupID = &group.ID
+
+	cfg := &config.Config{RunMode: config.RunModeStandard}
+	apiKeyService := service.NewAPIKeyService(&stubApiKeyRepo{
+		getByKey: func(ctx context.Context, key string) (*service.APIKey, error) {
+			if key != apiKey.Key {
+				return nil, service.ErrAPIKeyNotFound
+			}
+			clone := *apiKey
+			return &clone, nil
+		},
+	}, nil, nil, nil, nil, nil, cfg)
+
+	now := time.Now()
+	past := now.Add(-48 * time.Hour)
+	sub := &service.UserSubscription{
+		ID:                 1706,
+		UserID:             user.ID,
+		GroupID:            group.ID,
+		Status:             service.SubscriptionStatusActive,
+		ExpiresAt:          now.Add(24 * time.Hour),
+		DailyWindowStart:   &past,
+		MonthlyWindowStart: &now,
+		MonthlyUsageUSD:    10,
+	}
+	subscriptionService := service.NewSubscriptionService(nil, &stubUserSubscriptionRepo{
+		getActive: func(ctx context.Context, userID, groupID int64) (*service.UserSubscription, error) {
+			if userID != sub.UserID || groupID != sub.GroupID {
+				return nil, service.ErrSubscriptionNotFound
+			}
+			clone := *sub
+			return &clone, nil
+		},
+		updateStatus:   func(ctx context.Context, subscriptionID int64, status string) error { return nil },
+		activateWindow: func(ctx context.Context, id int64, start time.Time) error { return nil },
+		resetDaily:     func(ctx context.Context, id int64, start time.Time) error { return nil },
+		resetWeekly:    func(ctx context.Context, id int64, start time.Time) error { return nil },
+		resetMonthly:   func(ctx context.Context, id int64, start time.Time) error { return nil },
+	}, nil, nil, cfg)
+
+	router := gin.New()
+	router.Use(gin.HandlerFunc(NewAPIKeyAuthMiddleware(apiKeyService, subscriptionService, cfg)))
+	router.GET("/t", func(c *gin.Context) {
+		_, ok := GetSubscriptionFromContext(c)
+		c.JSON(http.StatusOK, gin.H{"has_subscription": ok})
+	})
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/t", nil)
+	req.Header.Set("x-api-key", apiKey.Key)
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Contains(t, w.Body.String(), `"has_subscription":false`)
 }
 
 func newAuthTestRouter(apiKeyService *service.APIKeyService, subscriptionService *service.SubscriptionService, cfg *config.Config) *gin.Engine {

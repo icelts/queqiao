@@ -104,14 +104,18 @@ type AdminService interface {
 
 // CreateUserInput represents input for creating a new user via admin operations.
 type CreateUserInput struct {
-	Email                 string
-	Password              string
-	Username              string
-	Notes                 string
-	Balance               float64
-	Concurrency           int
-	AllowedGroups         []int64
-	SoraStorageQuotaBytes int64
+	Email                         string
+	Password                      string
+	Username                      string
+	Notes                         string
+	Balance                       float64
+	Concurrency                   int
+	AllowedGroups                 []int64
+	SoraStorageQuotaBytes         int64
+	InviterID                     *int64
+	CustomFirstCommissionRate     *float64
+	CustomRecurringCommissionRate *float64
+	RecurringCommissionEnabled    bool
 }
 
 type UpdateUserInput struct {
@@ -125,8 +129,12 @@ type UpdateUserInput struct {
 	AllowedGroups *[]int64 // 使用指针区分"未提供"和"设置为空数组"
 	// GroupRates 用户专属分组倍率配置
 	// map[groupID]*rate，nil 表示删除该分组的专属倍率
-	GroupRates            map[int64]*float64
-	SoraStorageQuotaBytes *int64
+	GroupRates                    map[int64]*float64
+	SoraStorageQuotaBytes         *int64
+	InviterID                     *int64
+	CustomFirstCommissionRate     *float64
+	CustomRecurringCommissionRate *float64
+	RecurringCommissionEnabled    *bool
 }
 
 type CreateGroupInput struct {
@@ -139,6 +147,9 @@ type CreateGroupInput struct {
 	DailyLimitUSD    *float64 // 日限额 (USD)
 	WeeklyLimitUSD   *float64 // 周限额 (USD)
 	MonthlyLimitUSD  *float64 // 月限额 (USD)
+	DefaultValidityDays int
+	PurchaseEnabled     bool
+	PurchasePrice       *float64
 	// 图片生成计费配置（仅 antigravity 平台使用）
 	ImagePrice1K *float64
 	ImagePrice2K *float64
@@ -180,6 +191,9 @@ type UpdateGroupInput struct {
 	DailyLimitUSD    *float64 // 日限额 (USD)
 	WeeklyLimitUSD   *float64 // 周限额 (USD)
 	MonthlyLimitUSD  *float64 // 月限额 (USD)
+	DefaultValidityDays *int
+	PurchaseEnabled     *bool
+	PurchasePrice       *float64
 	// 图片生成计费配置（仅 antigravity 平台使用）
 	ImagePrice1K *float64
 	ImagePrice2K *float64
@@ -574,15 +588,19 @@ func (s *adminServiceImpl) GetUser(ctx context.Context, id int64) (*User, error)
 
 func (s *adminServiceImpl) CreateUser(ctx context.Context, input *CreateUserInput) (*User, error) {
 	user := &User{
-		Email:                 input.Email,
-		Username:              input.Username,
-		Notes:                 input.Notes,
-		Role:                  RoleUser, // Always create as regular user, never admin
-		Balance:               input.Balance,
-		Concurrency:           input.Concurrency,
-		Status:                StatusActive,
-		AllowedGroups:         input.AllowedGroups,
-		SoraStorageQuotaBytes: input.SoraStorageQuotaBytes,
+		Email:                         input.Email,
+		Username:                      input.Username,
+		Notes:                         input.Notes,
+		Role:                          RoleUser, // Always create as regular user, never admin
+		Balance:                       input.Balance,
+		Concurrency:                   input.Concurrency,
+		Status:                        StatusActive,
+		AllowedGroups:                 input.AllowedGroups,
+		SoraStorageQuotaBytes:         input.SoraStorageQuotaBytes,
+		InviterID:                     input.InviterID,
+		CustomFirstCommissionRate:     input.CustomFirstCommissionRate,
+		CustomRecurringCommissionRate: input.CustomRecurringCommissionRate,
+		RecurringCommissionEnabled:    input.RecurringCommissionEnabled,
 	}
 	if err := user.SetPassword(input.Password); err != nil {
 		return nil, err
@@ -656,6 +674,18 @@ func (s *adminServiceImpl) UpdateUser(ctx context.Context, id int64, input *Upda
 
 	if input.SoraStorageQuotaBytes != nil {
 		user.SoraStorageQuotaBytes = *input.SoraStorageQuotaBytes
+	}
+	if input.InviterID != nil {
+		user.InviterID = input.InviterID
+	}
+	if input.CustomFirstCommissionRate != nil {
+		user.CustomFirstCommissionRate = input.CustomFirstCommissionRate
+	}
+	if input.CustomRecurringCommissionRate != nil {
+		user.CustomRecurringCommissionRate = input.CustomRecurringCommissionRate
+	}
+	if input.RecurringCommissionEnabled != nil {
+		user.RecurringCommissionEnabled = *input.RecurringCommissionEnabled
 	}
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
@@ -864,6 +894,9 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 	soraImagePrice540 := normalizePrice(input.SoraImagePrice540)
 	soraVideoPrice := normalizePrice(input.SoraVideoPricePerRequest)
 	soraVideoPriceHD := normalizePrice(input.SoraVideoPricePerRequestHD)
+	validityDays := normalizeGroupValidityDays(input.DefaultValidityDays)
+	purchasePrice := normalizePrice(input.PurchasePrice)
+	purchaseEnabled := input.PurchaseEnabled
 
 	// 校验降级分组
 	if input.FallbackGroupID != nil {
@@ -880,6 +913,13 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		if err := s.validateFallbackGroupOnInvalidRequest(ctx, 0, platform, subscriptionType, *fallbackOnInvalidRequest); err != nil {
 			return nil, err
 		}
+	}
+	if subscriptionType != SubscriptionTypeSubscription {
+		purchaseEnabled = false
+		purchasePrice = nil
+	}
+	if purchaseEnabled && (purchasePrice == nil || *purchasePrice <= 0) {
+		return nil, infraerrors.BadRequest("PURCHASE_PRICE_REQUIRED", "purchase price must be greater than 0 when purchase is enabled")
 	}
 
 	// MCPXMLInject：默认为 true，仅当显式传入 false 时关闭
@@ -931,6 +971,9 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		DailyLimitUSD:                   dailyLimit,
 		WeeklyLimitUSD:                  weeklyLimit,
 		MonthlyLimitUSD:                 monthlyLimit,
+		DefaultValidityDays:             validityDays,
+		PurchaseEnabled:                 purchaseEnabled,
+		PurchasePrice:                   purchasePrice,
 		ImagePrice1K:                    imagePrice1K,
 		ImagePrice2K:                    imagePrice2K,
 		ImagePrice4K:                    imagePrice4K,
@@ -1000,6 +1043,17 @@ func normalizePrice(price *float64) *float64 {
 		return nil
 	}
 	return price
+}
+
+func normalizeGroupValidityDays(days int) int {
+	switch {
+	case days <= 0:
+		return 30
+	case days > MaxValidityDays:
+		return MaxValidityDays
+	default:
+		return days
+	}
 }
 
 // validateFallbackGroup 校验降级分组的有效性
@@ -1105,6 +1159,15 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	group.DailyLimitUSD = normalizeLimit(input.DailyLimitUSD)
 	group.WeeklyLimitUSD = normalizeLimit(input.WeeklyLimitUSD)
 	group.MonthlyLimitUSD = normalizeLimit(input.MonthlyLimitUSD)
+	if input.DefaultValidityDays != nil {
+		group.DefaultValidityDays = normalizeGroupValidityDays(*input.DefaultValidityDays)
+	}
+	if input.PurchaseEnabled != nil {
+		group.PurchaseEnabled = *input.PurchaseEnabled
+	}
+	if input.PurchasePrice != nil {
+		group.PurchasePrice = normalizePrice(input.PurchasePrice)
+	}
 	// 图片生成计费配置：负数表示清除（使用默认价格）
 	if input.ImagePrice1K != nil {
 		group.ImagePrice1K = normalizePrice(input.ImagePrice1K)
@@ -1190,6 +1253,13 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	}
 	if input.DefaultMappedModel != nil {
 		group.DefaultMappedModel = *input.DefaultMappedModel
+	}
+	if group.SubscriptionType != SubscriptionTypeSubscription {
+		group.PurchaseEnabled = false
+		group.PurchasePrice = nil
+	}
+	if group.PurchaseEnabled && (group.PurchasePrice == nil || *group.PurchasePrice <= 0) {
+		return nil, infraerrors.BadRequest("PURCHASE_PRICE_REQUIRED", "purchase price must be greater than 0 when purchase is enabled")
 	}
 
 	if err := s.groupRepo.Update(ctx, group); err != nil {

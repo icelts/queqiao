@@ -174,23 +174,26 @@ func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscripti
 
 			// 订阅模式：验证订阅限额
 			if subscription != nil {
+				maintenanceTarget := subscription
 				needsMaintenance, validateErr := subscriptionService.ValidateAndCheckLimits(subscription, apiKey.Group)
 				if validateErr != nil {
-					code := "SUBSCRIPTION_INVALID"
-					status := 403
-					if errors.Is(validateErr, service.ErrDailyLimitExceeded) ||
-						errors.Is(validateErr, service.ErrWeeklyLimitExceeded) ||
-						errors.Is(validateErr, service.ErrMonthlyLimitExceeded) {
-						code = "USAGE_LIMIT_EXCEEDED"
-						status = 429
+					if shouldFallbackToBalanceOnSubscriptionLimit(apiKey, validateErr) {
+						subscription = nil
+					} else {
+						code := "SUBSCRIPTION_INVALID"
+						status := 403
+						if isSubscriptionUsageLimitExceeded(validateErr) {
+							code = "USAGE_LIMIT_EXCEEDED"
+							status = 429
+						}
+						AbortWithError(c, status, code, validateErr.Error())
+						return
 					}
-					AbortWithError(c, status, code, validateErr.Error())
-					return
 				}
 
 				// 窗口维护异步化（不阻塞请求）
-				if needsMaintenance {
-					maintenanceCopy := *subscription
+				if needsMaintenance && maintenanceTarget != nil {
+					maintenanceCopy := *maintenanceTarget
 					subscriptionService.DoWindowMaintenance(&maintenanceCopy)
 				}
 			} else {

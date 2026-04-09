@@ -332,6 +332,7 @@ export default {
     apiKeys: 'API 密钥',
     usage: '使用记录',
     redeem: '兑换',
+    referral: '推广返佣',
     profile: '个人资料',
     users: '用户管理',
     groups: '分组管理',
@@ -341,6 +342,8 @@ export default {
     redeemCodes: '兑换码',
     ops: '运维监控',
     promoCodes: '优惠码',
+    rechargeOrders: '充值订单',
+    referralWithdrawals: '返佣提现',
     settings: '系统设置',
     myAccount: '我的账户',
     lightMode: '浅色模式',
@@ -351,6 +354,7 @@ export default {
     github: 'GitHub',
     mySubscriptions: '我的订阅',
     buySubscription: '充值/订阅',
+    tutorialGuide: '兑换教程',
     docs: '文档',
     sora: 'Sora 创作'
   },
@@ -521,6 +525,104 @@ export default {
     checkDetailedLogs: '查看详细的使用日志',
     redeemCode: '兑换码',
     addBalanceWithCode: '使用兑换码充值'
+  },
+
+  referral: {
+    title: '推广中心',
+    description: '查看邀请用户和返佣业绩',
+    shareTitle: '分享你的推广码',
+    shareDescription: '新用户可以使用推广码或注册链接注册，并绑定到你的名下。',
+    codeLabel: '推广码',
+    linkLabel: '注册链接',
+    copyCode: '复制推广码',
+    copyLink: '复制链接',
+    codeCopied: '推广码已复制',
+    linkCopied: '推广链接已复制',
+    linkHint: '只有真实支付成功的充值订单才会触发返佣。',
+    loadFailed: '加载推广数据失败',
+    summary: {
+      invitees: '邀请用户数',
+      totalCommission: '累计返佣',
+      firstCommissionCount: '首充返佣人数',
+      totalRecharge: '累计充值',
+      availableCommission: '可提现佣金',
+      pendingWithdrawal: '待审核提现',
+      approvedWithdrawal: '已提现佣金'
+    },
+    invitees: {
+      title: '邀请用户',
+      description: '查看通过你的推广码注册的用户和他们的充值情况。',
+      user: '用户',
+      registeredAt: '注册时间',
+      firstPaid: '首笔充值',
+      totalPaid: '累计充值',
+      totalCommission: '累计返佣'
+    },
+    commissions: {
+      title: '返佣记录',
+      description: '展示每笔由成功充值订单触发的返佣流水。',
+      createdAt: '创建时间',
+      user: '邀请用户',
+      type: '返佣类型',
+      sourceAmount: '充值金额',
+      commissionAmount: '返佣金额',
+      order: '订单'
+    },
+    commissionTypes: {
+      first: '首充返佣',
+      recurring: '续充返佣'
+    },
+    statuses: {
+      recorded: '已记账',
+      reversed: '已冲回',
+      pending: '待审核',
+      approved: '已通过',
+      rejected: '已驳回',
+      canceled: '已取消'
+    },
+    paymentMethods: {
+      alipay: '支付宝',
+      wechat: '微信',
+      bank: '银行卡',
+      usdt: 'USDT',
+      other: '其他'
+    },
+    withdraw: {
+      title: '返佣提现',
+      description: '满足门槛后，可提交返佣提现申请。',
+      disabled: '管理员尚未开启返佣提现功能。',
+      rules: '门槛：至少拥有 {amount} 可提现佣金，且达到 {count} 个有效邀请用户。',
+      effectiveInvitees: '当前有效邀请用户：{count}',
+      notEligible: '当前未满足提现门槛。',
+      amount: '提现金额',
+      amountRequired: '请输入有效的提现金额。',
+      method: '收款方式',
+      accountName: '收款人',
+      accountNamePlaceholder: '可选，填写真实姓名或备注名',
+      account: '收款账号',
+      accountPlaceholder: '支付宝 / 微信 / 银行卡 / 钱包地址',
+      accountRequired: '请输入收款账号。',
+      notes: '备注',
+      notesPlaceholder: '可选，填写给管理员的说明',
+      submit: '提交申请',
+      submitSuccess: '提现申请已提交。',
+      submitFailed: '提交提现申请失败。'
+    },
+    withdrawals: {
+      title: '提现申请记录',
+      description: '查看返佣提现申请的审核状态和处理结果。',
+      createdAt: '申请时间',
+      amount: '金额',
+      method: '方式',
+      account: '账号',
+      status: '状态',
+      notes: '备注',
+      actions: '操作',
+      cancel: '取消申请',
+      cancelConfirm: '确认取消这笔提现申请吗？',
+      cancelSuccess: '提现申请已取消。',
+      cancelFailed: '取消提现申请失败。'
+    }
   },
 
   // Groups (shared)
@@ -836,6 +938,8 @@ export default {
     updateSuccess: '资料更新成功',
     updateFailed: '资料更新失败',
     usernameRequired: '用户名不能为空',
+    subscriptionLimitFallbackToggle: '订阅额度用尽后自动使用余额',
+    subscriptionLimitFallbackToggleHint: '开启后，当订阅日/周/月额度耗尽时，请求会自动回退为余额计费',
     changePassword: '修改密码',
     currentPassword: '当前密码',
     newPassword: '新密码',
@@ -1017,6 +1121,97 @@ export default {
       systemSettings: '系统设置',
       configureSystem: '配置系统设置',
       failedToLoad: '加载仪表盘数据失败'
+    },
+    referralWithdrawals: {
+      title: '返佣提现审核',
+      description: '审核并处理用户提交的返佣提现申请。',
+      loadFailed: '加载提现申请失败',
+      approveSuccess: '提现申请已通过。',
+      approveFailed: '提现申请通过失败',
+      rejectSuccess: '提现申请已驳回。',
+      rejectFailed: '提现申请驳回失败',
+      rejectConfirm: '确认驳回这笔提现申请吗？',
+      filters: {
+        all: '全部状态'
+      },
+      columns: {
+        createdAt: '申请时间',
+        user: '用户',
+        amount: '金额',
+        payment: '收款方式',
+        account: '收款账号',
+        status: '状态',
+        notes: '备注',
+        actions: '操作'
+      },
+      statuses: {
+        pending: '待审核',
+        approved: '已通过',
+        rejected: '已驳回',
+        canceled: '已取消'
+      },
+      actions: {
+        approve: '通过',
+        reject: '驳回'
+      },
+      prompts: {
+        approve: '可选：填写审核备注',
+        reject: '可选：填写驳回原因'
+      }
+    },
+    rechargeOrders: {
+      title: '充值订单',
+      description: '查看用户充值订单、支付结果和返佣关联情况。',
+      loadFailed: '加载充值订单失败',
+      filters: {
+        search: '搜索订单号 / 外部订单号 / 邮箱 / 用户名',
+        allStatuses: '全部状态',
+        allChannels: '全部渠道',
+        withCommission: '仅看有返佣',
+        refundedOnly: '仅看已退款'
+      },
+      stats: {
+        totalOrders: '订单总数',
+        totalPaidAmount: '支付总额',
+        totalRefundedAmount: '退款总额',
+        totalCommissionAmount: '已记账返佣'
+      },
+      columns: {
+        createdAt: '创建时间',
+        user: '用户',
+        order: '订单',
+        amount: '金额',
+        credited: '到账',
+        status: '状态',
+        paidAt: '支付时间',
+        refundedAt: '退款时间',
+        channel: '渠道',
+        commission: '返佣',
+        commissionCount: '笔数',
+        notes: '备注',
+        actions: '操作'
+      },
+      statuses: {
+        pending: '待支付',
+        paid: '已支付',
+        failed: '已失败',
+        refunded: '已退款'
+      },
+      channels: {
+        xunhupay: '迅虎支付',
+        manual: '手动',
+        custom: '自定义'
+      },
+      details: {
+        title: '充值订单详情',
+        view: '详情',
+        loadFailed: '加载充值订单详情失败',
+        callbackRaw: '回调原文'
+      },
+      exportCsv: '导出 CSV',
+      exporting: '导出中...',
+      exportSuccess: '充值订单已导出。',
+      exportFailed: '导出充值订单失败'
     },
 
     backup: {
@@ -1435,6 +1630,11 @@ export default {
       failedToAdjust: '调整失败',
       emailRequired: '请输入邮箱',
       concurrencyMin: '并发数不能小于1',
+      customFirstCommissionRate: '自定义首充返佣比例',
+      customRecurringCommissionRate: '自定义续充返佣比例',
+      commissionRatePlaceholder: '使用系统默认值',
+      commissionRateHint: '填写 0-100 的比例将覆盖系统默认值；留空则保持当前设置。',
+      commissionRateInvalid: '返佣比例必须在 0 到 100 之间',
       soraStorageQuota: 'Sora 存储配额',
       soraStorageQuotaHint: '单位 GB，0 表示使用分组或系统默认配额',
       amountRequired: '请输入有效金额',
@@ -1715,6 +1915,10 @@ export default {
         monthlyLimit: '每月限额（USD）',
         defaultValidityDays: '默认有效期（天）',
         validityHint: '分配给用户时订阅的有效天数',
+        purchaseEnabled: '允许直接购买',
+        purchaseEnabledHint: '开启后，用户可以在“充值 / 订阅”页面直接购买或续费。',
+        purchasePrice: '售价（CNY）',
+        purchasePriceHint: '设置该订阅分组的直接购买 / 续费价格。',
         noLimit: '无限制'
       },
       imagePricing: {
@@ -4329,6 +4533,23 @@ export default {
         subscriptionGroup: '订阅分组',
         subscriptionValidityDays: '有效期（天）'
       },
+      affiliate: {
+        title: '推广返佣设置',
+        description: '配置基于充值订单的推广返佣规则。',
+        enabled: '开启代理返佣',
+        enabledHint: '只有真实支付成功的充值订单才会触发返佣。',
+        firstEnabled: '开启首充返佣',
+        firstEnabledHint: '被邀请用户首次成功充值时按较高比例返佣。',
+        firstRate: '默认首充返佣比例',
+        recurringEnabled: '开启续充返佣',
+        recurringEnabledHint: '被邀请用户后续每笔成功充值继续返佣。',
+        recurringRate: '默认续充返佣比例',
+        rateHint: '单用户自定义返佣比例会覆盖这里的系统默认值。',
+        withdrawEnabled: '开启返佣提现申请',
+        withdrawEnabledHint: '允许用户提交返佣提现申请，由管理员审核处理。',
+        withdrawMinAmount: '最低提现金额',
+        withdrawMinInvitees: '最低有效邀请人数'
+      },
       claudeCode: {
         title: 'Claude Code 设置',
         description: '控制 Claude Code 客户端访问要求',
@@ -4402,6 +4623,48 @@ export default {
           '⚠️ iframe 模式提示：部分网站设置了 X-Frame-Options 或 CSP 安全策略，禁止被嵌入到 iframe 中。如果页面显示空白或报错，请确认目标网站允许被嵌入，或考虑使用 HTML 模式自行构建页面内容。',
         hideCcsImportButton: '隐藏 CCS 导入按钮',
         hideCcsImportButtonHint: '启用后将在 API Keys 页面隐藏"导入 CCS"按钮'
+      },
+      xunhupay: {
+        title: '迅虎支付设置',
+        description: '配置用户真实支付成功后的充值下单与回调。',
+        enabled: '启用迅虎支付充值',
+        enabledHint: '开启后，用户可以在充值/订阅页面发起真实充值订单。',
+        baseUrl: '接口基础地址',
+        baseUrlPlaceholder: 'https://api.xunhupay.com',
+        baseUrlHint: '官方 API 地址，除非迅虎支付明确要求，否则保持默认即可。',
+        plugins: '插件标识',
+        pluginsPlaceholder: 'sub2api',
+        pluginsHint: '发送给迅虎支付的插件标识字段。',
+        appId: 'APPID',
+        appIdPlaceholder: '请输入迅虎支付 APPID',
+        appIdHint: '在迅虎支付商户后台获取。',
+        appSecret: 'APPSECRET',
+        appSecretPlaceholder: '请输入 APPSECRET',
+        appSecretHint: '用于接口签名，请妥善保管。',
+        appSecretConfiguredHint: 'APPSECRET 已配置，留空则保持当前值。',
+        notifyUrl: '异步通知地址',
+        notifyUrlPlaceholder: 'https://example.com/api/v1/payments/webhook/xunhupay',
+        notifyUrlHint: '支付成功后，迅虎支付会向这个服务端地址发送通知。',
+        returnUrl: '支付完成返回地址',
+        returnUrlPlaceholder: 'https://example.com/purchase',
+        returnUrlHint: '可选，用户支付完成后浏览器跳转地址。',
+        callbackUrl: '页面回调地址',
+        callbackUrlPlaceholder: 'https://example.com/payment/complete',
+        callbackUrlHint: '可选，传给迅虎支付的前端回调地址。',
+        docLink: '打开迅虎支付官方文档',
+        docHint: '请按官方文档核对 APPID、APPSECRET、通知地址和签名规则。',
+        appIdRequired: '启用迅虎支付充值时必须填写 APPID。',
+        appSecretRequired: '启用迅虎支付充值时必须填写 APPSECRET。',
+        notifyUrlRequired: '启用迅虎支付充值时必须填写异步通知地址。',
+        baseUrlInvalid: '迅虎支付接口基础地址必须是完整的 http(s) URL。',
+        notifyUrlInvalid: '迅虎支付异步通知地址必须是完整的 http(s) URL。',
+        returnUrlInvalid: '迅虎支付返回地址必须是完整的 http(s) URL。',
+        callbackUrlInvalid: '迅虎支付页面回调地址必须是完整的 http(s) URL。',
+        balanceRechargeRatio: '余额充值比例',
+        balanceRechargeRatioPlaceholder: '输入 1 元人民币到账的余额',
+        balanceRechargeRatioHint:
+          '用户支付人民币后，系统会按固定比例发放美元计价余额；返佣仍按用户实际支付的人民币金额计算。',
+        balanceRechargeRatioInvalid: '余额充值比例必须大于 0。'
       },
       purchase: {
         title: '充值/订阅页面',
@@ -4863,12 +5126,104 @@ export default {
   // Recharge / Subscription Page
   purchase: {
     title: '充值/订阅',
-    description: '通过内嵌页面完成充值/订阅',
+    description: '通过迅虎支付完成真实充值，或打开外部订阅页面',
+    embeddedTitle: '外部订阅页面',
+    embeddedDescription: '如果你同时配置了外部订阅页，用户仍然可以在下方直接打开。',
     openInNewTab: '新窗口打开',
     notEnabledTitle: '该功能未开启',
-    notEnabledDesc: '管理员暂未开启充值/订阅入口，请联系管理员。',
+    notEnabledDesc: '管理员暂未开启充值或订阅入口，请联系管理员。',
     notConfiguredTitle: '充值/订阅链接未配置',
-    notConfiguredDesc: '管理员已开启入口，但尚未配置充值/订阅链接，请联系管理员。'
+    notConfiguredDesc: '管理员已开启外部订阅入口，但尚未配置有效的页面链接。',
+    statuses: {
+      pending: '待支付',
+      paid: '已支付',
+      failed: '支付失败',
+      refunded: '已退款'
+    },
+    paymentModal: {
+      title: '支付弹窗',
+      scanBadge: '扫码完成支付',
+      reopen: '继续支付',
+      expiresAt: '请在 {date} 前完成支付',
+      remainingMs: '距过期还有 {minutes}:{seconds}',
+      remainingHms: '距过期还有 {hours}:{minutes}:{seconds}',
+      pendingLabel: '待支付',
+      expiredLabel: '已过期',
+      expired: '支付二维码已过期',
+      unavailable: '该订单的支付二维码已不可用。',
+      qrUnavailable: '二维码不可用，请改用“打开支付页面”。'
+    },
+    recharge: {
+      title: '在线充值',
+      description: '通过迅虎支付创建真实支付充值订单。只有真实支付成功的订单才会触发推广返佣。',
+      currentBalance: '当前余额',
+      channel: '支付渠道',
+      channelXunhu: '迅虎支付',
+      balanceUnit: '美元余额',
+      creditedBalance: '到账余额',
+      ratioHint: '当前比例：{ratio}',
+      creditedBalancePreview: '按当前比例，支付成功后将到账 {amount} 美元余额。',
+      commissionRule: '返佣规则',
+      commissionRuleHint: '优惠码、兑换码、管理员加余额和赠送订阅都不会触发返佣。',
+      amount: '充值金额',
+      amountPlaceholder: '请输入充值金额',
+      amountHint: '当前仅支持人民币充值订单。',
+      amountInvalid: '请输入有效的充值金额。',
+      preset: '快捷金额',
+      notes: '订单备注',
+      notesPlaceholder: '可选，显示在订单记录中',
+      createOrder: '创建充值订单',
+      creating: '正在创建订单...',
+      refreshOrders: '刷新订单',
+      currentOrder: '当前订单',
+      currentOrderHint: '打开支付页面或扫码支付后，可返回这里确认支付状态。',
+      currentOrderEmpty: '当前还没有活跃的充值订单。',
+      scanToPay: '扫码支付',
+      openPayment: '打开支付页面',
+      checkStatus: '检查状态',
+      defaultTitle: '账户充值',
+      orderCreated: '充值订单已创建，请完成支付后等待余额到账。',
+      createFailed: '创建充值订单失败',
+      statusCheckFailed: '检查充值订单状态失败',
+      paidSuccess: '充值支付成功，余额已刷新。',
+      failed: '该充值订单支付失败。',
+      refunded: '该充值订单已退款。'
+    },
+    subscription: {
+      title: '订阅购买',
+      description: '直接选择可售订阅组并完成支付。已拥有的订阅会自动变为续费。',
+      noDescription: '该订阅组暂无额外说明。',
+      price: '售价',
+      buy: '新购',
+      renew: '续费',
+      buyNow: '立即购买',
+      renewNow: '立即续费',
+      creating: '正在创建订单...',
+      createFailed: '创建订阅订单失败',
+      loadFailed: '加载可购订阅失败',
+      orderCreated: '订阅订单已创建，请完成支付后等待开通。',
+      renewCreated: '续费订单已创建，请完成支付后等待续期。',
+      paidSuccess: '订阅支付成功，订阅状态已更新。',
+      failed: '该订阅订单支付失败。',
+      refunded: '该订阅订单已退款。',
+      validityDaysShort: '{days} 天',
+      currentExpires: '当前到期：{date}',
+      day: '日',
+      week: '周',
+      month: '月',
+      noLimit: '不限额',
+      orderType: '订阅购买订单'
+    },
+    orders: {
+      title: '最近订单',
+      description: '展示当前账号最近创建的充值或订阅订单。',
+      empty: '暂无订单。',
+      loadFailed: '加载订单失败',
+      orderNo: '订单号',
+      amount: '金额',
+      status: '状态',
+      createdAt: '创建时间'
+    }
   },
 
   // Custom Page (iframe embed)
@@ -4879,6 +5234,11 @@ export default {
     notFoundDesc: '该自定义页面不存在或已被删除。',
     notConfiguredTitle: '页面链接未配置',
     notConfiguredDesc: '该自定义页面的 URL 未正确配置。',
+  },
+
+  tutorial: {
+    title: '兑换到本地教程',
+    description: '从兑换码、订阅到账到本地客户端配置的完整指引',
   },
 
   // Announcements Page

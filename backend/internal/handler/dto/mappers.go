@@ -13,16 +13,17 @@ func UserFromServiceShallow(u *service.User) *User {
 		return nil
 	}
 	return &User{
-		ID:            u.ID,
-		Email:         u.Email,
-		Username:      u.Username,
-		Role:          u.Role,
-		Balance:       u.Balance,
-		Concurrency:   u.Concurrency,
-		Status:        u.Status,
-		AllowedGroups: u.AllowedGroups,
-		CreatedAt:     u.CreatedAt,
-		UpdatedAt:     u.UpdatedAt,
+		ID:                                 u.ID,
+		Email:                              u.Email,
+		Username:                           u.Username,
+		Role:                               u.Role,
+		Balance:                            u.Balance,
+		Concurrency:                        u.Concurrency,
+		Status:                             u.Status,
+		SubscriptionLimitFallbackToBalance: u.SubscriptionLimitFallbackToBalance,
+		AllowedGroups:                      u.AllowedGroups,
+		CreatedAt:                          u.CreatedAt,
+		UpdatedAt:                          u.UpdatedAt,
 	}
 }
 
@@ -59,11 +60,16 @@ func UserFromServiceAdmin(u *service.User) *AdminUser {
 		return nil
 	}
 	return &AdminUser{
-		User:                  *base,
-		Notes:                 u.Notes,
-		GroupRates:            u.GroupRates,
-		SoraStorageQuotaBytes: u.SoraStorageQuotaBytes,
-		SoraStorageUsedBytes:  u.SoraStorageUsedBytes,
+		User:                          *base,
+		Notes:                         u.Notes,
+		InviterID:                     u.InviterID,
+		ReferralCode:                  u.ReferralCode,
+		CustomFirstCommissionRate:     u.CustomFirstCommissionRate,
+		CustomRecurringCommissionRate: u.CustomRecurringCommissionRate,
+		RecurringCommissionEnabled:    u.RecurringCommissionEnabled,
+		GroupRates:                    u.GroupRates,
+		SoraStorageQuotaBytes:         u.SoraStorageQuotaBytes,
+		SoraStorageUsedBytes:          u.SoraStorageUsedBytes,
 	}
 }
 
@@ -169,6 +175,9 @@ func groupFromServiceBase(g *service.Group) Group {
 		DailyLimitUSD:                   g.DailyLimitUSD,
 		WeeklyLimitUSD:                  g.WeeklyLimitUSD,
 		MonthlyLimitUSD:                 g.MonthlyLimitUSD,
+		DefaultValidityDays:             g.DefaultValidityDays,
+		PurchaseEnabled:                 g.PurchaseEnabled,
+		PurchasePrice:                   g.PurchasePrice,
 		ImagePrice1K:                    g.ImagePrice1K,
 		ImagePrice2K:                    g.ImagePrice2K,
 		ImagePrice4K:                    g.ImagePrice4K,

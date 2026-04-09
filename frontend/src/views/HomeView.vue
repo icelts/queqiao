@@ -378,7 +378,7 @@
         class="mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 text-center sm:flex-row sm:text-left"
       >
         <p class="text-sm text-gray-500 dark:text-dark-400">
-          &copy; {{ currentYear }} {{ siteName }}. {{ t('home.footer.allRightsReserved') }}
+          &copy; 2026 鹊桥在线 保留所有权利
         </p>
         <div class="flex items-center gap-4">
           <a
@@ -389,14 +389,6 @@
             class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
           >
             {{ t('home.docs') }}
-          </a>
-          <a
-            :href="githubUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
-          >
-            GitHub
           </a>
         </div>
       </div>
@@ -432,9 +424,6 @@ const isHomeContentUrl = computed(() => {
 // Theme
 const isDark = ref(document.documentElement.classList.contains('dark'))
 
-// GitHub URL
-const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
-
 // Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isAdmin = computed(() => authStore.isAdmin)
@@ -444,9 +433,6 @@ const userInitial = computed(() => {
   if (!user || !user.email) return ''
   return user.email.charAt(0).toUpperCase()
 })
-
-// Current year for footer
-const currentYear = computed(() => new Date().getFullYear())
 
 // Toggle theme
 function toggleTheme() {

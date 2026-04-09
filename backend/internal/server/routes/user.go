@@ -82,13 +82,34 @@ func RegisterUserRoutes(
 			redeem.GET("/history", h.Redeem.GetHistory)
 		}
 
+		referral := authenticated.Group("/referral")
+		{
+			referral.GET("/code", h.Referral.GetInviteCode)
+			referral.GET("/summary", h.Referral.GetSummary)
+			referral.GET("/invitees", h.Referral.ListInvitees)
+			referral.GET("/commissions", h.Referral.ListCommissions)
+			referral.GET("/withdrawals", h.Referral.ListWithdrawalRequests)
+			referral.POST("/withdrawals", h.Referral.CreateWithdrawalRequest)
+			referral.POST("/withdrawals/:id/cancel", h.Referral.CancelWithdrawalRequest)
+		}
+
 		// 用户订阅
+		recharges := authenticated.Group("/recharges")
+		{
+			recharges.POST("/orders", h.Recharge.CreateOrder)
+			recharges.GET("/orders", h.Recharge.ListOrders)
+			recharges.GET("/orders/:orderNo", h.Recharge.GetOrder)
+			recharges.POST("/orders/:orderNo/reconcile", h.Recharge.ReconcileOrder)
+		}
+
 		subscriptions := authenticated.Group("/subscriptions")
 		{
 			subscriptions.GET("", h.Subscription.List)
 			subscriptions.GET("/active", h.Subscription.GetActive)
 			subscriptions.GET("/progress", h.Subscription.GetProgress)
 			subscriptions.GET("/summary", h.Subscription.GetSummary)
+			subscriptions.GET("/purchase-options", h.Subscription.ListPurchaseOptions)
+			subscriptions.POST("/purchase-orders", h.Subscription.CreatePurchaseOrder)
 		}
 	}
 }

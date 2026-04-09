@@ -127,23 +127,24 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 	}
 
 	// 检查是否需要邀请码
-	var invitationRedeemCode *RedeemCode
+	var binding *invitationBinding
+	invitationCode = strings.TrimSpace(invitationCode)
 	if s.settingService != nil && s.settingService.IsInvitationCodeEnabled(ctx) {
 		if invitationCode == "" {
 			return "", nil, ErrInvitationCodeRequired
 		}
-		// 验证邀请码
-		redeemCode, err := s.redeemRepo.GetByCode(ctx, invitationCode)
-		if err != nil {
-			logger.LegacyPrintf("service.auth", "[Auth] Invalid invitation code: %s, error: %v", invitationCode, err)
+		resolvedBinding, resolveErr := s.resolveInvitationBinding(ctx, invitationCode)
+		if resolveErr != nil {
+			logger.LegacyPrintf("service.auth", "[Auth] Invalid invitation code: %s, error: %v", invitationCode, resolveErr)
 			return "", nil, ErrInvitationCodeInvalid
 		}
-		// 检查类型和状态
-		if redeemCode.Type != RedeemTypeInvitation || redeemCode.Status != StatusUnused {
-			logger.LegacyPrintf("service.auth", "[Auth] Invitation code invalid: type=%s, status=%s", redeemCode.Type, redeemCode.Status)
-			return "", nil, ErrInvitationCodeInvalid
+		binding = resolvedBinding
+	} else if invitationCode != "" {
+		// 即使未开启邀请码注册，也允许通过 referral code 绑定邀请人（推广场景）。
+		optionalBinding, resolveErr := s.resolveReferralBinding(ctx, invitationCode)
+		if resolveErr == nil {
+			binding = optionalBinding
 		}
-		invitationRedeemCode = redeemCode
 	}
 
 	// 检查是否需要邮件验证
@@ -196,6 +197,7 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 		Concurrency:  defaultConcurrency,
 		Status:       StatusActive,
 	}
+	s.applyInvitationBinding(user, binding)
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
 		// 优先检查邮箱冲突错误（竞态条件下可能发生）
@@ -208,8 +210,8 @@ func (s *AuthService) RegisterWithVerification(ctx context.Context, email, passw
 	s.assignDefaultSubscriptions(ctx, user.ID)
 
 	// 标记邀请码为已使用（如果使用了邀请码）
-	if invitationRedeemCode != nil {
-		if err := s.redeemRepo.Use(ctx, invitationRedeemCode.ID, user.ID); err != nil {
+	if binding != nil {
+		if err := s.markInvitationBindingUsed(ctx, binding, user.ID); err != nil {
 			// 邀请码标记失败不影响注册，只记录日志
 			logger.LegacyPrintf("service.auth", "[Auth] Failed to mark invitation code as used for user %d: %v", user.ID, err)
 		}
@@ -559,19 +561,21 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 			}
 
 			// 检查是否需要邀请码
-			var invitationRedeemCode *RedeemCode
+			var binding *invitationBinding
+			invitationCode = strings.TrimSpace(invitationCode)
 			if s.settingService != nil && s.settingService.IsInvitationCodeEnabled(ctx) {
 				if invitationCode == "" {
 					return nil, nil, ErrOAuthInvitationRequired
 				}
-				redeemCode, err := s.redeemRepo.GetByCode(ctx, invitationCode)
+				binding, err = s.resolveInvitationBinding(ctx, invitationCode)
 				if err != nil {
 					return nil, nil, ErrInvitationCodeInvalid
 				}
-				if redeemCode.Type != RedeemTypeInvitation || redeemCode.Status != StatusUnused {
-					return nil, nil, ErrInvitationCodeInvalid
+			} else if invitationCode != "" {
+				optionalBinding, resolveErr := s.resolveReferralBinding(ctx, invitationCode)
+				if resolveErr == nil {
+					binding = optionalBinding
 				}
-				invitationRedeemCode = redeemCode
 			}
 
 			randomPassword, err := randomHexString(32)
@@ -600,8 +604,9 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 				Concurrency:  defaultConcurrency,
 				Status:       StatusActive,
 			}
+			s.applyInvitationBinding(newUser, binding)
 
-			if s.entClient != nil && invitationRedeemCode != nil {
+			if s.entClient != nil && binding != nil && binding.redeemCode != nil {
 				tx, err := s.entClient.Tx(ctx)
 				if err != nil {
 					logger.LegacyPrintf("service.auth", "[Auth] Failed to begin transaction for oauth registration: %v", err)
@@ -622,7 +627,7 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 						return nil, nil, ErrServiceUnavailable
 					}
 				} else {
-					if err := s.redeemRepo.Use(txCtx, invitationRedeemCode.ID, newUser.ID); err != nil {
+					if err := s.markInvitationBindingUsed(txCtx, binding, newUser.ID); err != nil {
 						return nil, nil, ErrInvitationCodeInvalid
 					}
 					if err := tx.Commit(); err != nil {
@@ -647,8 +652,8 @@ func (s *AuthService) LoginOrRegisterOAuthWithTokenPair(ctx context.Context, ema
 				} else {
 					user = newUser
 					s.assignDefaultSubscriptions(ctx, user.ID)
-					if invitationRedeemCode != nil {
-						if err := s.redeemRepo.Use(ctx, invitationRedeemCode.ID, user.ID); err != nil {
+					if binding != nil {
+						if err := s.markInvitationBindingUsed(ctx, binding, user.ID); err != nil {
 							return nil, nil, ErrInvitationCodeInvalid
 						}
 					}

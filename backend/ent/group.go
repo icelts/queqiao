@@ -46,6 +46,10 @@ type Group struct {
 	MonthlyLimitUsd *float64 `json:"monthly_limit_usd,omitempty"`
 	// DefaultValidityDays holds the value of the "default_validity_days" field.
 	DefaultValidityDays int `json:"default_validity_days,omitempty"`
+	// PurchaseEnabled holds the value of the "purchase_enabled" field.
+	PurchaseEnabled bool `json:"purchase_enabled,omitempty"`
+	// PurchasePrice holds the value of the "purchase_price" field.
+	PurchasePrice *float64 `json:"purchase_price,omitempty"`
 	// ImagePrice1k holds the value of the "image_price_1k" field.
 	ImagePrice1k *float64 `json:"image_price_1k,omitempty"`
 	// ImagePrice2k holds the value of the "image_price_2k" field.
@@ -194,9 +198,9 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case group.FieldModelRouting, group.FieldSupportedModelScopes:
 			values[i] = new([]byte)
-		case group.FieldIsExclusive, group.FieldClaudeCodeOnly, group.FieldModelRoutingEnabled, group.FieldMcpXMLInject, group.FieldAllowMessagesDispatch, group.FieldRequireOauthOnly, group.FieldRequirePrivacySet:
+		case group.FieldIsExclusive, group.FieldPurchaseEnabled, group.FieldClaudeCodeOnly, group.FieldModelRoutingEnabled, group.FieldMcpXMLInject, group.FieldAllowMessagesDispatch, group.FieldRequireOauthOnly, group.FieldRequirePrivacySet:
 			values[i] = new(sql.NullBool)
-		case group.FieldRateMultiplier, group.FieldDailyLimitUsd, group.FieldWeeklyLimitUsd, group.FieldMonthlyLimitUsd, group.FieldImagePrice1k, group.FieldImagePrice2k, group.FieldImagePrice4k, group.FieldSoraImagePrice360, group.FieldSoraImagePrice540, group.FieldSoraVideoPricePerRequest, group.FieldSoraVideoPricePerRequestHd:
+		case group.FieldRateMultiplier, group.FieldDailyLimitUsd, group.FieldWeeklyLimitUsd, group.FieldMonthlyLimitUsd, group.FieldPurchasePrice, group.FieldImagePrice1k, group.FieldImagePrice2k, group.FieldImagePrice4k, group.FieldSoraImagePrice360, group.FieldSoraImagePrice540, group.FieldSoraVideoPricePerRequest, group.FieldSoraVideoPricePerRequestHd:
 			values[i] = new(sql.NullFloat64)
 		case group.FieldID, group.FieldDefaultValidityDays, group.FieldSoraStorageQuotaBytes, group.FieldFallbackGroupID, group.FieldFallbackGroupIDOnInvalidRequest, group.FieldSortOrder:
 			values[i] = new(sql.NullInt64)
@@ -313,6 +317,19 @@ func (_m *Group) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field default_validity_days", values[i])
 			} else if value.Valid {
 				_m.DefaultValidityDays = int(value.Int64)
+			}
+		case group.FieldPurchaseEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field purchase_enabled", values[i])
+			} else if value.Valid {
+				_m.PurchaseEnabled = value.Bool
+			}
+		case group.FieldPurchasePrice:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field purchase_price", values[i])
+			} else if value.Valid {
+				_m.PurchasePrice = new(float64)
+				*_m.PurchasePrice = value.Float64
 			}
 		case group.FieldImagePrice1k:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -574,6 +591,14 @@ func (_m *Group) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("default_validity_days=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DefaultValidityDays))
+	builder.WriteString(", ")
+	builder.WriteString("purchase_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PurchaseEnabled))
+	builder.WriteString(", ")
+	if v := _m.PurchasePrice; v != nil {
+		builder.WriteString("purchase_price=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := _m.ImagePrice1k; v != nil {
 		builder.WriteString("image_price_1k=")

@@ -22,6 +22,7 @@ export async function getProfile(): Promise<User> {
  */
 export async function updateProfile(profile: {
   username?: string
+  subscription_limit_fallback_to_balance?: boolean
 }): Promise<User> {
   const { data } = await apiClient.put<User>('/user', profile)
   return data

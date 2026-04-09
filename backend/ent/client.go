@@ -26,7 +26,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/tlsfingerprintprofile"
@@ -68,8 +71,14 @@ type Client struct {
 	PromoCodeUsage *PromoCodeUsageClient
 	// Proxy is the client for interacting with the Proxy builders.
 	Proxy *ProxyClient
+	// RechargeOrder is the client for interacting with the RechargeOrder builders.
+	RechargeOrder *RechargeOrderClient
 	// RedeemCode is the client for interacting with the RedeemCode builders.
 	RedeemCode *RedeemCodeClient
+	// ReferralCommission is the client for interacting with the ReferralCommission builders.
+	ReferralCommission *ReferralCommissionClient
+	// ReferralWithdrawalRequest is the client for interacting with the ReferralWithdrawalRequest builders.
+	ReferralWithdrawalRequest *ReferralWithdrawalRequestClient
 	// SecuritySecret is the client for interacting with the SecuritySecret builders.
 	SecuritySecret *SecuritySecretClient
 	// Setting is the client for interacting with the Setting builders.
@@ -112,7 +121,10 @@ func (c *Client) init() {
 	c.PromoCode = NewPromoCodeClient(c.config)
 	c.PromoCodeUsage = NewPromoCodeUsageClient(c.config)
 	c.Proxy = NewProxyClient(c.config)
+	c.RechargeOrder = NewRechargeOrderClient(c.config)
 	c.RedeemCode = NewRedeemCodeClient(c.config)
+	c.ReferralCommission = NewReferralCommissionClient(c.config)
+	c.ReferralWithdrawalRequest = NewReferralWithdrawalRequestClient(c.config)
 	c.SecuritySecret = NewSecuritySecretClient(c.config)
 	c.Setting = NewSettingClient(c.config)
 	c.TLSFingerprintProfile = NewTLSFingerprintProfileClient(c.config)
@@ -213,30 +225,33 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                     ctx,
-		config:                  cfg,
-		APIKey:                  NewAPIKeyClient(cfg),
-		Account:                 NewAccountClient(cfg),
-		AccountGroup:            NewAccountGroupClient(cfg),
-		Announcement:            NewAnnouncementClient(cfg),
-		AnnouncementRead:        NewAnnouncementReadClient(cfg),
-		ErrorPassthroughRule:    NewErrorPassthroughRuleClient(cfg),
-		Group:                   NewGroupClient(cfg),
-		IdempotencyRecord:       NewIdempotencyRecordClient(cfg),
-		PromoCode:               NewPromoCodeClient(cfg),
-		PromoCodeUsage:          NewPromoCodeUsageClient(cfg),
-		Proxy:                   NewProxyClient(cfg),
-		RedeemCode:              NewRedeemCodeClient(cfg),
-		SecuritySecret:          NewSecuritySecretClient(cfg),
-		Setting:                 NewSettingClient(cfg),
-		TLSFingerprintProfile:   NewTLSFingerprintProfileClient(cfg),
-		UsageCleanupTask:        NewUsageCleanupTaskClient(cfg),
-		UsageLog:                NewUsageLogClient(cfg),
-		User:                    NewUserClient(cfg),
-		UserAllowedGroup:        NewUserAllowedGroupClient(cfg),
-		UserAttributeDefinition: NewUserAttributeDefinitionClient(cfg),
-		UserAttributeValue:      NewUserAttributeValueClient(cfg),
-		UserSubscription:        NewUserSubscriptionClient(cfg),
+		ctx:                       ctx,
+		config:                    cfg,
+		APIKey:                    NewAPIKeyClient(cfg),
+		Account:                   NewAccountClient(cfg),
+		AccountGroup:              NewAccountGroupClient(cfg),
+		Announcement:              NewAnnouncementClient(cfg),
+		AnnouncementRead:          NewAnnouncementReadClient(cfg),
+		ErrorPassthroughRule:      NewErrorPassthroughRuleClient(cfg),
+		Group:                     NewGroupClient(cfg),
+		IdempotencyRecord:         NewIdempotencyRecordClient(cfg),
+		PromoCode:                 NewPromoCodeClient(cfg),
+		PromoCodeUsage:            NewPromoCodeUsageClient(cfg),
+		Proxy:                     NewProxyClient(cfg),
+		RechargeOrder:             NewRechargeOrderClient(cfg),
+		RedeemCode:                NewRedeemCodeClient(cfg),
+		ReferralCommission:        NewReferralCommissionClient(cfg),
+		ReferralWithdrawalRequest: NewReferralWithdrawalRequestClient(cfg),
+		SecuritySecret:            NewSecuritySecretClient(cfg),
+		Setting:                   NewSettingClient(cfg),
+		TLSFingerprintProfile:     NewTLSFingerprintProfileClient(cfg),
+		UsageCleanupTask:          NewUsageCleanupTaskClient(cfg),
+		UsageLog:                  NewUsageLogClient(cfg),
+		User:                      NewUserClient(cfg),
+		UserAllowedGroup:          NewUserAllowedGroupClient(cfg),
+		UserAttributeDefinition:   NewUserAttributeDefinitionClient(cfg),
+		UserAttributeValue:        NewUserAttributeValueClient(cfg),
+		UserSubscription:          NewUserSubscriptionClient(cfg),
 	}, nil
 }
 
@@ -254,30 +269,33 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                     ctx,
-		config:                  cfg,
-		APIKey:                  NewAPIKeyClient(cfg),
-		Account:                 NewAccountClient(cfg),
-		AccountGroup:            NewAccountGroupClient(cfg),
-		Announcement:            NewAnnouncementClient(cfg),
-		AnnouncementRead:        NewAnnouncementReadClient(cfg),
-		ErrorPassthroughRule:    NewErrorPassthroughRuleClient(cfg),
-		Group:                   NewGroupClient(cfg),
-		IdempotencyRecord:       NewIdempotencyRecordClient(cfg),
-		PromoCode:               NewPromoCodeClient(cfg),
-		PromoCodeUsage:          NewPromoCodeUsageClient(cfg),
-		Proxy:                   NewProxyClient(cfg),
-		RedeemCode:              NewRedeemCodeClient(cfg),
-		SecuritySecret:          NewSecuritySecretClient(cfg),
-		Setting:                 NewSettingClient(cfg),
-		TLSFingerprintProfile:   NewTLSFingerprintProfileClient(cfg),
-		UsageCleanupTask:        NewUsageCleanupTaskClient(cfg),
-		UsageLog:                NewUsageLogClient(cfg),
-		User:                    NewUserClient(cfg),
-		UserAllowedGroup:        NewUserAllowedGroupClient(cfg),
-		UserAttributeDefinition: NewUserAttributeDefinitionClient(cfg),
-		UserAttributeValue:      NewUserAttributeValueClient(cfg),
-		UserSubscription:        NewUserSubscriptionClient(cfg),
+		ctx:                       ctx,
+		config:                    cfg,
+		APIKey:                    NewAPIKeyClient(cfg),
+		Account:                   NewAccountClient(cfg),
+		AccountGroup:              NewAccountGroupClient(cfg),
+		Announcement:              NewAnnouncementClient(cfg),
+		AnnouncementRead:          NewAnnouncementReadClient(cfg),
+		ErrorPassthroughRule:      NewErrorPassthroughRuleClient(cfg),
+		Group:                     NewGroupClient(cfg),
+		IdempotencyRecord:         NewIdempotencyRecordClient(cfg),
+		PromoCode:                 NewPromoCodeClient(cfg),
+		PromoCodeUsage:            NewPromoCodeUsageClient(cfg),
+		Proxy:                     NewProxyClient(cfg),
+		RechargeOrder:             NewRechargeOrderClient(cfg),
+		RedeemCode:                NewRedeemCodeClient(cfg),
+		ReferralCommission:        NewReferralCommissionClient(cfg),
+		ReferralWithdrawalRequest: NewReferralWithdrawalRequestClient(cfg),
+		SecuritySecret:            NewSecuritySecretClient(cfg),
+		Setting:                   NewSettingClient(cfg),
+		TLSFingerprintProfile:     NewTLSFingerprintProfileClient(cfg),
+		UsageCleanupTask:          NewUsageCleanupTaskClient(cfg),
+		UsageLog:                  NewUsageLogClient(cfg),
+		User:                      NewUserClient(cfg),
+		UserAllowedGroup:          NewUserAllowedGroupClient(cfg),
+		UserAttributeDefinition:   NewUserAttributeDefinitionClient(cfg),
+		UserAttributeValue:        NewUserAttributeValueClient(cfg),
+		UserSubscription:          NewUserSubscriptionClient(cfg),
 	}, nil
 }
 
@@ -309,7 +327,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
 		c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord, c.PromoCode,
-		c.PromoCodeUsage, c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting,
+		c.PromoCodeUsage, c.Proxy, c.RechargeOrder, c.RedeemCode, c.ReferralCommission,
+		c.ReferralWithdrawalRequest, c.SecuritySecret, c.Setting,
 		c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
 		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
 		c.UserSubscription,
@@ -324,7 +343,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
 		c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord, c.PromoCode,
-		c.PromoCodeUsage, c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting,
+		c.PromoCodeUsage, c.Proxy, c.RechargeOrder, c.RedeemCode, c.ReferralCommission,
+		c.ReferralWithdrawalRequest, c.SecuritySecret, c.Setting,
 		c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
 		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
 		c.UserSubscription,
@@ -358,8 +378,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PromoCodeUsage.mutate(ctx, m)
 	case *ProxyMutation:
 		return c.Proxy.mutate(ctx, m)
+	case *RechargeOrderMutation:
+		return c.RechargeOrder.mutate(ctx, m)
 	case *RedeemCodeMutation:
 		return c.RedeemCode.mutate(ctx, m)
+	case *ReferralCommissionMutation:
+		return c.ReferralCommission.mutate(ctx, m)
+	case *ReferralWithdrawalRequestMutation:
+		return c.ReferralWithdrawalRequest.mutate(ctx, m)
 	case *SecuritySecretMutation:
 		return c.SecuritySecret.mutate(ctx, m)
 	case *SettingMutation:
@@ -2191,6 +2217,171 @@ func (c *ProxyClient) mutate(ctx context.Context, m *ProxyMutation) (Value, erro
 	}
 }
 
+// RechargeOrderClient is a client for the RechargeOrder schema.
+type RechargeOrderClient struct {
+	config
+}
+
+// NewRechargeOrderClient returns a client for the RechargeOrder from the given config.
+func NewRechargeOrderClient(c config) *RechargeOrderClient {
+	return &RechargeOrderClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rechargeorder.Hooks(f(g(h())))`.
+func (c *RechargeOrderClient) Use(hooks ...Hook) {
+	c.hooks.RechargeOrder = append(c.hooks.RechargeOrder, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rechargeorder.Intercept(f(g(h())))`.
+func (c *RechargeOrderClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RechargeOrder = append(c.inters.RechargeOrder, interceptors...)
+}
+
+// Create returns a builder for creating a RechargeOrder entity.
+func (c *RechargeOrderClient) Create() *RechargeOrderCreate {
+	mutation := newRechargeOrderMutation(c.config, OpCreate)
+	return &RechargeOrderCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RechargeOrder entities.
+func (c *RechargeOrderClient) CreateBulk(builders ...*RechargeOrderCreate) *RechargeOrderCreateBulk {
+	return &RechargeOrderCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RechargeOrderClient) MapCreateBulk(slice any, setFunc func(*RechargeOrderCreate, int)) *RechargeOrderCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RechargeOrderCreateBulk{err: fmt.Errorf("calling to RechargeOrderClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RechargeOrderCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RechargeOrderCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RechargeOrder.
+func (c *RechargeOrderClient) Update() *RechargeOrderUpdate {
+	mutation := newRechargeOrderMutation(c.config, OpUpdate)
+	return &RechargeOrderUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RechargeOrderClient) UpdateOne(_m *RechargeOrder) *RechargeOrderUpdateOne {
+	mutation := newRechargeOrderMutation(c.config, OpUpdateOne, withRechargeOrder(_m))
+	return &RechargeOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RechargeOrderClient) UpdateOneID(id int64) *RechargeOrderUpdateOne {
+	mutation := newRechargeOrderMutation(c.config, OpUpdateOne, withRechargeOrderID(id))
+	return &RechargeOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RechargeOrder.
+func (c *RechargeOrderClient) Delete() *RechargeOrderDelete {
+	mutation := newRechargeOrderMutation(c.config, OpDelete)
+	return &RechargeOrderDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RechargeOrderClient) DeleteOne(_m *RechargeOrder) *RechargeOrderDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RechargeOrderClient) DeleteOneID(id int64) *RechargeOrderDeleteOne {
+	builder := c.Delete().Where(rechargeorder.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RechargeOrderDeleteOne{builder}
+}
+
+// Query returns a query builder for RechargeOrder.
+func (c *RechargeOrderClient) Query() *RechargeOrderQuery {
+	return &RechargeOrderQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRechargeOrder},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RechargeOrder entity by its id.
+func (c *RechargeOrderClient) Get(ctx context.Context, id int64) (*RechargeOrder, error) {
+	return c.Query().Where(rechargeorder.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RechargeOrderClient) GetX(ctx context.Context, id int64) *RechargeOrder {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a RechargeOrder.
+func (c *RechargeOrderClient) QueryUser(_m *RechargeOrder) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rechargeorder.Table, rechargeorder.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rechargeorder.UserTable, rechargeorder.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReferralCommissions queries the referral_commissions edge of a RechargeOrder.
+func (c *RechargeOrderClient) QueryReferralCommissions(_m *RechargeOrder) *ReferralCommissionQuery {
+	query := (&ReferralCommissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rechargeorder.Table, rechargeorder.FieldID, id),
+			sqlgraph.To(referralcommission.Table, referralcommission.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rechargeorder.ReferralCommissionsTable, rechargeorder.ReferralCommissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RechargeOrderClient) Hooks() []Hook {
+	return c.hooks.RechargeOrder
+}
+
+// Interceptors returns the client interceptors.
+func (c *RechargeOrderClient) Interceptors() []Interceptor {
+	return c.inters.RechargeOrder
+}
+
+func (c *RechargeOrderClient) mutate(ctx context.Context, m *RechargeOrderMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RechargeOrderCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RechargeOrderUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RechargeOrderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RechargeOrderDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RechargeOrder mutation op: %q", m.Op())
+	}
+}
+
 // RedeemCodeClient is a client for the RedeemCode schema.
 type RedeemCodeClient struct {
 	config
@@ -2353,6 +2544,352 @@ func (c *RedeemCodeClient) mutate(ctx context.Context, m *RedeemCodeMutation) (V
 		return (&RedeemCodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown RedeemCode mutation op: %q", m.Op())
+	}
+}
+
+// ReferralCommissionClient is a client for the ReferralCommission schema.
+type ReferralCommissionClient struct {
+	config
+}
+
+// NewReferralCommissionClient returns a client for the ReferralCommission from the given config.
+func NewReferralCommissionClient(c config) *ReferralCommissionClient {
+	return &ReferralCommissionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `referralcommission.Hooks(f(g(h())))`.
+func (c *ReferralCommissionClient) Use(hooks ...Hook) {
+	c.hooks.ReferralCommission = append(c.hooks.ReferralCommission, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `referralcommission.Intercept(f(g(h())))`.
+func (c *ReferralCommissionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ReferralCommission = append(c.inters.ReferralCommission, interceptors...)
+}
+
+// Create returns a builder for creating a ReferralCommission entity.
+func (c *ReferralCommissionClient) Create() *ReferralCommissionCreate {
+	mutation := newReferralCommissionMutation(c.config, OpCreate)
+	return &ReferralCommissionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ReferralCommission entities.
+func (c *ReferralCommissionClient) CreateBulk(builders ...*ReferralCommissionCreate) *ReferralCommissionCreateBulk {
+	return &ReferralCommissionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReferralCommissionClient) MapCreateBulk(slice any, setFunc func(*ReferralCommissionCreate, int)) *ReferralCommissionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReferralCommissionCreateBulk{err: fmt.Errorf("calling to ReferralCommissionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReferralCommissionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReferralCommissionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ReferralCommission.
+func (c *ReferralCommissionClient) Update() *ReferralCommissionUpdate {
+	mutation := newReferralCommissionMutation(c.config, OpUpdate)
+	return &ReferralCommissionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReferralCommissionClient) UpdateOne(_m *ReferralCommission) *ReferralCommissionUpdateOne {
+	mutation := newReferralCommissionMutation(c.config, OpUpdateOne, withReferralCommission(_m))
+	return &ReferralCommissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReferralCommissionClient) UpdateOneID(id int64) *ReferralCommissionUpdateOne {
+	mutation := newReferralCommissionMutation(c.config, OpUpdateOne, withReferralCommissionID(id))
+	return &ReferralCommissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ReferralCommission.
+func (c *ReferralCommissionClient) Delete() *ReferralCommissionDelete {
+	mutation := newReferralCommissionMutation(c.config, OpDelete)
+	return &ReferralCommissionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReferralCommissionClient) DeleteOne(_m *ReferralCommission) *ReferralCommissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReferralCommissionClient) DeleteOneID(id int64) *ReferralCommissionDeleteOne {
+	builder := c.Delete().Where(referralcommission.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReferralCommissionDeleteOne{builder}
+}
+
+// Query returns a query builder for ReferralCommission.
+func (c *ReferralCommissionClient) Query() *ReferralCommissionQuery {
+	return &ReferralCommissionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReferralCommission},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ReferralCommission entity by its id.
+func (c *ReferralCommissionClient) Get(ctx context.Context, id int64) (*ReferralCommission, error) {
+	return c.Query().Where(referralcommission.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReferralCommissionClient) GetX(ctx context.Context, id int64) *ReferralCommission {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPromoter queries the promoter edge of a ReferralCommission.
+func (c *ReferralCommissionClient) QueryPromoter(_m *ReferralCommission) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralcommission.Table, referralcommission.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralcommission.PromoterTable, referralcommission.PromoterColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReferredUser queries the referred_user edge of a ReferralCommission.
+func (c *ReferralCommissionClient) QueryReferredUser(_m *ReferralCommission) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralcommission.Table, referralcommission.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralcommission.ReferredUserTable, referralcommission.ReferredUserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRechargeOrder queries the recharge_order edge of a ReferralCommission.
+func (c *ReferralCommissionClient) QueryRechargeOrder(_m *ReferralCommission) *RechargeOrderQuery {
+	query := (&RechargeOrderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralcommission.Table, referralcommission.FieldID, id),
+			sqlgraph.To(rechargeorder.Table, rechargeorder.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralcommission.RechargeOrderTable, referralcommission.RechargeOrderColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReferralCommissionClient) Hooks() []Hook {
+	return c.hooks.ReferralCommission
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReferralCommissionClient) Interceptors() []Interceptor {
+	return c.inters.ReferralCommission
+}
+
+func (c *ReferralCommissionClient) mutate(ctx context.Context, m *ReferralCommissionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReferralCommissionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReferralCommissionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReferralCommissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReferralCommissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ReferralCommission mutation op: %q", m.Op())
+	}
+}
+
+// ReferralWithdrawalRequestClient is a client for the ReferralWithdrawalRequest schema.
+type ReferralWithdrawalRequestClient struct {
+	config
+}
+
+// NewReferralWithdrawalRequestClient returns a client for the ReferralWithdrawalRequest from the given config.
+func NewReferralWithdrawalRequestClient(c config) *ReferralWithdrawalRequestClient {
+	return &ReferralWithdrawalRequestClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `referralwithdrawalrequest.Hooks(f(g(h())))`.
+func (c *ReferralWithdrawalRequestClient) Use(hooks ...Hook) {
+	c.hooks.ReferralWithdrawalRequest = append(c.hooks.ReferralWithdrawalRequest, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `referralwithdrawalrequest.Intercept(f(g(h())))`.
+func (c *ReferralWithdrawalRequestClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ReferralWithdrawalRequest = append(c.inters.ReferralWithdrawalRequest, interceptors...)
+}
+
+// Create returns a builder for creating a ReferralWithdrawalRequest entity.
+func (c *ReferralWithdrawalRequestClient) Create() *ReferralWithdrawalRequestCreate {
+	mutation := newReferralWithdrawalRequestMutation(c.config, OpCreate)
+	return &ReferralWithdrawalRequestCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ReferralWithdrawalRequest entities.
+func (c *ReferralWithdrawalRequestClient) CreateBulk(builders ...*ReferralWithdrawalRequestCreate) *ReferralWithdrawalRequestCreateBulk {
+	return &ReferralWithdrawalRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReferralWithdrawalRequestClient) MapCreateBulk(slice any, setFunc func(*ReferralWithdrawalRequestCreate, int)) *ReferralWithdrawalRequestCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReferralWithdrawalRequestCreateBulk{err: fmt.Errorf("calling to ReferralWithdrawalRequestClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReferralWithdrawalRequestCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReferralWithdrawalRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ReferralWithdrawalRequest.
+func (c *ReferralWithdrawalRequestClient) Update() *ReferralWithdrawalRequestUpdate {
+	mutation := newReferralWithdrawalRequestMutation(c.config, OpUpdate)
+	return &ReferralWithdrawalRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReferralWithdrawalRequestClient) UpdateOne(_m *ReferralWithdrawalRequest) *ReferralWithdrawalRequestUpdateOne {
+	mutation := newReferralWithdrawalRequestMutation(c.config, OpUpdateOne, withReferralWithdrawalRequest(_m))
+	return &ReferralWithdrawalRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReferralWithdrawalRequestClient) UpdateOneID(id int64) *ReferralWithdrawalRequestUpdateOne {
+	mutation := newReferralWithdrawalRequestMutation(c.config, OpUpdateOne, withReferralWithdrawalRequestID(id))
+	return &ReferralWithdrawalRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ReferralWithdrawalRequest.
+func (c *ReferralWithdrawalRequestClient) Delete() *ReferralWithdrawalRequestDelete {
+	mutation := newReferralWithdrawalRequestMutation(c.config, OpDelete)
+	return &ReferralWithdrawalRequestDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReferralWithdrawalRequestClient) DeleteOne(_m *ReferralWithdrawalRequest) *ReferralWithdrawalRequestDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReferralWithdrawalRequestClient) DeleteOneID(id int64) *ReferralWithdrawalRequestDeleteOne {
+	builder := c.Delete().Where(referralwithdrawalrequest.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReferralWithdrawalRequestDeleteOne{builder}
+}
+
+// Query returns a query builder for ReferralWithdrawalRequest.
+func (c *ReferralWithdrawalRequestClient) Query() *ReferralWithdrawalRequestQuery {
+	return &ReferralWithdrawalRequestQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReferralWithdrawalRequest},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ReferralWithdrawalRequest entity by its id.
+func (c *ReferralWithdrawalRequestClient) Get(ctx context.Context, id int64) (*ReferralWithdrawalRequest, error) {
+	return c.Query().Where(referralwithdrawalrequest.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReferralWithdrawalRequestClient) GetX(ctx context.Context, id int64) *ReferralWithdrawalRequest {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPromoter queries the promoter edge of a ReferralWithdrawalRequest.
+func (c *ReferralWithdrawalRequestClient) QueryPromoter(_m *ReferralWithdrawalRequest) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralwithdrawalrequest.PromoterTable, referralwithdrawalrequest.PromoterColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReviewer queries the reviewer edge of a ReferralWithdrawalRequest.
+func (c *ReferralWithdrawalRequestClient) QueryReviewer(_m *ReferralWithdrawalRequest) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralwithdrawalrequest.ReviewerTable, referralwithdrawalrequest.ReviewerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReferralWithdrawalRequestClient) Hooks() []Hook {
+	return c.hooks.ReferralWithdrawalRequest
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReferralWithdrawalRequestClient) Interceptors() []Interceptor {
+	return c.inters.ReferralWithdrawalRequest
+}
+
+func (c *ReferralWithdrawalRequestClient) mutate(ctx context.Context, m *ReferralWithdrawalRequestMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReferralWithdrawalRequestCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReferralWithdrawalRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReferralWithdrawalRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReferralWithdrawalRequestDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ReferralWithdrawalRequest mutation op: %q", m.Op())
 	}
 }
 
@@ -3353,6 +3890,118 @@ func (c *UserClient) QueryPromoCodeUsages(_m *User) *PromoCodeUsageQuery {
 	return query
 }
 
+// QueryInvitees queries the invitees edge of a User.
+func (c *UserClient) QueryInvitees(_m *User) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.InviteesTable, user.InviteesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryInviter queries the inviter edge of a User.
+func (c *UserClient) QueryInviter(_m *User) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, user.InviterTable, user.InviterColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRechargeOrders queries the recharge_orders edge of a User.
+func (c *UserClient) QueryRechargeOrders(_m *User) *RechargeOrderQuery {
+	query := (&RechargeOrderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(rechargeorder.Table, rechargeorder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.RechargeOrdersTable, user.RechargeOrdersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPromoterCommissions queries the promoter_commissions edge of a User.
+func (c *UserClient) QueryPromoterCommissions(_m *User) *ReferralCommissionQuery {
+	query := (&ReferralCommissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referralcommission.Table, referralcommission.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PromoterCommissionsTable, user.PromoterCommissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReferredCommissions queries the referred_commissions edge of a User.
+func (c *UserClient) QueryReferredCommissions(_m *User) *ReferralCommissionQuery {
+	query := (&ReferralCommissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referralcommission.Table, referralcommission.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReferredCommissionsTable, user.ReferredCommissionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReferralWithdrawalRequests queries the referral_withdrawal_requests edge of a User.
+func (c *UserClient) QueryReferralWithdrawalRequests(_m *User) *ReferralWithdrawalRequestQuery {
+	query := (&ReferralWithdrawalRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReferralWithdrawalRequestsTable, user.ReferralWithdrawalRequestsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReviewedReferralWithdrawals queries the reviewed_referral_withdrawals edge of a User.
+func (c *UserClient) QueryReviewedReferralWithdrawals(_m *User) *ReferralWithdrawalRequestQuery {
+	query := (&ReferralWithdrawalRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReviewedReferralWithdrawalsTable, user.ReviewedReferralWithdrawalsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryUserAllowedGroups queries the user_allowed_groups edge of a User.
 func (c *UserClient) QueryUserAllowedGroups(_m *User) *UserAllowedGroupQuery {
 	query := (&UserAllowedGroupClient{config: c.config}).Query()
@@ -4032,14 +4681,16 @@ type (
 	hooks struct {
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
 		ErrorPassthroughRule, Group, IdempotencyRecord, PromoCode, PromoCodeUsage,
-		Proxy, RedeemCode, SecuritySecret, Setting, TLSFingerprintProfile,
+		Proxy, RechargeOrder, RedeemCode, ReferralCommission,
+		ReferralWithdrawalRequest, SecuritySecret, Setting, TLSFingerprintProfile,
 		UsageCleanupTask, UsageLog, User, UserAllowedGroup, UserAttributeDefinition,
 		UserAttributeValue, UserSubscription []ent.Hook
 	}
 	inters struct {
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
 		ErrorPassthroughRule, Group, IdempotencyRecord, PromoCode, PromoCodeUsage,
-		Proxy, RedeemCode, SecuritySecret, Setting, TLSFingerprintProfile,
+		Proxy, RechargeOrder, RedeemCode, ReferralCommission,
+		ReferralWithdrawalRequest, SecuritySecret, Setting, TLSFingerprintProfile,
 		UsageCleanupTask, UsageLog, User, UserAllowedGroup, UserAttributeDefinition,
 		UserAttributeValue, UserSubscription []ent.Interceptor
 	}

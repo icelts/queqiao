@@ -178,6 +178,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/referral',
+    name: 'Referral',
+    component: () => import('@/views/user/ReferralView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Referral Center',
+      titleKey: 'referral.title',
+      descriptionKey: 'referral.description'
+    }
+  },
+  {
     path: '/subscriptions',
     name: 'Subscriptions',
     component: () => import('@/views/user/SubscriptionsView.vue'),
@@ -199,18 +211,6 @@ const routes: RouteRecordRaw[] = [
       title: 'Purchase Subscription',
       titleKey: 'purchase.title',
       descriptionKey: 'purchase.description'
-    }
-  },
-  {
-    path: '/sora',
-    name: 'Sora',
-    component: () => import('@/views/user/SoraView.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: false,
-      title: 'Sora',
-      titleKey: 'sora.title',
-      descriptionKey: 'sora.description'
     }
   },
   {
@@ -264,6 +264,30 @@ const routes: RouteRecordRaw[] = [
       title: 'User Management',
       titleKey: 'admin.users.title',
       descriptionKey: 'admin.users.description'
+    }
+  },
+  {
+    path: '/admin/referral-withdrawals',
+    name: 'AdminReferralWithdrawals',
+    component: () => import('@/views/admin/ReferralWithdrawalsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Referral Withdrawals',
+      titleKey: 'admin.referralWithdrawals.title',
+      descriptionKey: 'admin.referralWithdrawals.description'
+    }
+  },
+  {
+    path: '/admin/recharge-orders',
+    name: 'AdminRechargeOrders',
+    component: () => import('@/views/admin/RechargeOrdersView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Recharge Orders',
+      titleKey: 'admin.rechargeOrders.title',
+      descriptionKey: 'admin.rechargeOrders.description'
     }
   },
   {

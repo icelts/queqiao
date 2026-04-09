@@ -274,6 +274,47 @@ func (_u *GroupUpdate) AddDefaultValidityDays(v int) *GroupUpdate {
 	return _u
 }
 
+// SetPurchaseEnabled sets the "purchase_enabled" field.
+func (_u *GroupUpdate) SetPurchaseEnabled(v bool) *GroupUpdate {
+	_u.mutation.SetPurchaseEnabled(v)
+	return _u
+}
+
+// SetNillablePurchaseEnabled sets the "purchase_enabled" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillablePurchaseEnabled(v *bool) *GroupUpdate {
+	if v != nil {
+		_u.SetPurchaseEnabled(*v)
+	}
+	return _u
+}
+
+// SetPurchasePrice sets the "purchase_price" field.
+func (_u *GroupUpdate) SetPurchasePrice(v float64) *GroupUpdate {
+	_u.mutation.ResetPurchasePrice()
+	_u.mutation.SetPurchasePrice(v)
+	return _u
+}
+
+// SetNillablePurchasePrice sets the "purchase_price" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillablePurchasePrice(v *float64) *GroupUpdate {
+	if v != nil {
+		_u.SetPurchasePrice(*v)
+	}
+	return _u
+}
+
+// AddPurchasePrice adds value to the "purchase_price" field.
+func (_u *GroupUpdate) AddPurchasePrice(v float64) *GroupUpdate {
+	_u.mutation.AddPurchasePrice(v)
+	return _u
+}
+
+// ClearPurchasePrice clears the value of the "purchase_price" field.
+func (_u *GroupUpdate) ClearPurchasePrice() *GroupUpdate {
+	_u.mutation.ClearPurchasePrice()
+	return _u
+}
+
 // SetImagePrice1k sets the "image_price_1k" field.
 func (_u *GroupUpdate) SetImagePrice1k(v float64) *GroupUpdate {
 	_u.mutation.ResetImagePrice1k()
@@ -1055,6 +1096,18 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedDefaultValidityDays(); ok {
 		_spec.AddField(group.FieldDefaultValidityDays, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.PurchaseEnabled(); ok {
+		_spec.SetField(group.FieldPurchaseEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.PurchasePrice(); ok {
+		_spec.SetField(group.FieldPurchasePrice, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPurchasePrice(); ok {
+		_spec.AddField(group.FieldPurchasePrice, field.TypeFloat64, value)
+	}
+	if _u.mutation.PurchasePriceCleared() {
+		_spec.ClearField(group.FieldPurchasePrice, field.TypeFloat64)
+	}
 	if value, ok := _u.mutation.ImagePrice1k(); ok {
 		_spec.SetField(group.FieldImagePrice1k, field.TypeFloat64, value)
 	}
@@ -1733,6 +1786,47 @@ func (_u *GroupUpdateOne) SetNillableDefaultValidityDays(v *int) *GroupUpdateOne
 // AddDefaultValidityDays adds value to the "default_validity_days" field.
 func (_u *GroupUpdateOne) AddDefaultValidityDays(v int) *GroupUpdateOne {
 	_u.mutation.AddDefaultValidityDays(v)
+	return _u
+}
+
+// SetPurchaseEnabled sets the "purchase_enabled" field.
+func (_u *GroupUpdateOne) SetPurchaseEnabled(v bool) *GroupUpdateOne {
+	_u.mutation.SetPurchaseEnabled(v)
+	return _u
+}
+
+// SetNillablePurchaseEnabled sets the "purchase_enabled" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillablePurchaseEnabled(v *bool) *GroupUpdateOne {
+	if v != nil {
+		_u.SetPurchaseEnabled(*v)
+	}
+	return _u
+}
+
+// SetPurchasePrice sets the "purchase_price" field.
+func (_u *GroupUpdateOne) SetPurchasePrice(v float64) *GroupUpdateOne {
+	_u.mutation.ResetPurchasePrice()
+	_u.mutation.SetPurchasePrice(v)
+	return _u
+}
+
+// SetNillablePurchasePrice sets the "purchase_price" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillablePurchasePrice(v *float64) *GroupUpdateOne {
+	if v != nil {
+		_u.SetPurchasePrice(*v)
+	}
+	return _u
+}
+
+// AddPurchasePrice adds value to the "purchase_price" field.
+func (_u *GroupUpdateOne) AddPurchasePrice(v float64) *GroupUpdateOne {
+	_u.mutation.AddPurchasePrice(v)
+	return _u
+}
+
+// ClearPurchasePrice clears the value of the "purchase_price" field.
+func (_u *GroupUpdateOne) ClearPurchasePrice() *GroupUpdateOne {
+	_u.mutation.ClearPurchasePrice()
 	return _u
 }
 
@@ -2546,6 +2640,18 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.AddedDefaultValidityDays(); ok {
 		_spec.AddField(group.FieldDefaultValidityDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.PurchaseEnabled(); ok {
+		_spec.SetField(group.FieldPurchaseEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.PurchasePrice(); ok {
+		_spec.SetField(group.FieldPurchasePrice, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPurchasePrice(); ok {
+		_spec.AddField(group.FieldPurchasePrice, field.TypeFloat64, value)
+	}
+	if _u.mutation.PurchasePriceCleared() {
+		_spec.ClearField(group.FieldPurchasePrice, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.ImagePrice1k(); ok {
 		_spec.SetField(group.FieldImagePrice1k, field.TypeFloat64, value)

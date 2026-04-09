@@ -216,6 +216,34 @@ func (_c *GroupCreate) SetNillableDefaultValidityDays(v *int) *GroupCreate {
 	return _c
 }
 
+// SetPurchaseEnabled sets the "purchase_enabled" field.
+func (_c *GroupCreate) SetPurchaseEnabled(v bool) *GroupCreate {
+	_c.mutation.SetPurchaseEnabled(v)
+	return _c
+}
+
+// SetNillablePurchaseEnabled sets the "purchase_enabled" field if the given value is not nil.
+func (_c *GroupCreate) SetNillablePurchaseEnabled(v *bool) *GroupCreate {
+	if v != nil {
+		_c.SetPurchaseEnabled(*v)
+	}
+	return _c
+}
+
+// SetPurchasePrice sets the "purchase_price" field.
+func (_c *GroupCreate) SetPurchasePrice(v float64) *GroupCreate {
+	_c.mutation.SetPurchasePrice(v)
+	return _c
+}
+
+// SetNillablePurchasePrice sets the "purchase_price" field if the given value is not nil.
+func (_c *GroupCreate) SetNillablePurchasePrice(v *float64) *GroupCreate {
+	if v != nil {
+		_c.SetPurchasePrice(*v)
+	}
+	return _c
+}
+
 // SetImagePrice1k sets the "image_price_1k" field.
 func (_c *GroupCreate) SetImagePrice1k(v float64) *GroupCreate {
 	_c.mutation.SetImagePrice1k(v)
@@ -645,6 +673,10 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultDefaultValidityDays
 		_c.mutation.SetDefaultValidityDays(v)
 	}
+	if _, ok := _c.mutation.PurchaseEnabled(); !ok {
+		v := group.DefaultPurchaseEnabled
+		_c.mutation.SetPurchaseEnabled(v)
+	}
 	if _, ok := _c.mutation.SoraStorageQuotaBytes(); !ok {
 		v := group.DefaultSoraStorageQuotaBytes
 		_c.mutation.SetSoraStorageQuotaBytes(v)
@@ -736,6 +768,9 @@ func (_c *GroupCreate) check() error {
 	}
 	if _, ok := _c.mutation.DefaultValidityDays(); !ok {
 		return &ValidationError{Name: "default_validity_days", err: errors.New(`ent: missing required field "Group.default_validity_days"`)}
+	}
+	if _, ok := _c.mutation.PurchaseEnabled(); !ok {
+		return &ValidationError{Name: "purchase_enabled", err: errors.New(`ent: missing required field "Group.purchase_enabled"`)}
 	}
 	if _, ok := _c.mutation.SoraStorageQuotaBytes(); !ok {
 		return &ValidationError{Name: "sora_storage_quota_bytes", err: errors.New(`ent: missing required field "Group.sora_storage_quota_bytes"`)}
@@ -854,6 +889,14 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DefaultValidityDays(); ok {
 		_spec.SetField(group.FieldDefaultValidityDays, field.TypeInt, value)
 		_node.DefaultValidityDays = value
+	}
+	if value, ok := _c.mutation.PurchaseEnabled(); ok {
+		_spec.SetField(group.FieldPurchaseEnabled, field.TypeBool, value)
+		_node.PurchaseEnabled = value
+	}
+	if value, ok := _c.mutation.PurchasePrice(); ok {
+		_spec.SetField(group.FieldPurchasePrice, field.TypeFloat64, value)
+		_node.PurchasePrice = &value
 	}
 	if value, ok := _c.mutation.ImagePrice1k(); ok {
 		_spec.SetField(group.FieldImagePrice1k, field.TypeFloat64, value)
@@ -1304,6 +1347,42 @@ func (u *GroupUpsert) UpdateDefaultValidityDays() *GroupUpsert {
 // AddDefaultValidityDays adds v to the "default_validity_days" field.
 func (u *GroupUpsert) AddDefaultValidityDays(v int) *GroupUpsert {
 	u.Add(group.FieldDefaultValidityDays, v)
+	return u
+}
+
+// SetPurchaseEnabled sets the "purchase_enabled" field.
+func (u *GroupUpsert) SetPurchaseEnabled(v bool) *GroupUpsert {
+	u.Set(group.FieldPurchaseEnabled, v)
+	return u
+}
+
+// UpdatePurchaseEnabled sets the "purchase_enabled" field to the value that was provided on create.
+func (u *GroupUpsert) UpdatePurchaseEnabled() *GroupUpsert {
+	u.SetExcluded(group.FieldPurchaseEnabled)
+	return u
+}
+
+// SetPurchasePrice sets the "purchase_price" field.
+func (u *GroupUpsert) SetPurchasePrice(v float64) *GroupUpsert {
+	u.Set(group.FieldPurchasePrice, v)
+	return u
+}
+
+// UpdatePurchasePrice sets the "purchase_price" field to the value that was provided on create.
+func (u *GroupUpsert) UpdatePurchasePrice() *GroupUpsert {
+	u.SetExcluded(group.FieldPurchasePrice)
+	return u
+}
+
+// AddPurchasePrice adds v to the "purchase_price" field.
+func (u *GroupUpsert) AddPurchasePrice(v float64) *GroupUpsert {
+	u.Add(group.FieldPurchasePrice, v)
+	return u
+}
+
+// ClearPurchasePrice clears the value of the "purchase_price" field.
+func (u *GroupUpsert) ClearPurchasePrice() *GroupUpsert {
+	u.SetNull(group.FieldPurchasePrice)
 	return u
 }
 
@@ -1967,6 +2046,48 @@ func (u *GroupUpsertOne) AddDefaultValidityDays(v int) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateDefaultValidityDays() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateDefaultValidityDays()
+	})
+}
+
+// SetPurchaseEnabled sets the "purchase_enabled" field.
+func (u *GroupUpsertOne) SetPurchaseEnabled(v bool) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetPurchaseEnabled(v)
+	})
+}
+
+// UpdatePurchaseEnabled sets the "purchase_enabled" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdatePurchaseEnabled() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdatePurchaseEnabled()
+	})
+}
+
+// SetPurchasePrice sets the "purchase_price" field.
+func (u *GroupUpsertOne) SetPurchasePrice(v float64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetPurchasePrice(v)
+	})
+}
+
+// AddPurchasePrice adds v to the "purchase_price" field.
+func (u *GroupUpsertOne) AddPurchasePrice(v float64) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddPurchasePrice(v)
+	})
+}
+
+// UpdatePurchasePrice sets the "purchase_price" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdatePurchasePrice() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdatePurchasePrice()
+	})
+}
+
+// ClearPurchasePrice clears the value of the "purchase_price" field.
+func (u *GroupUpsertOne) ClearPurchasePrice() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.ClearPurchasePrice()
 	})
 }
 
@@ -2857,6 +2978,48 @@ func (u *GroupUpsertBulk) AddDefaultValidityDays(v int) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateDefaultValidityDays() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateDefaultValidityDays()
+	})
+}
+
+// SetPurchaseEnabled sets the "purchase_enabled" field.
+func (u *GroupUpsertBulk) SetPurchaseEnabled(v bool) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetPurchaseEnabled(v)
+	})
+}
+
+// UpdatePurchaseEnabled sets the "purchase_enabled" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdatePurchaseEnabled() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdatePurchaseEnabled()
+	})
+}
+
+// SetPurchasePrice sets the "purchase_price" field.
+func (u *GroupUpsertBulk) SetPurchasePrice(v float64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetPurchasePrice(v)
+	})
+}
+
+// AddPurchasePrice adds v to the "purchase_price" field.
+func (u *GroupUpsertBulk) AddPurchasePrice(v float64) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddPurchasePrice(v)
+	})
+}
+
+// UpdatePurchasePrice sets the "purchase_price" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdatePurchasePrice() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdatePurchasePrice()
+	})
+}
+
+// ClearPurchasePrice clears the value of the "purchase_price" field.
+func (u *GroupUpsertBulk) ClearPurchasePrice() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.ClearPurchasePrice()
 	})
 }
 

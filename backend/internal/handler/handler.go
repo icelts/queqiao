@@ -26,6 +26,7 @@ type AdminHandlers struct {
 	Subscription          *admin.SubscriptionHandler
 	Usage                 *admin.UsageHandler
 	UserAttribute         *admin.UserAttributeHandler
+	Referral              *admin.ReferralHandler
 	ErrorPassthrough      *admin.ErrorPassthroughHandler
 	TLSFingerprintProfile *admin.TLSFingerprintProfileHandler
 	APIKey                *admin.AdminAPIKeyHandler
@@ -38,14 +39,14 @@ type Handlers struct {
 	User          *UserHandler
 	APIKey        *APIKeyHandler
 	Usage         *UsageHandler
+	Recharge      *RechargeHandler
+	Referral      *ReferralHandler
 	Redeem        *RedeemHandler
 	Subscription  *SubscriptionHandler
 	Announcement  *AnnouncementHandler
 	Admin         *AdminHandlers
 	Gateway       *GatewayHandler
 	OpenAIGateway *OpenAIGatewayHandler
-	SoraGateway   *SoraGatewayHandler
-	SoraClient    *SoraClientHandler
 	Setting       *SettingHandler
 	Totp          *TotpHandler
 }

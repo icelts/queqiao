@@ -15,7 +15,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
+	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
@@ -140,6 +143,20 @@ func (_c *UserCreate) SetNillableStatus(v *string) *UserCreate {
 	return _c
 }
 
+// SetSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field.
+func (_c *UserCreate) SetSubscriptionLimitFallbackToBalance(v bool) *UserCreate {
+	_c.mutation.SetSubscriptionLimitFallbackToBalance(v)
+	return _c
+}
+
+// SetNillableSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field if the given value is not nil.
+func (_c *UserCreate) SetNillableSubscriptionLimitFallbackToBalance(v *bool) *UserCreate {
+	if v != nil {
+		_c.SetSubscriptionLimitFallbackToBalance(*v)
+	}
+	return _c
+}
+
 // SetUsername sets the "username" field.
 func (_c *UserCreate) SetUsername(v string) *UserCreate {
 	_c.mutation.SetUsername(v)
@@ -164,6 +181,76 @@ func (_c *UserCreate) SetNotes(v string) *UserCreate {
 func (_c *UserCreate) SetNillableNotes(v *string) *UserCreate {
 	if v != nil {
 		_c.SetNotes(*v)
+	}
+	return _c
+}
+
+// SetInviterID sets the "inviter_id" field.
+func (_c *UserCreate) SetInviterID(v int64) *UserCreate {
+	_c.mutation.SetInviterID(v)
+	return _c
+}
+
+// SetNillableInviterID sets the "inviter_id" field if the given value is not nil.
+func (_c *UserCreate) SetNillableInviterID(v *int64) *UserCreate {
+	if v != nil {
+		_c.SetInviterID(*v)
+	}
+	return _c
+}
+
+// SetReferralCode sets the "referral_code" field.
+func (_c *UserCreate) SetReferralCode(v string) *UserCreate {
+	_c.mutation.SetReferralCode(v)
+	return _c
+}
+
+// SetNillableReferralCode sets the "referral_code" field if the given value is not nil.
+func (_c *UserCreate) SetNillableReferralCode(v *string) *UserCreate {
+	if v != nil {
+		_c.SetReferralCode(*v)
+	}
+	return _c
+}
+
+// SetCustomFirstCommissionRate sets the "custom_first_commission_rate" field.
+func (_c *UserCreate) SetCustomFirstCommissionRate(v float64) *UserCreate {
+	_c.mutation.SetCustomFirstCommissionRate(v)
+	return _c
+}
+
+// SetNillableCustomFirstCommissionRate sets the "custom_first_commission_rate" field if the given value is not nil.
+func (_c *UserCreate) SetNillableCustomFirstCommissionRate(v *float64) *UserCreate {
+	if v != nil {
+		_c.SetCustomFirstCommissionRate(*v)
+	}
+	return _c
+}
+
+// SetCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field.
+func (_c *UserCreate) SetCustomRecurringCommissionRate(v float64) *UserCreate {
+	_c.mutation.SetCustomRecurringCommissionRate(v)
+	return _c
+}
+
+// SetNillableCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field if the given value is not nil.
+func (_c *UserCreate) SetNillableCustomRecurringCommissionRate(v *float64) *UserCreate {
+	if v != nil {
+		_c.SetCustomRecurringCommissionRate(*v)
+	}
+	return _c
+}
+
+// SetRecurringCommissionEnabled sets the "recurring_commission_enabled" field.
+func (_c *UserCreate) SetRecurringCommissionEnabled(v bool) *UserCreate {
+	_c.mutation.SetRecurringCommissionEnabled(v)
+	return _c
+}
+
+// SetNillableRecurringCommissionEnabled sets the "recurring_commission_enabled" field if the given value is not nil.
+func (_c *UserCreate) SetNillableRecurringCommissionEnabled(v *bool) *UserCreate {
+	if v != nil {
+		_c.SetRecurringCommissionEnabled(*v)
 	}
 	return _c
 }
@@ -373,6 +460,101 @@ func (_c *UserCreate) AddPromoCodeUsages(v ...*PromoCodeUsage) *UserCreate {
 	return _c.AddPromoCodeUsageIDs(ids...)
 }
 
+// AddInviteeIDs adds the "invitees" edge to the User entity by IDs.
+func (_c *UserCreate) AddInviteeIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddInviteeIDs(ids...)
+	return _c
+}
+
+// AddInvitees adds the "invitees" edges to the User entity.
+func (_c *UserCreate) AddInvitees(v ...*User) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddInviteeIDs(ids...)
+}
+
+// SetInviter sets the "inviter" edge to the User entity.
+func (_c *UserCreate) SetInviter(v *User) *UserCreate {
+	return _c.SetInviterID(v.ID)
+}
+
+// AddRechargeOrderIDs adds the "recharge_orders" edge to the RechargeOrder entity by IDs.
+func (_c *UserCreate) AddRechargeOrderIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddRechargeOrderIDs(ids...)
+	return _c
+}
+
+// AddRechargeOrders adds the "recharge_orders" edges to the RechargeOrder entity.
+func (_c *UserCreate) AddRechargeOrders(v ...*RechargeOrder) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddRechargeOrderIDs(ids...)
+}
+
+// AddPromoterCommissionIDs adds the "promoter_commissions" edge to the ReferralCommission entity by IDs.
+func (_c *UserCreate) AddPromoterCommissionIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddPromoterCommissionIDs(ids...)
+	return _c
+}
+
+// AddPromoterCommissions adds the "promoter_commissions" edges to the ReferralCommission entity.
+func (_c *UserCreate) AddPromoterCommissions(v ...*ReferralCommission) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPromoterCommissionIDs(ids...)
+}
+
+// AddReferredCommissionIDs adds the "referred_commissions" edge to the ReferralCommission entity by IDs.
+func (_c *UserCreate) AddReferredCommissionIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddReferredCommissionIDs(ids...)
+	return _c
+}
+
+// AddReferredCommissions adds the "referred_commissions" edges to the ReferralCommission entity.
+func (_c *UserCreate) AddReferredCommissions(v ...*ReferralCommission) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddReferredCommissionIDs(ids...)
+}
+
+// AddReferralWithdrawalRequestIDs adds the "referral_withdrawal_requests" edge to the ReferralWithdrawalRequest entity by IDs.
+func (_c *UserCreate) AddReferralWithdrawalRequestIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddReferralWithdrawalRequestIDs(ids...)
+	return _c
+}
+
+// AddReferralWithdrawalRequests adds the "referral_withdrawal_requests" edges to the ReferralWithdrawalRequest entity.
+func (_c *UserCreate) AddReferralWithdrawalRequests(v ...*ReferralWithdrawalRequest) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddReferralWithdrawalRequestIDs(ids...)
+}
+
+// AddReviewedReferralWithdrawalIDs adds the "reviewed_referral_withdrawals" edge to the ReferralWithdrawalRequest entity by IDs.
+func (_c *UserCreate) AddReviewedReferralWithdrawalIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddReviewedReferralWithdrawalIDs(ids...)
+	return _c
+}
+
+// AddReviewedReferralWithdrawals adds the "reviewed_referral_withdrawals" edges to the ReferralWithdrawalRequest entity.
+func (_c *UserCreate) AddReviewedReferralWithdrawals(v ...*ReferralWithdrawalRequest) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddReviewedReferralWithdrawalIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -440,6 +622,10 @@ func (_c *UserCreate) defaults() error {
 		v := user.DefaultStatus
 		_c.mutation.SetStatus(v)
 	}
+	if _, ok := _c.mutation.SubscriptionLimitFallbackToBalance(); !ok {
+		v := user.DefaultSubscriptionLimitFallbackToBalance
+		_c.mutation.SetSubscriptionLimitFallbackToBalance(v)
+	}
 	if _, ok := _c.mutation.Username(); !ok {
 		v := user.DefaultUsername
 		_c.mutation.SetUsername(v)
@@ -447,6 +633,14 @@ func (_c *UserCreate) defaults() error {
 	if _, ok := _c.mutation.Notes(); !ok {
 		v := user.DefaultNotes
 		_c.mutation.SetNotes(v)
+	}
+	if _, ok := _c.mutation.ReferralCode(); !ok {
+		v := user.DefaultReferralCode
+		_c.mutation.SetReferralCode(v)
+	}
+	if _, ok := _c.mutation.RecurringCommissionEnabled(); !ok {
+		v := user.DefaultRecurringCommissionEnabled
+		_c.mutation.SetRecurringCommissionEnabled(v)
 	}
 	if _, ok := _c.mutation.TotpEnabled(); !ok {
 		v := user.DefaultTotpEnabled
@@ -509,6 +703,9 @@ func (_c *UserCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.SubscriptionLimitFallbackToBalance(); !ok {
+		return &ValidationError{Name: "subscription_limit_fallback_to_balance", err: errors.New(`ent: missing required field "User.subscription_limit_fallback_to_balance"`)}
+	}
 	if _, ok := _c.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "User.username"`)}
 	}
@@ -519,6 +716,17 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.Notes(); !ok {
 		return &ValidationError{Name: "notes", err: errors.New(`ent: missing required field "User.notes"`)}
+	}
+	if _, ok := _c.mutation.ReferralCode(); !ok {
+		return &ValidationError{Name: "referral_code", err: errors.New(`ent: missing required field "User.referral_code"`)}
+	}
+	if v, ok := _c.mutation.ReferralCode(); ok {
+		if err := user.ReferralCodeValidator(v); err != nil {
+			return &ValidationError{Name: "referral_code", err: fmt.Errorf(`ent: validator failed for field "User.referral_code": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RecurringCommissionEnabled(); !ok {
+		return &ValidationError{Name: "recurring_commission_enabled", err: errors.New(`ent: missing required field "User.recurring_commission_enabled"`)}
 	}
 	if _, ok := _c.mutation.TotpEnabled(); !ok {
 		return &ValidationError{Name: "totp_enabled", err: errors.New(`ent: missing required field "User.totp_enabled"`)}
@@ -592,6 +800,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldStatus, field.TypeString, value)
 		_node.Status = value
 	}
+	if value, ok := _c.mutation.SubscriptionLimitFallbackToBalance(); ok {
+		_spec.SetField(user.FieldSubscriptionLimitFallbackToBalance, field.TypeBool, value)
+		_node.SubscriptionLimitFallbackToBalance = value
+	}
 	if value, ok := _c.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 		_node.Username = value
@@ -599,6 +811,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Notes(); ok {
 		_spec.SetField(user.FieldNotes, field.TypeString, value)
 		_node.Notes = value
+	}
+	if value, ok := _c.mutation.ReferralCode(); ok {
+		_spec.SetField(user.FieldReferralCode, field.TypeString, value)
+		_node.ReferralCode = value
+	}
+	if value, ok := _c.mutation.CustomFirstCommissionRate(); ok {
+		_spec.SetField(user.FieldCustomFirstCommissionRate, field.TypeFloat64, value)
+		_node.CustomFirstCommissionRate = &value
+	}
+	if value, ok := _c.mutation.CustomRecurringCommissionRate(); ok {
+		_spec.SetField(user.FieldCustomRecurringCommissionRate, field.TypeFloat64, value)
+		_node.CustomRecurringCommissionRate = &value
+	}
+	if value, ok := _c.mutation.RecurringCommissionEnabled(); ok {
+		_spec.SetField(user.FieldRecurringCommissionEnabled, field.TypeBool, value)
+		_node.RecurringCommissionEnabled = value
 	}
 	if value, ok := _c.mutation.TotpSecretEncrypted(); ok {
 		_spec.SetField(user.FieldTotpSecretEncrypted, field.TypeString, value)
@@ -761,6 +989,119 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(promocodeusage.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.InviteesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.InviteesTable,
+			Columns: []string{user.InviteesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.InviterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.InviterTable,
+			Columns: []string{user.InviterColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.InviterID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RechargeOrdersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.RechargeOrdersTable,
+			Columns: []string{user.RechargeOrdersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rechargeorder.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PromoterCommissionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PromoterCommissionsTable,
+			Columns: []string{user.PromoterCommissionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralcommission.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ReferredCommissionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferredCommissionsTable,
+			Columns: []string{user.ReferredCommissionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralcommission.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ReferralWithdrawalRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalRequestsTable,
+			Columns: []string{user.ReferralWithdrawalRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ReviewedReferralWithdrawalsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReviewedReferralWithdrawalsTable,
+			Columns: []string{user.ReviewedReferralWithdrawalsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -934,6 +1275,18 @@ func (u *UserUpsert) UpdateStatus() *UserUpsert {
 	return u
 }
 
+// SetSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field.
+func (u *UserUpsert) SetSubscriptionLimitFallbackToBalance(v bool) *UserUpsert {
+	u.Set(user.FieldSubscriptionLimitFallbackToBalance, v)
+	return u
+}
+
+// UpdateSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field to the value that was provided on create.
+func (u *UserUpsert) UpdateSubscriptionLimitFallbackToBalance() *UserUpsert {
+	u.SetExcluded(user.FieldSubscriptionLimitFallbackToBalance)
+	return u
+}
+
 // SetUsername sets the "username" field.
 func (u *UserUpsert) SetUsername(v string) *UserUpsert {
 	u.Set(user.FieldUsername, v)
@@ -955,6 +1308,96 @@ func (u *UserUpsert) SetNotes(v string) *UserUpsert {
 // UpdateNotes sets the "notes" field to the value that was provided on create.
 func (u *UserUpsert) UpdateNotes() *UserUpsert {
 	u.SetExcluded(user.FieldNotes)
+	return u
+}
+
+// SetInviterID sets the "inviter_id" field.
+func (u *UserUpsert) SetInviterID(v int64) *UserUpsert {
+	u.Set(user.FieldInviterID, v)
+	return u
+}
+
+// UpdateInviterID sets the "inviter_id" field to the value that was provided on create.
+func (u *UserUpsert) UpdateInviterID() *UserUpsert {
+	u.SetExcluded(user.FieldInviterID)
+	return u
+}
+
+// ClearInviterID clears the value of the "inviter_id" field.
+func (u *UserUpsert) ClearInviterID() *UserUpsert {
+	u.SetNull(user.FieldInviterID)
+	return u
+}
+
+// SetReferralCode sets the "referral_code" field.
+func (u *UserUpsert) SetReferralCode(v string) *UserUpsert {
+	u.Set(user.FieldReferralCode, v)
+	return u
+}
+
+// UpdateReferralCode sets the "referral_code" field to the value that was provided on create.
+func (u *UserUpsert) UpdateReferralCode() *UserUpsert {
+	u.SetExcluded(user.FieldReferralCode)
+	return u
+}
+
+// SetCustomFirstCommissionRate sets the "custom_first_commission_rate" field.
+func (u *UserUpsert) SetCustomFirstCommissionRate(v float64) *UserUpsert {
+	u.Set(user.FieldCustomFirstCommissionRate, v)
+	return u
+}
+
+// UpdateCustomFirstCommissionRate sets the "custom_first_commission_rate" field to the value that was provided on create.
+func (u *UserUpsert) UpdateCustomFirstCommissionRate() *UserUpsert {
+	u.SetExcluded(user.FieldCustomFirstCommissionRate)
+	return u
+}
+
+// AddCustomFirstCommissionRate adds v to the "custom_first_commission_rate" field.
+func (u *UserUpsert) AddCustomFirstCommissionRate(v float64) *UserUpsert {
+	u.Add(user.FieldCustomFirstCommissionRate, v)
+	return u
+}
+
+// ClearCustomFirstCommissionRate clears the value of the "custom_first_commission_rate" field.
+func (u *UserUpsert) ClearCustomFirstCommissionRate() *UserUpsert {
+	u.SetNull(user.FieldCustomFirstCommissionRate)
+	return u
+}
+
+// SetCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field.
+func (u *UserUpsert) SetCustomRecurringCommissionRate(v float64) *UserUpsert {
+	u.Set(user.FieldCustomRecurringCommissionRate, v)
+	return u
+}
+
+// UpdateCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field to the value that was provided on create.
+func (u *UserUpsert) UpdateCustomRecurringCommissionRate() *UserUpsert {
+	u.SetExcluded(user.FieldCustomRecurringCommissionRate)
+	return u
+}
+
+// AddCustomRecurringCommissionRate adds v to the "custom_recurring_commission_rate" field.
+func (u *UserUpsert) AddCustomRecurringCommissionRate(v float64) *UserUpsert {
+	u.Add(user.FieldCustomRecurringCommissionRate, v)
+	return u
+}
+
+// ClearCustomRecurringCommissionRate clears the value of the "custom_recurring_commission_rate" field.
+func (u *UserUpsert) ClearCustomRecurringCommissionRate() *UserUpsert {
+	u.SetNull(user.FieldCustomRecurringCommissionRate)
+	return u
+}
+
+// SetRecurringCommissionEnabled sets the "recurring_commission_enabled" field.
+func (u *UserUpsert) SetRecurringCommissionEnabled(v bool) *UserUpsert {
+	u.Set(user.FieldRecurringCommissionEnabled, v)
+	return u
+}
+
+// UpdateRecurringCommissionEnabled sets the "recurring_commission_enabled" field to the value that was provided on create.
+func (u *UserUpsert) UpdateRecurringCommissionEnabled() *UserUpsert {
+	u.SetExcluded(user.FieldRecurringCommissionEnabled)
 	return u
 }
 
@@ -1220,6 +1663,20 @@ func (u *UserUpsertOne) UpdateStatus() *UserUpsertOne {
 	})
 }
 
+// SetSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field.
+func (u *UserUpsertOne) SetSubscriptionLimitFallbackToBalance(v bool) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSubscriptionLimitFallbackToBalance(v)
+	})
+}
+
+// UpdateSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateSubscriptionLimitFallbackToBalance() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSubscriptionLimitFallbackToBalance()
+	})
+}
+
 // SetUsername sets the "username" field.
 func (u *UserUpsertOne) SetUsername(v string) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
@@ -1245,6 +1702,111 @@ func (u *UserUpsertOne) SetNotes(v string) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateNotes() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateNotes()
+	})
+}
+
+// SetInviterID sets the "inviter_id" field.
+func (u *UserUpsertOne) SetInviterID(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetInviterID(v)
+	})
+}
+
+// UpdateInviterID sets the "inviter_id" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateInviterID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateInviterID()
+	})
+}
+
+// ClearInviterID clears the value of the "inviter_id" field.
+func (u *UserUpsertOne) ClearInviterID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearInviterID()
+	})
+}
+
+// SetReferralCode sets the "referral_code" field.
+func (u *UserUpsertOne) SetReferralCode(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetReferralCode(v)
+	})
+}
+
+// UpdateReferralCode sets the "referral_code" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateReferralCode() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateReferralCode()
+	})
+}
+
+// SetCustomFirstCommissionRate sets the "custom_first_commission_rate" field.
+func (u *UserUpsertOne) SetCustomFirstCommissionRate(v float64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetCustomFirstCommissionRate(v)
+	})
+}
+
+// AddCustomFirstCommissionRate adds v to the "custom_first_commission_rate" field.
+func (u *UserUpsertOne) AddCustomFirstCommissionRate(v float64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddCustomFirstCommissionRate(v)
+	})
+}
+
+// UpdateCustomFirstCommissionRate sets the "custom_first_commission_rate" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateCustomFirstCommissionRate() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateCustomFirstCommissionRate()
+	})
+}
+
+// ClearCustomFirstCommissionRate clears the value of the "custom_first_commission_rate" field.
+func (u *UserUpsertOne) ClearCustomFirstCommissionRate() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearCustomFirstCommissionRate()
+	})
+}
+
+// SetCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field.
+func (u *UserUpsertOne) SetCustomRecurringCommissionRate(v float64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetCustomRecurringCommissionRate(v)
+	})
+}
+
+// AddCustomRecurringCommissionRate adds v to the "custom_recurring_commission_rate" field.
+func (u *UserUpsertOne) AddCustomRecurringCommissionRate(v float64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddCustomRecurringCommissionRate(v)
+	})
+}
+
+// UpdateCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateCustomRecurringCommissionRate() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateCustomRecurringCommissionRate()
+	})
+}
+
+// ClearCustomRecurringCommissionRate clears the value of the "custom_recurring_commission_rate" field.
+func (u *UserUpsertOne) ClearCustomRecurringCommissionRate() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearCustomRecurringCommissionRate()
+	})
+}
+
+// SetRecurringCommissionEnabled sets the "recurring_commission_enabled" field.
+func (u *UserUpsertOne) SetRecurringCommissionEnabled(v bool) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetRecurringCommissionEnabled(v)
+	})
+}
+
+// UpdateRecurringCommissionEnabled sets the "recurring_commission_enabled" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateRecurringCommissionEnabled() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateRecurringCommissionEnabled()
 	})
 }
 
@@ -1690,6 +2252,20 @@ func (u *UserUpsertBulk) UpdateStatus() *UserUpsertBulk {
 	})
 }
 
+// SetSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field.
+func (u *UserUpsertBulk) SetSubscriptionLimitFallbackToBalance(v bool) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSubscriptionLimitFallbackToBalance(v)
+	})
+}
+
+// UpdateSubscriptionLimitFallbackToBalance sets the "subscription_limit_fallback_to_balance" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateSubscriptionLimitFallbackToBalance() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSubscriptionLimitFallbackToBalance()
+	})
+}
+
 // SetUsername sets the "username" field.
 func (u *UserUpsertBulk) SetUsername(v string) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
@@ -1715,6 +2291,111 @@ func (u *UserUpsertBulk) SetNotes(v string) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateNotes() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateNotes()
+	})
+}
+
+// SetInviterID sets the "inviter_id" field.
+func (u *UserUpsertBulk) SetInviterID(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetInviterID(v)
+	})
+}
+
+// UpdateInviterID sets the "inviter_id" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateInviterID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateInviterID()
+	})
+}
+
+// ClearInviterID clears the value of the "inviter_id" field.
+func (u *UserUpsertBulk) ClearInviterID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearInviterID()
+	})
+}
+
+// SetReferralCode sets the "referral_code" field.
+func (u *UserUpsertBulk) SetReferralCode(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetReferralCode(v)
+	})
+}
+
+// UpdateReferralCode sets the "referral_code" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateReferralCode() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateReferralCode()
+	})
+}
+
+// SetCustomFirstCommissionRate sets the "custom_first_commission_rate" field.
+func (u *UserUpsertBulk) SetCustomFirstCommissionRate(v float64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetCustomFirstCommissionRate(v)
+	})
+}
+
+// AddCustomFirstCommissionRate adds v to the "custom_first_commission_rate" field.
+func (u *UserUpsertBulk) AddCustomFirstCommissionRate(v float64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddCustomFirstCommissionRate(v)
+	})
+}
+
+// UpdateCustomFirstCommissionRate sets the "custom_first_commission_rate" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateCustomFirstCommissionRate() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateCustomFirstCommissionRate()
+	})
+}
+
+// ClearCustomFirstCommissionRate clears the value of the "custom_first_commission_rate" field.
+func (u *UserUpsertBulk) ClearCustomFirstCommissionRate() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearCustomFirstCommissionRate()
+	})
+}
+
+// SetCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field.
+func (u *UserUpsertBulk) SetCustomRecurringCommissionRate(v float64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetCustomRecurringCommissionRate(v)
+	})
+}
+
+// AddCustomRecurringCommissionRate adds v to the "custom_recurring_commission_rate" field.
+func (u *UserUpsertBulk) AddCustomRecurringCommissionRate(v float64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddCustomRecurringCommissionRate(v)
+	})
+}
+
+// UpdateCustomRecurringCommissionRate sets the "custom_recurring_commission_rate" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateCustomRecurringCommissionRate() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateCustomRecurringCommissionRate()
+	})
+}
+
+// ClearCustomRecurringCommissionRate clears the value of the "custom_recurring_commission_rate" field.
+func (u *UserUpsertBulk) ClearCustomRecurringCommissionRate() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearCustomRecurringCommissionRate()
+	})
+}
+
+// SetRecurringCommissionEnabled sets the "recurring_commission_enabled" field.
+func (u *UserUpsertBulk) SetRecurringCommissionEnabled(v bool) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetRecurringCommissionEnabled(v)
+	})
+}
+
+// UpdateRecurringCommissionEnabled sets the "recurring_commission_enabled" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateRecurringCommissionEnabled() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateRecurringCommissionEnabled()
 	})
 }
 

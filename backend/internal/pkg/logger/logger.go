@@ -47,6 +47,7 @@ var (
 	sugar         atomic.Pointer[zap.SugaredLogger]
 	atomicLevel   zap.AtomicLevel
 	initOptions   InitOptions
+	closeCurrent  func()
 	currentSink   atomic.Value // sinkState
 	stdLogUndo    func()
 	bootstrapOnce sync.Once
@@ -54,6 +55,14 @@ var (
 
 type sinkState struct {
 	sink Sink
+}
+
+type noSyncWriteSyncer struct {
+	io.Writer
+}
+
+func (w noSyncWriteSyncer) Sync() error {
+	return nil
 }
 
 func InitBootstrap() {
@@ -72,22 +81,27 @@ func Init(options InitOptions) error {
 
 func initLocked(options InitOptions) error {
 	normalized := options.normalized()
-	zl, al, err := buildLogger(normalized)
+	zl, al, cleanup, err := buildLogger(normalized)
 	if err != nil {
 		return err
 	}
 
 	prev := global.Load()
+	prevCleanup := closeCurrent
 	global.Store(zl)
 	sugar.Store(zl.Sugar())
 	atomicLevel = al
 	initOptions = normalized
+	closeCurrent = cleanup
 
 	bridgeSlogLocked()
 	bridgeStdLogLocked()
 
 	if prev != nil {
 		_ = prev.Sync()
+	}
+	if prevCleanup != nil {
+		prevCleanup()
 	}
 	return nil
 }
@@ -205,6 +219,19 @@ func Sync() {
 	}
 }
 
+func Close() {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if l := global.Load(); l != nil {
+		_ = l.Sync()
+	}
+	if closeCurrent != nil {
+		closeCurrent()
+		closeCurrent = nil
+	}
+}
+
 func bridgeStdLogLocked() {
 	if stdLogUndo != nil {
 		stdLogUndo()
@@ -238,7 +265,7 @@ func bridgeSlogLocked() {
 	slog.SetDefault(slog.New(newSlogZapHandler(base.Named("slog"))))
 }
 
-func buildLogger(options InitOptions) (*zap.Logger, zap.AtomicLevel, error) {
+func buildLogger(options InitOptions) (*zap.Logger, zap.AtomicLevel, func(), error) {
 	level, _ := parseLevel(options.Level)
 	atomic := zap.NewAtomicLevelAt(level)
 
@@ -265,20 +292,23 @@ func buildLogger(options InitOptions) (*zap.Logger, zap.AtomicLevel, error) {
 
 	sinkCore := newSinkCore()
 	cores := make([]zapcore.Core, 0, 3)
+	cleanups := make([]func(), 0, 1)
 
 	if options.Output.ToStdout {
+		stdoutSyncer := zapcore.Lock(noSyncWriteSyncer{Writer: os.Stdout})
+		stderrSyncer := zapcore.Lock(noSyncWriteSyncer{Writer: os.Stderr})
 		infoPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl >= atomic.Level() && lvl < zapcore.WarnLevel
 		})
 		errPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl >= atomic.Level() && lvl >= zapcore.WarnLevel
 		})
-		cores = append(cores, zapcore.NewCore(enc, zapcore.Lock(os.Stdout), infoPriority))
-		cores = append(cores, zapcore.NewCore(enc, zapcore.Lock(os.Stderr), errPriority))
+		cores = append(cores, zapcore.NewCore(enc, stdoutSyncer, infoPriority))
+		cores = append(cores, zapcore.NewCore(enc, stderrSyncer, errPriority))
 	}
 
 	if options.Output.ToFile {
-		fileCore, filePath, fileErr := buildFileCore(enc, atomic, options)
+		fileCore, filePath, cleanup, fileErr := buildFileCore(enc, atomic, options)
 		if fileErr != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "time=%s level=WARN msg=\"日志文件输出初始化失败，降级为仅标准输出\" path=%s err=%v\n",
 				time.Now().Format(time.RFC3339Nano),
@@ -287,11 +317,14 @@ func buildLogger(options InitOptions) (*zap.Logger, zap.AtomicLevel, error) {
 			)
 		} else {
 			cores = append(cores, fileCore)
+			if cleanup != nil {
+				cleanups = append(cleanups, cleanup)
+			}
 		}
 	}
 
 	if len(cores) == 0 {
-		cores = append(cores, zapcore.NewCore(enc, zapcore.Lock(os.Stdout), atomic))
+		cores = append(cores, zapcore.NewCore(enc, zapcore.Lock(noSyncWriteSyncer{Writer: os.Stdout}), atomic))
 	}
 
 	core := zapcore.NewTee(cores...)
@@ -313,10 +346,10 @@ func buildLogger(options InitOptions) (*zap.Logger, zap.AtomicLevel, error) {
 		zap.String("service", options.ServiceName),
 		zap.String("env", options.Environment),
 	)
-	return logger, atomic, nil
+	return logger, atomic, chainClosers(cleanups...), nil
 }
 
-func buildFileCore(enc zapcore.Encoder, atomic zap.AtomicLevel, options InitOptions) (zapcore.Core, string, error) {
+func buildFileCore(enc zapcore.Encoder, atomic zap.AtomicLevel, options InitOptions) (zapcore.Core, string, func(), error) {
 	filePath := options.Output.FilePath
 	if strings.TrimSpace(filePath) == "" {
 		filePath = resolveLogFilePath("")
@@ -324,7 +357,7 @@ func buildFileCore(enc zapcore.Encoder, atomic zap.AtomicLevel, options InitOpti
 
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, filePath, err
+		return nil, filePath, nil, err
 	}
 	lj := &lumberjack.Logger{
 		Filename:   filePath,
@@ -334,7 +367,9 @@ func buildFileCore(enc zapcore.Encoder, atomic zap.AtomicLevel, options InitOpti
 		Compress:   options.Rotation.Compress,
 		LocalTime:  options.Rotation.LocalTime,
 	}
-	return zapcore.NewCore(enc, zapcore.AddSync(lj), atomic), filePath, nil
+	return zapcore.NewCore(enc, zapcore.AddSync(lj), atomic), filePath, func() {
+		_ = lj.Close()
+	}, nil
 }
 
 type sinkCore struct {
@@ -405,6 +440,23 @@ func (s *sinkCore) Write(entry zapcore.Entry, fields []zapcore.Field) error {
 
 func (s *sinkCore) Sync() error {
 	return s.core.Sync()
+}
+
+func chainClosers(cleanups ...func()) func() {
+	filtered := make([]func(), 0, len(cleanups))
+	for _, cleanup := range cleanups {
+		if cleanup != nil {
+			filtered = append(filtered, cleanup)
+		}
+	}
+	if len(filtered) == 0 {
+		return nil
+	}
+	return func() {
+		for _, cleanup := range filtered {
+			cleanup()
+		}
+	}
 }
 
 type stdLogBridge struct {

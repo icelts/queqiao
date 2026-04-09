@@ -392,6 +392,8 @@ var (
 		{Name: "weekly_limit_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "monthly_limit_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "default_validity_days", Type: field.TypeInt, Default: 30},
+		{Name: "purchase_enabled", Type: field.TypeBool, Default: false},
+		{Name: "purchase_price", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "image_price_1k", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "image_price_2k", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "image_price_4k", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
@@ -447,7 +449,7 @@ var (
 			{
 				Name:    "group_sort_order",
 				Unique:  false,
-				Columns: []*schema.Column{GroupsColumns[30]},
+				Columns: []*schema.Column{GroupsColumns[32]},
 			},
 		},
 	}
@@ -597,6 +599,67 @@ var (
 			},
 		},
 	}
+	// RechargeOrdersColumns holds the columns for the "recharge_orders" table.
+	RechargeOrdersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "order_no", Type: field.TypeString, Unique: true, Size: 64},
+		{Name: "external_order_id", Type: field.TypeString, Nullable: true, Size: 128},
+		{Name: "channel", Type: field.TypeString, Size: 50, Default: ""},
+		{Name: "source", Type: field.TypeString, Size: 30, Default: "payment"},
+		{Name: "currency", Type: field.TypeString, Size: 16, Default: "CNY"},
+		{Name: "amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "credited_amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "status", Type: field.TypeString, Size: 20, Default: "pending"},
+		{Name: "paid_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "refunded_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "callback_idempotency_key", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "callback_raw", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "user_id", Type: field.TypeInt64},
+	}
+	// RechargeOrdersTable holds the schema information for the "recharge_orders" table.
+	RechargeOrdersTable = &schema.Table{
+		Name:       "recharge_orders",
+		Columns:    RechargeOrdersColumns,
+		PrimaryKey: []*schema.Column{RechargeOrdersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "recharge_orders_users_recharge_orders",
+				Columns:    []*schema.Column{RechargeOrdersColumns[16]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "rechargeorder_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{RechargeOrdersColumns[16]},
+			},
+			{
+				Name:    "rechargeorder_status",
+				Unique:  false,
+				Columns: []*schema.Column{RechargeOrdersColumns[10]},
+			},
+			{
+				Name:    "rechargeorder_external_order_id",
+				Unique:  false,
+				Columns: []*schema.Column{RechargeOrdersColumns[4]},
+			},
+			{
+				Name:    "rechargeorder_paid_at",
+				Unique:  false,
+				Columns: []*schema.Column{RechargeOrdersColumns[11]},
+			},
+			{
+				Name:    "rechargeorder_callback_idempotency_key",
+				Unique:  false,
+				Columns: []*schema.Column{RechargeOrdersColumns[13]},
+			},
+		},
+	}
 	// RedeemCodesColumns holds the columns for the "redeem_codes" table.
 	RedeemCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -645,6 +708,140 @@ var (
 				Name:    "redeemcode_group_id",
 				Unique:  false,
 				Columns: []*schema.Column{RedeemCodesColumns[9]},
+			},
+		},
+	}
+	// ReferralCommissionsColumns holds the columns for the "referral_commissions" table.
+	ReferralCommissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "commission_type", Type: field.TypeString, Size: 20, Default: "first"},
+		{Name: "status", Type: field.TypeString, Size: 20, Default: "recorded"},
+		{Name: "source_amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "rate_snapshot", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
+		{Name: "commission_amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "reversed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "reversed_reason", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "recharge_order_id", Type: field.TypeInt64},
+		{Name: "promoter_user_id", Type: field.TypeInt64},
+		{Name: "referred_user_id", Type: field.TypeInt64},
+	}
+	// ReferralCommissionsTable holds the schema information for the "referral_commissions" table.
+	ReferralCommissionsTable = &schema.Table{
+		Name:       "referral_commissions",
+		Columns:    ReferralCommissionsColumns,
+		PrimaryKey: []*schema.Column{ReferralCommissionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "referral_commissions_recharge_orders_referral_commissions",
+				Columns:    []*schema.Column{ReferralCommissionsColumns[11]},
+				RefColumns: []*schema.Column{RechargeOrdersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "referral_commissions_users_promoter_commissions",
+				Columns:    []*schema.Column{ReferralCommissionsColumns[12]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "referral_commissions_users_referred_commissions",
+				Columns:    []*schema.Column{ReferralCommissionsColumns[13]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "referralcommission_promoter_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralCommissionsColumns[12]},
+			},
+			{
+				Name:    "referralcommission_referred_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralCommissionsColumns[13]},
+			},
+			{
+				Name:    "referralcommission_recharge_order_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralCommissionsColumns[11]},
+			},
+			{
+				Name:    "referralcommission_commission_type",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralCommissionsColumns[3]},
+			},
+			{
+				Name:    "referralcommission_status",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralCommissionsColumns[4]},
+			},
+			{
+				Name:    "referralcommission_recharge_order_id_commission_type",
+				Unique:  true,
+				Columns: []*schema.Column{ReferralCommissionsColumns[11], ReferralCommissionsColumns[3]},
+			},
+		},
+	}
+	// ReferralWithdrawalRequestsColumns holds the columns for the "referral_withdrawal_requests" table.
+	ReferralWithdrawalRequestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "currency", Type: field.TypeString, Size: 16, Default: "CNY"},
+		{Name: "payment_method", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "account_name", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "account_identifier", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "status", Type: field.TypeString, Size: 20, Default: "pending"},
+		{Name: "reviewed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "review_notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "promoter_user_id", Type: field.TypeInt64},
+		{Name: "reviewer_user_id", Type: field.TypeInt64, Nullable: true},
+	}
+	// ReferralWithdrawalRequestsTable holds the schema information for the "referral_withdrawal_requests" table.
+	ReferralWithdrawalRequestsTable = &schema.Table{
+		Name:       "referral_withdrawal_requests",
+		Columns:    ReferralWithdrawalRequestsColumns,
+		PrimaryKey: []*schema.Column{ReferralWithdrawalRequestsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "referral_withdrawal_requests_users_referral_withdrawal_requests",
+				Columns:    []*schema.Column{ReferralWithdrawalRequestsColumns[12]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "referral_withdrawal_requests_users_reviewed_referral_withdrawals",
+				Columns:    []*schema.Column{ReferralWithdrawalRequestsColumns[13]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "referralwithdrawalrequest_promoter_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[12]},
+			},
+			{
+				Name:    "referralwithdrawalrequest_reviewer_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[13]},
+			},
+			{
+				Name:    "referralwithdrawalrequest_status",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[8]},
+			},
+			{
+				Name:    "referralwithdrawalrequest_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[1]},
 			},
 		},
 	}
@@ -887,19 +1084,33 @@ var (
 		{Name: "balance", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "concurrency", Type: field.TypeInt, Default: 5},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "active"},
+		{Name: "subscription_limit_fallback_to_balance", Type: field.TypeBool, Default: false},
 		{Name: "username", Type: field.TypeString, Size: 100, Default: ""},
 		{Name: "notes", Type: field.TypeString, Default: "", SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "referral_code", Type: field.TypeString, Size: 32, Default: ""},
+		{Name: "custom_first_commission_rate", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
+		{Name: "custom_recurring_commission_rate", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
+		{Name: "recurring_commission_enabled", Type: field.TypeBool, Default: false},
 		{Name: "totp_secret_encrypted", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "totp_enabled", Type: field.TypeBool, Default: false},
 		{Name: "totp_enabled_at", Type: field.TypeTime, Nullable: true},
 		{Name: "sora_storage_quota_bytes", Type: field.TypeInt64, Default: 0},
 		{Name: "sora_storage_used_bytes", Type: field.TypeInt64, Default: 0},
+		{Name: "inviter_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "users_users_invitees",
+				Columns:    []*schema.Column{UsersColumns[22]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
 				Name:    "user_status",
@@ -910,6 +1121,16 @@ var (
 				Name:    "user_deleted_at",
 				Unique:  false,
 				Columns: []*schema.Column{UsersColumns[3]},
+			},
+			{
+				Name:    "user_inviter_id",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[22]},
+			},
+			{
+				Name:    "user_referral_code",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[13]},
 			},
 		},
 	}
@@ -1134,7 +1355,10 @@ var (
 		PromoCodesTable,
 		PromoCodeUsagesTable,
 		ProxiesTable,
+		RechargeOrdersTable,
 		RedeemCodesTable,
+		ReferralCommissionsTable,
+		ReferralWithdrawalRequestsTable,
 		SecuritySecretsTable,
 		SettingsTable,
 		TLSFingerprintProfilesTable,
@@ -1191,10 +1415,25 @@ func init() {
 	ProxiesTable.Annotation = &entsql.Annotation{
 		Table: "proxies",
 	}
+	RechargeOrdersTable.ForeignKeys[0].RefTable = UsersTable
+	RechargeOrdersTable.Annotation = &entsql.Annotation{
+		Table: "recharge_orders",
+	}
 	RedeemCodesTable.ForeignKeys[0].RefTable = GroupsTable
 	RedeemCodesTable.ForeignKeys[1].RefTable = UsersTable
 	RedeemCodesTable.Annotation = &entsql.Annotation{
 		Table: "redeem_codes",
+	}
+	ReferralCommissionsTable.ForeignKeys[0].RefTable = RechargeOrdersTable
+	ReferralCommissionsTable.ForeignKeys[1].RefTable = UsersTable
+	ReferralCommissionsTable.ForeignKeys[2].RefTable = UsersTable
+	ReferralCommissionsTable.Annotation = &entsql.Annotation{
+		Table: "referral_commissions",
+	}
+	ReferralWithdrawalRequestsTable.ForeignKeys[0].RefTable = UsersTable
+	ReferralWithdrawalRequestsTable.ForeignKeys[1].RefTable = UsersTable
+	ReferralWithdrawalRequestsTable.Annotation = &entsql.Annotation{
+		Table: "referral_withdrawal_requests",
 	}
 	SecuritySecretsTable.Annotation = &entsql.Annotation{
 		Table: "security_secrets",
@@ -1216,6 +1455,7 @@ func init() {
 	UsageLogsTable.Annotation = &entsql.Annotation{
 		Table: "usage_logs",
 	}
+	UsersTable.ForeignKeys[0].RefTable = UsersTable
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
 	}

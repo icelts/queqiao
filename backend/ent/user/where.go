@@ -100,6 +100,11 @@ func Status(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldStatus, v))
 }
 
+// SubscriptionLimitFallbackToBalance applies equality check predicate on the "subscription_limit_fallback_to_balance" field. It's identical to SubscriptionLimitFallbackToBalanceEQ.
+func SubscriptionLimitFallbackToBalance(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldSubscriptionLimitFallbackToBalance, v))
+}
+
 // Username applies equality check predicate on the "username" field. It's identical to UsernameEQ.
 func Username(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUsername, v))
@@ -108,6 +113,31 @@ func Username(v string) predicate.User {
 // Notes applies equality check predicate on the "notes" field. It's identical to NotesEQ.
 func Notes(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldNotes, v))
+}
+
+// InviterID applies equality check predicate on the "inviter_id" field. It's identical to InviterIDEQ.
+func InviterID(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldInviterID, v))
+}
+
+// ReferralCode applies equality check predicate on the "referral_code" field. It's identical to ReferralCodeEQ.
+func ReferralCode(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldReferralCode, v))
+}
+
+// CustomFirstCommissionRate applies equality check predicate on the "custom_first_commission_rate" field. It's identical to CustomFirstCommissionRateEQ.
+func CustomFirstCommissionRate(v float64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomRecurringCommissionRate applies equality check predicate on the "custom_recurring_commission_rate" field. It's identical to CustomRecurringCommissionRateEQ.
+func CustomRecurringCommissionRate(v float64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldCustomRecurringCommissionRate, v))
+}
+
+// RecurringCommissionEnabled applies equality check predicate on the "recurring_commission_enabled" field. It's identical to RecurringCommissionEnabledEQ.
+func RecurringCommissionEnabled(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldRecurringCommissionEnabled, v))
 }
 
 // TotpSecretEncrypted applies equality check predicate on the "totp_secret_encrypted" field. It's identical to TotpSecretEncryptedEQ.
@@ -605,6 +635,16 @@ func StatusContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldStatus, v))
 }
 
+// SubscriptionLimitFallbackToBalanceEQ applies the EQ predicate on the "subscription_limit_fallback_to_balance" field.
+func SubscriptionLimitFallbackToBalanceEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldSubscriptionLimitFallbackToBalance, v))
+}
+
+// SubscriptionLimitFallbackToBalanceNEQ applies the NEQ predicate on the "subscription_limit_fallback_to_balance" field.
+func SubscriptionLimitFallbackToBalanceNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldSubscriptionLimitFallbackToBalance, v))
+}
+
 // UsernameEQ applies the EQ predicate on the "username" field.
 func UsernameEQ(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUsername, v))
@@ -733,6 +773,211 @@ func NotesEqualFold(v string) predicate.User {
 // NotesContainsFold applies the ContainsFold predicate on the "notes" field.
 func NotesContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldNotes, v))
+}
+
+// InviterIDEQ applies the EQ predicate on the "inviter_id" field.
+func InviterIDEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldInviterID, v))
+}
+
+// InviterIDNEQ applies the NEQ predicate on the "inviter_id" field.
+func InviterIDNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldInviterID, v))
+}
+
+// InviterIDIn applies the In predicate on the "inviter_id" field.
+func InviterIDIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldInviterID, vs...))
+}
+
+// InviterIDNotIn applies the NotIn predicate on the "inviter_id" field.
+func InviterIDNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldInviterID, vs...))
+}
+
+// InviterIDIsNil applies the IsNil predicate on the "inviter_id" field.
+func InviterIDIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldInviterID))
+}
+
+// InviterIDNotNil applies the NotNil predicate on the "inviter_id" field.
+func InviterIDNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldInviterID))
+}
+
+// ReferralCodeEQ applies the EQ predicate on the "referral_code" field.
+func ReferralCodeEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldReferralCode, v))
+}
+
+// ReferralCodeNEQ applies the NEQ predicate on the "referral_code" field.
+func ReferralCodeNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldReferralCode, v))
+}
+
+// ReferralCodeIn applies the In predicate on the "referral_code" field.
+func ReferralCodeIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldReferralCode, vs...))
+}
+
+// ReferralCodeNotIn applies the NotIn predicate on the "referral_code" field.
+func ReferralCodeNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldReferralCode, vs...))
+}
+
+// ReferralCodeGT applies the GT predicate on the "referral_code" field.
+func ReferralCodeGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldReferralCode, v))
+}
+
+// ReferralCodeGTE applies the GTE predicate on the "referral_code" field.
+func ReferralCodeGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldReferralCode, v))
+}
+
+// ReferralCodeLT applies the LT predicate on the "referral_code" field.
+func ReferralCodeLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldReferralCode, v))
+}
+
+// ReferralCodeLTE applies the LTE predicate on the "referral_code" field.
+func ReferralCodeLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldReferralCode, v))
+}
+
+// ReferralCodeContains applies the Contains predicate on the "referral_code" field.
+func ReferralCodeContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldReferralCode, v))
+}
+
+// ReferralCodeHasPrefix applies the HasPrefix predicate on the "referral_code" field.
+func ReferralCodeHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldReferralCode, v))
+}
+
+// ReferralCodeHasSuffix applies the HasSuffix predicate on the "referral_code" field.
+func ReferralCodeHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldReferralCode, v))
+}
+
+// ReferralCodeEqualFold applies the EqualFold predicate on the "referral_code" field.
+func ReferralCodeEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldReferralCode, v))
+}
+
+// ReferralCodeContainsFold applies the ContainsFold predicate on the "referral_code" field.
+func ReferralCodeContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldReferralCode, v))
+}
+
+// CustomFirstCommissionRateEQ applies the EQ predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateEQ(v float64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomFirstCommissionRateNEQ applies the NEQ predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateNEQ(v float64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomFirstCommissionRateIn applies the In predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateIn(vs ...float64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldCustomFirstCommissionRate, vs...))
+}
+
+// CustomFirstCommissionRateNotIn applies the NotIn predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateNotIn(vs ...float64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldCustomFirstCommissionRate, vs...))
+}
+
+// CustomFirstCommissionRateGT applies the GT predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateGT(v float64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomFirstCommissionRateGTE applies the GTE predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateGTE(v float64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomFirstCommissionRateLT applies the LT predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateLT(v float64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomFirstCommissionRateLTE applies the LTE predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateLTE(v float64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldCustomFirstCommissionRate, v))
+}
+
+// CustomFirstCommissionRateIsNil applies the IsNil predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldCustomFirstCommissionRate))
+}
+
+// CustomFirstCommissionRateNotNil applies the NotNil predicate on the "custom_first_commission_rate" field.
+func CustomFirstCommissionRateNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldCustomFirstCommissionRate))
+}
+
+// CustomRecurringCommissionRateEQ applies the EQ predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateEQ(v float64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldCustomRecurringCommissionRate, v))
+}
+
+// CustomRecurringCommissionRateNEQ applies the NEQ predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateNEQ(v float64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldCustomRecurringCommissionRate, v))
+}
+
+// CustomRecurringCommissionRateIn applies the In predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateIn(vs ...float64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldCustomRecurringCommissionRate, vs...))
+}
+
+// CustomRecurringCommissionRateNotIn applies the NotIn predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateNotIn(vs ...float64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldCustomRecurringCommissionRate, vs...))
+}
+
+// CustomRecurringCommissionRateGT applies the GT predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateGT(v float64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldCustomRecurringCommissionRate, v))
+}
+
+// CustomRecurringCommissionRateGTE applies the GTE predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateGTE(v float64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldCustomRecurringCommissionRate, v))
+}
+
+// CustomRecurringCommissionRateLT applies the LT predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateLT(v float64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldCustomRecurringCommissionRate, v))
+}
+
+// CustomRecurringCommissionRateLTE applies the LTE predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateLTE(v float64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldCustomRecurringCommissionRate, v))
+}
+
+// CustomRecurringCommissionRateIsNil applies the IsNil predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldCustomRecurringCommissionRate))
+}
+
+// CustomRecurringCommissionRateNotNil applies the NotNil predicate on the "custom_recurring_commission_rate" field.
+func CustomRecurringCommissionRateNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldCustomRecurringCommissionRate))
+}
+
+// RecurringCommissionEnabledEQ applies the EQ predicate on the "recurring_commission_enabled" field.
+func RecurringCommissionEnabledEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldRecurringCommissionEnabled, v))
+}
+
+// RecurringCommissionEnabledNEQ applies the NEQ predicate on the "recurring_commission_enabled" field.
+func RecurringCommissionEnabledNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldRecurringCommissionEnabled, v))
 }
 
 // TotpSecretEncryptedEQ applies the EQ predicate on the "totp_secret_encrypted" field.
@@ -1149,6 +1394,167 @@ func HasPromoCodeUsages() predicate.User {
 func HasPromoCodeUsagesWith(preds ...predicate.PromoCodeUsage) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newPromoCodeUsagesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasInvitees applies the HasEdge predicate on the "invitees" edge.
+func HasInvitees() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, InviteesTable, InviteesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInviteesWith applies the HasEdge predicate on the "invitees" edge with a given conditions (other predicates).
+func HasInviteesWith(preds ...predicate.User) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newInviteesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasInviter applies the HasEdge predicate on the "inviter" edge.
+func HasInviter() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, InviterTable, InviterColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInviterWith applies the HasEdge predicate on the "inviter" edge with a given conditions (other predicates).
+func HasInviterWith(preds ...predicate.User) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newInviterStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRechargeOrders applies the HasEdge predicate on the "recharge_orders" edge.
+func HasRechargeOrders() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RechargeOrdersTable, RechargeOrdersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRechargeOrdersWith applies the HasEdge predicate on the "recharge_orders" edge with a given conditions (other predicates).
+func HasRechargeOrdersWith(preds ...predicate.RechargeOrder) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newRechargeOrdersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPromoterCommissions applies the HasEdge predicate on the "promoter_commissions" edge.
+func HasPromoterCommissions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PromoterCommissionsTable, PromoterCommissionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPromoterCommissionsWith applies the HasEdge predicate on the "promoter_commissions" edge with a given conditions (other predicates).
+func HasPromoterCommissionsWith(preds ...predicate.ReferralCommission) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newPromoterCommissionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReferredCommissions applies the HasEdge predicate on the "referred_commissions" edge.
+func HasReferredCommissions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReferredCommissionsTable, ReferredCommissionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReferredCommissionsWith applies the HasEdge predicate on the "referred_commissions" edge with a given conditions (other predicates).
+func HasReferredCommissionsWith(preds ...predicate.ReferralCommission) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newReferredCommissionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReferralWithdrawalRequests applies the HasEdge predicate on the "referral_withdrawal_requests" edge.
+func HasReferralWithdrawalRequests() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReferralWithdrawalRequestsTable, ReferralWithdrawalRequestsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReferralWithdrawalRequestsWith applies the HasEdge predicate on the "referral_withdrawal_requests" edge with a given conditions (other predicates).
+func HasReferralWithdrawalRequestsWith(preds ...predicate.ReferralWithdrawalRequest) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newReferralWithdrawalRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReviewedReferralWithdrawals applies the HasEdge predicate on the "reviewed_referral_withdrawals" edge.
+func HasReviewedReferralWithdrawals() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReviewedReferralWithdrawalsTable, ReviewedReferralWithdrawalsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReviewedReferralWithdrawalsWith applies the HasEdge predicate on the "reviewed_referral_withdrawals" edge with a given conditions (other predicates).
+func HasReviewedReferralWithdrawalsWith(preds ...predicate.ReferralWithdrawalRequest) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newReviewedReferralWithdrawalsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -20,6 +20,20 @@
           />
         </div>
 
+        <div class="rounded-lg border border-gray-200 p-4 dark:border-dark-600">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ t('profile.subscriptionLimitFallbackToggle') }}
+              </p>
+              <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                {{ t('profile.subscriptionLimitFallbackToggleHint') }}
+              </p>
+            </div>
+            <Toggle v-model="subscriptionLimitFallbackToBalance" />
+          </div>
+        </div>
+
         <div class="flex justify-end pt-4">
           <button type="submit" :disabled="loading" class="btn btn-primary">
             {{ loading ? t('profile.updating') : t('profile.updateProfile') }}
@@ -36,9 +50,11 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { userAPI } from '@/api'
+import Toggle from '@/components/common/Toggle.vue'
 
 const props = defineProps<{
   initialUsername: string
+  initialSubscriptionLimitFallbackToBalance: boolean
 }>()
 
 const { t } = useI18n()
@@ -46,10 +62,15 @@ const authStore = useAuthStore()
 const appStore = useAppStore()
 
 const username = ref(props.initialUsername)
+const subscriptionLimitFallbackToBalance = ref(props.initialSubscriptionLimitFallbackToBalance)
 const loading = ref(false)
 
-watch(() => props.initialUsername, (val) => {
-  username.value = val
+watch(() => props.initialUsername, (initialUsername) => {
+  username.value = initialUsername
+})
+
+watch(() => props.initialSubscriptionLimitFallbackToBalance, (initialFallback) => {
+  subscriptionLimitFallbackToBalance.value = initialFallback
 })
 
 const handleUpdateProfile = async () => {
@@ -61,7 +82,8 @@ const handleUpdateProfile = async () => {
   loading.value = true
   try {
     const updatedUser = await userAPI.updateProfile({
-      username: username.value
+      username: username.value,
+      subscription_limit_fallback_to_balance: subscriptionLimitFallbackToBalance.value
     })
     authStore.user = updatedUser
     appStore.showSuccess(t('profile.updateSuccess'))

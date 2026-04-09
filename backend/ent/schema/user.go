@@ -33,8 +33,7 @@ func (User) Mixin() []ent.Mixin {
 
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		// 唯一约束通过部分索引实现（WHERE deleted_at IS NULL），支持软删除后重用
-		// 见迁移文件 016_soft_delete_partial_unique_indexes.sql
+		// Unique is enforced through a partial index so soft-deleted rows can be reused.
 		field.String("email").
 			MaxLen(255).
 			NotEmpty(),
@@ -52,17 +51,32 @@ func (User) Fields() []ent.Field {
 		field.String("status").
 			MaxLen(20).
 			Default(domain.StatusActive),
+		field.Bool("subscription_limit_fallback_to_balance").
+			Default(false),
 
-		// Optional profile fields (added later; default '' in DB migration)
 		field.String("username").
 			MaxLen(100).
 			Default(""),
-		// wechat field migrated to user_attribute_values (see migration 019)
 		field.String("notes").
 			SchemaType(map[string]string{dialect.Postgres: "text"}).
 			Default(""),
+		field.Int64("inviter_id").
+			Optional().
+			Nillable(),
+		field.String("referral_code").
+			MaxLen(32).
+			Default(""),
+		field.Float("custom_first_commission_rate").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
+			Optional().
+			Nillable(),
+		field.Float("custom_recurring_commission_rate").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
+			Optional().
+			Nillable(),
+		field.Bool("recurring_commission_enabled").
+			Default(false),
 
-		// TOTP 双因素认证字段
 		field.String("totp_secret_encrypted").
 			SchemaType(map[string]string{dialect.Postgres: "text"}).
 			Optional().
@@ -73,7 +87,6 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Nillable(),
 
-		// Sora 存储配额
 		field.Int64("sora_storage_quota_bytes").
 			Default(0),
 		field.Int64("sora_storage_used_bytes").
@@ -93,13 +106,24 @@ func (User) Edges() []ent.Edge {
 		edge.To("usage_logs", UsageLog.Type),
 		edge.To("attribute_values", UserAttributeValue.Type),
 		edge.To("promo_code_usages", PromoCodeUsage.Type),
+		edge.To("invitees", User.Type),
+		edge.From("inviter", User.Type).
+			Ref("invitees").
+			Field("inviter_id").
+			Unique(),
+		edge.To("recharge_orders", RechargeOrder.Type),
+		edge.To("promoter_commissions", ReferralCommission.Type),
+		edge.To("referred_commissions", ReferralCommission.Type),
+		edge.To("referral_withdrawal_requests", ReferralWithdrawalRequest.Type),
+		edge.To("reviewed_referral_withdrawals", ReferralWithdrawalRequest.Type),
 	}
 }
 
 func (User) Indexes() []ent.Index {
 	return []ent.Index{
-		// email 字段已在 Fields() 中声明 Unique()，无需重复索引
 		index.Fields("status"),
 		index.Fields("deleted_at"),
+		index.Fields("inviter_id"),
+		index.Fields("referral_code"),
 	}
 }

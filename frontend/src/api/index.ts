@@ -14,6 +14,23 @@ export { keysAPI } from './keys'
 export { usageAPI } from './usage'
 export { userAPI } from './user'
 export { redeemAPI, type RedeemHistoryItem } from './redeem'
+export {
+  rechargeAPI,
+  type RechargeOrder,
+  type CreateRechargeOrderRequest,
+  type CreateRechargeOrderResponse,
+  type XunhuPaymentResult,
+  type XunhuQueryPaymentResult,
+  type ReconcileRechargeOrderResponse
+} from './recharge'
+export {
+  referralAPI,
+  type ReferralSummary,
+  type ReferralInvitee,
+  type ReferralCommission,
+  type ReferralWithdrawalRequest,
+  type CreateReferralWithdrawalPayload
+} from './referral'
 export { userGroupsAPI } from './groups'
 export { totpAPI } from './totp'
 export { default as announcementsAPI } from './announcements'

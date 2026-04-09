@@ -194,6 +194,17 @@ func TestSettingService_UpdateSettings_RegistrationEmailSuffixWhitelist_Invalid(
 	require.Equal(t, "INVALID_REGISTRATION_EMAIL_SUFFIX_WHITELIST", infraerrors.Reason(err))
 }
 
+func TestSettingService_UpdateSettings_PersistsBalanceRechargeRatio(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	svc := NewSettingService(repo, &config.Config{})
+
+	err := svc.UpdateSettings(context.Background(), &SystemSettings{
+		BalanceRechargeRatio: 100,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "100.00000000", repo.updates[SettingKeyBalanceRechargeRatio])
+}
+
 func TestParseDefaultSubscriptions_NormalizesValues(t *testing.T) {
 	got := parseDefaultSubscriptions(`[{"group_id":11,"validity_days":30},{"group_id":11,"validity_days":60},{"group_id":0,"validity_days":10},{"group_id":12,"validity_days":99999}]`)
 	require.Equal(t, []DefaultSubscriptionSetting{

@@ -1164,6 +1164,148 @@
             </div>
           </div>
         </div>
+
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.affiliate.title') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.affiliate.description') }}
+            </p>
+          </div>
+          <div class="space-y-5 p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="font-medium text-gray-900 dark:text-white">
+                  {{ t('admin.settings.affiliate.enabled') }}
+                </label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.affiliate.enabledHint') }}
+                </p>
+              </div>
+              <Toggle v-model="form.affiliate_enabled" />
+            </div>
+
+            <div
+              v-if="form.affiliate_enabled"
+              class="space-y-5 border-t border-gray-100 pt-5 dark:border-dark-700"
+            >
+              <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-600">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <label class="font-medium text-gray-900 dark:text-white">
+                        {{ t('admin.settings.affiliate.firstEnabled') }}
+                      </label>
+                      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {{ t('admin.settings.affiliate.firstEnabledHint') }}
+                      </p>
+                    </div>
+                    <Toggle v-model="form.first_commission_enabled" />
+                  </div>
+
+                  <div v-if="form.first_commission_enabled" class="mt-4">
+                    <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.affiliate.firstRate') }}
+                    </label>
+                    <div class="flex items-center gap-3">
+                      <input
+                        v-model.number="form.default_first_commission_rate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        class="input"
+                      />
+                      <span class="text-sm text-gray-500 dark:text-gray-400">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-600">
+                  <div class="flex items-center justify-between gap-4">
+                    <div>
+                      <label class="font-medium text-gray-900 dark:text-white">
+                        {{ '允许指定用户开启续充返佣' }}
+                      </label>
+                      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {{ '这里是总闸，只有在用户管理里被单独开启二次返佣的用户，才会获得续充返佣。' }}
+                      </p>
+                    </div>
+                    <Toggle v-model="form.recurring_commission_enabled" />
+                  </div>
+                  <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    该开关是续充返佣总闸。开启后，仍然只有在用户管理里单独开启“二次返佣”的用户才会获得续充返佣；未开启的普通用户依然只有首充返佣。
+                  </p>
+
+                  <div v-if="form.recurring_commission_enabled" class="mt-4">
+                    <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.affiliate.recurringRate') }}
+                    </label>
+                    <div class="flex items-center gap-3">
+                      <input
+                        v-model.number="form.default_recurring_commission_rate"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        class="input"
+                      />
+                      <span class="text-sm text-gray-500 dark:text-gray-400">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-500 dark:bg-dark-700/60 dark:text-gray-400">
+                {{ t('admin.settings.affiliate.rateHint') }}
+              </p>
+
+              <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-600">
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <label class="font-medium text-gray-900 dark:text-white">
+                      {{ t('admin.settings.affiliate.withdrawEnabled') }}
+                    </label>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {{ t('admin.settings.affiliate.withdrawEnabledHint') }}
+                    </p>
+                  </div>
+                  <Toggle v-model="form.affiliate_withdraw_enabled" />
+                </div>
+
+                <div v-if="form.affiliate_withdraw_enabled" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.affiliate.withdrawMinAmount') }}
+                    </label>
+                    <input
+                      v-model.number="form.affiliate_withdraw_min_amount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      class="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.affiliate.withdrawMinInvitees') }}
+                    </label>
+                    <input
+                      v-model.number="form.affiliate_withdraw_min_invitees"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="input"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         </div><!-- /Tab: Users -->
 
         <!-- Tab: Gateway — Claude Code, Scheduling -->
@@ -1512,6 +1654,177 @@
           </div>
         </div>
 
+        <div class="card">
+          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('admin.settings.xunhupay.title') }}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('admin.settings.xunhupay.description') }}
+            </p>
+          </div>
+          <div class="space-y-5 p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="font-medium text-gray-900 dark:text-white">{{
+                  t('admin.settings.xunhupay.enabled')
+                }}</label>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.xunhupay.enabledHint') }}
+                </p>
+              </div>
+              <Toggle v-model="form.xunhupay_enabled" />
+            </div>
+
+            <div
+              v-if="form.xunhupay_enabled"
+              class="space-y-5 border-t border-gray-100 pt-5 dark:border-dark-700"
+            >
+              <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.baseUrl') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_base_url"
+                    type="url"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.baseUrlPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.xunhupay.baseUrlHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.plugins') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_plugins"
+                    type="text"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.pluginsPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.xunhupay.pluginsHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.appId') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_appid"
+                    type="text"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.appIdPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.xunhupay.appIdHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.appSecret') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_appsecret"
+                    type="password"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.appSecretPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{
+                      form.xunhupay_appsecret_configured
+                        ? t('admin.settings.xunhupay.appSecretConfiguredHint')
+                        : t('admin.settings.xunhupay.appSecretHint')
+                    }}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ t('admin.settings.xunhupay.balanceRechargeRatio') }}
+                </label>
+                <input
+                  v-model.number="form.balance_recharge_ratio"
+                  type="number"
+                  min="0.00000001"
+                  step="0.01"
+                  class="input max-w-sm"
+                  :placeholder="t('admin.settings.xunhupay.balanceRechargeRatioPlaceholder')"
+                />
+                <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.xunhupay.balanceRechargeRatioHint') }}
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 gap-6">
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.notifyUrl') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_notify_url"
+                    type="url"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.notifyUrlPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.xunhupay.notifyUrlHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.returnUrl') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_return_url"
+                    type="url"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.returnUrlPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.xunhupay.returnUrlHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.xunhupay.callbackUrl') }}
+                  </label>
+                  <input
+                    v-model="form.xunhupay_callback_url"
+                    type="url"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.xunhupay.callbackUrlPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.xunhupay.callbackUrlHint') }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-500 dark:bg-dark-700/60 dark:text-gray-400">
+                <a
+                  href="https://www.xunhupay.com/doc/prepare.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-300"
+                >
+                  {{ t('admin.settings.xunhupay.docLink') }}
+                </a>
+                <span class="ml-2">{{ t('admin.settings.xunhupay.docHint') }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Purchase Subscription Page -->
         <div class="card">
           <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
@@ -1573,31 +1886,6 @@
               <span class="text-xs text-gray-500 dark:text-gray-400">
                 {{ t('admin.settings.purchase.integrationDocHint') }}
               </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sora Client Toggle -->
-        <div class="card">
-          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('admin.settings.soraClient.title') }}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.soraClient.description') }}
-            </p>
-          </div>
-          <div class="space-y-6 p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="font-medium text-gray-900 dark:text-white">{{
-                  t('admin.settings.soraClient.enabled')
-                }}</label>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.soraClient.enabledHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.sora_client_enabled" />
             </div>
           </div>
         </div>
@@ -1956,13 +2244,8 @@
           <BackupSettings />
         </div>
 
-        <!-- Tab: Data Management -->
-        <div v-show="activeTab === 'data'">
-          <DataManagementSettings />
-        </div>
-
         <!-- Save Button -->
-        <div v-show="activeTab !== 'backup' && activeTab !== 'data'" class="flex justify-end">
+        <div v-show="activeTab !== 'backup'" class="flex justify-end">
           <button type="submit" :disabled="saving || loadFailed" class="btn btn-primary">
             <svg v-if="saving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle
@@ -2005,7 +2288,6 @@ import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
 import Toggle from '@/components/common/Toggle.vue'
 import ImageUpload from '@/components/common/ImageUpload.vue'
 import BackupSettings from '@/views/admin/BackupView.vue'
-import DataManagementSettings from '@/views/admin/DataManagementView.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { useAppStore } from '@/stores'
 import { useAdminSettingsStore } from '@/stores/adminSettings'
@@ -2020,7 +2302,7 @@ const { t } = useI18n()
 const appStore = useAppStore()
 const adminSettingsStore = useAdminSettingsStore()
 
-type SettingsTab = 'general' | 'security' | 'users' | 'gateway' | 'email' | 'backup' | 'data'
+type SettingsTab = 'general' | 'security' | 'users' | 'gateway' | 'email' | 'backup'
 const activeTab = ref<SettingsTab>('general')
 const settingsTabs = [
   { key: 'general'  as SettingsTab, icon: 'home'   as const },
@@ -2103,10 +2385,11 @@ interface DefaultSubscriptionGroupOption {
   [key: string]: unknown
 }
 
-type SettingsForm = SystemSettings & {
+type SettingsForm = Omit<SystemSettings, 'sora_client_enabled'> & {
   smtp_password: string
   turnstile_secret_key: string
   linuxdo_connect_client_secret: string
+  xunhupay_appsecret: string
 }
 
 const form = reactive<SettingsForm>({
@@ -2121,6 +2404,24 @@ const form = reactive<SettingsForm>({
   default_balance: 0,
   default_concurrency: 1,
   default_subscriptions: [],
+  xunhupay_enabled: false,
+  xunhupay_base_url: 'https://api.xunhupay.com',
+  xunhupay_appid: '',
+  xunhupay_appsecret: '',
+  xunhupay_appsecret_configured: false,
+  xunhupay_notify_url: '',
+  xunhupay_return_url: '',
+  xunhupay_callback_url: '',
+  xunhupay_plugins: 'sub2api',
+  balance_recharge_ratio: 1,
+  affiliate_enabled: false,
+  first_commission_enabled: true,
+  recurring_commission_enabled: false,
+  default_first_commission_rate: 70,
+  default_recurring_commission_rate: 0,
+  affiliate_withdraw_enabled: false,
+  affiliate_withdraw_min_amount: 100,
+  affiliate_withdraw_min_invitees: 3,
   site_name: 'Sub2API',
   site_logo: '',
   site_subtitle: 'Subscription to API Conversion Platform',
@@ -2132,7 +2433,6 @@ const form = reactive<SettingsForm>({
   hide_ccs_import_button: false,
   purchase_subscription_enabled: false,
   purchase_subscription_url: '',
-  sora_client_enabled: false,
   custom_menu_items: [] as Array<{id: string; label: string; icon_svg: string; url: string; visibility: 'user' | 'admin'; sort_order: number}>,
   custom_endpoints: [] as Array<{name: string; endpoint: string; description: string}>,
   frontend_url: '',
@@ -2322,11 +2622,12 @@ async function loadSettings() {
   try {
     const settings = await adminAPI.settings.getSettings()
     Object.assign(form, settings)
+    form.xunhupay_appsecret = ''
     form.backend_mode_enabled = settings.backend_mode_enabled
     form.default_subscriptions = Array.isArray(settings.default_subscriptions)
       ? settings.default_subscriptions
-          .filter((item) => item.group_id > 0 && item.validity_days > 0)
-          .map((item) => ({
+          .filter((item: DefaultSubscriptionSetting) => item.group_id > 0 && item.validity_days > 0)
+          .map((item: DefaultSubscriptionSetting) => ({
             group_id: item.group_id,
             validity_days: item.validity_days
           }))
@@ -2432,6 +2733,54 @@ async function saveSettings() {
       form.purchase_subscription_url = ''
     }
 
+    if (form.xunhupay_enabled) {
+      if (!Number.isFinite(form.balance_recharge_ratio) || form.balance_recharge_ratio <= 0) {
+        appStore.showError(t('admin.settings.xunhupay.balanceRechargeRatioInvalid'))
+        saving.value = false
+        return
+      }
+      if (!form.xunhupay_appid.trim()) {
+        appStore.showError(t('admin.settings.xunhupay.appIdRequired'))
+        saving.value = false
+        return
+      }
+      if (!form.xunhupay_appsecret_configured && !form.xunhupay_appsecret.trim()) {
+        appStore.showError(t('admin.settings.xunhupay.appSecretRequired'))
+        saving.value = false
+        return
+      }
+      if (!form.xunhupay_notify_url.trim()) {
+        appStore.showError(t('admin.settings.xunhupay.notifyUrlRequired'))
+        saving.value = false
+        return
+      }
+      if (!isValidHttpUrl(form.xunhupay_base_url)) {
+        appStore.showError(t('admin.settings.xunhupay.baseUrlInvalid'))
+        saving.value = false
+        return
+      }
+      if (!isValidHttpUrl(form.xunhupay_notify_url)) {
+        appStore.showError(t('admin.settings.xunhupay.notifyUrlInvalid'))
+        saving.value = false
+        return
+      }
+      if (!isValidHttpUrl(form.xunhupay_return_url)) {
+        appStore.showError(t('admin.settings.xunhupay.returnUrlInvalid'))
+        saving.value = false
+        return
+      }
+      if (!isValidHttpUrl(form.xunhupay_callback_url)) {
+        appStore.showError(t('admin.settings.xunhupay.callbackUrlInvalid'))
+        saving.value = false
+        return
+      }
+    } else {
+      if (!isValidHttpUrl(form.xunhupay_base_url)) form.xunhupay_base_url = 'https://api.xunhupay.com'
+      if (!isValidHttpUrl(form.xunhupay_notify_url)) form.xunhupay_notify_url = ''
+      if (!isValidHttpUrl(form.xunhupay_return_url)) form.xunhupay_return_url = ''
+      if (!isValidHttpUrl(form.xunhupay_callback_url)) form.xunhupay_callback_url = ''
+    }
+
     const payload: UpdateSettingsRequest = {
       registration_enabled: form.registration_enabled,
       email_verify_enabled: form.email_verify_enabled,
@@ -2445,6 +2794,23 @@ async function saveSettings() {
       default_balance: form.default_balance,
       default_concurrency: form.default_concurrency,
       default_subscriptions: normalizedDefaultSubscriptions,
+      xunhupay_enabled: form.xunhupay_enabled,
+      xunhupay_base_url: form.xunhupay_base_url,
+      xunhupay_appid: form.xunhupay_appid,
+      xunhupay_appsecret: form.xunhupay_appsecret || undefined,
+      xunhupay_notify_url: form.xunhupay_notify_url,
+      xunhupay_return_url: form.xunhupay_return_url,
+      xunhupay_callback_url: form.xunhupay_callback_url,
+      xunhupay_plugins: form.xunhupay_plugins,
+      balance_recharge_ratio: form.balance_recharge_ratio,
+      affiliate_enabled: form.affiliate_enabled,
+      first_commission_enabled: form.first_commission_enabled,
+      recurring_commission_enabled: form.recurring_commission_enabled,
+      default_first_commission_rate: form.default_first_commission_rate,
+      default_recurring_commission_rate: form.default_recurring_commission_rate,
+      affiliate_withdraw_enabled: form.affiliate_withdraw_enabled,
+      affiliate_withdraw_min_amount: form.affiliate_withdraw_min_amount,
+      affiliate_withdraw_min_invitees: form.affiliate_withdraw_min_invitees,
       site_name: form.site_name,
       site_logo: form.site_logo,
       site_subtitle: form.site_subtitle,
@@ -2456,7 +2822,6 @@ async function saveSettings() {
       hide_ccs_import_button: form.hide_ccs_import_button,
       purchase_subscription_enabled: form.purchase_subscription_enabled,
       purchase_subscription_url: form.purchase_subscription_url,
-      sora_client_enabled: form.sora_client_enabled,
       custom_menu_items: form.custom_menu_items,
       custom_endpoints: form.custom_endpoints,
       frontend_url: form.frontend_url,
@@ -2489,6 +2854,7 @@ async function saveSettings() {
     }
     const updated = await adminAPI.settings.updateSettings(payload)
     Object.assign(form, updated)
+    form.xunhupay_appsecret = ''
     registrationEmailSuffixWhitelistTags.value = normalizeRegistrationEmailSuffixDomains(
       updated.registration_email_suffix_whitelist
     )

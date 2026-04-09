@@ -29,7 +29,8 @@ type ChangePasswordRequest struct {
 
 // UpdateProfileRequest represents the update profile request payload
 type UpdateProfileRequest struct {
-	Username *string `json:"username"`
+	Username                           *string `json:"username"`
+	SubscriptionLimitFallbackToBalance *bool   `json:"subscription_limit_fallback_to_balance"`
 }
 
 // GetProfile handles getting user profile
@@ -94,7 +95,8 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	}
 
 	svcReq := service.UpdateProfileRequest{
-		Username: req.Username,
+		Username:                           req.Username,
+		SubscriptionLimitFallbackToBalance: req.SubscriptionLimitFallbackToBalance,
 	}
 	updatedUser, err := h.userService.UpdateProfile(c.Request.Context(), subject.UserID, svcReq)
 	if err != nil {

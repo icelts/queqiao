@@ -23,7 +23,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/tlsfingerprintprofile"
@@ -94,28 +97,31 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			apikey.Table:                  apikey.ValidColumn,
-			account.Table:                 account.ValidColumn,
-			accountgroup.Table:            accountgroup.ValidColumn,
-			announcement.Table:            announcement.ValidColumn,
-			announcementread.Table:        announcementread.ValidColumn,
-			errorpassthroughrule.Table:    errorpassthroughrule.ValidColumn,
-			group.Table:                   group.ValidColumn,
-			idempotencyrecord.Table:       idempotencyrecord.ValidColumn,
-			promocode.Table:               promocode.ValidColumn,
-			promocodeusage.Table:          promocodeusage.ValidColumn,
-			proxy.Table:                   proxy.ValidColumn,
-			redeemcode.Table:              redeemcode.ValidColumn,
-			securitysecret.Table:          securitysecret.ValidColumn,
-			setting.Table:                 setting.ValidColumn,
-			tlsfingerprintprofile.Table:   tlsfingerprintprofile.ValidColumn,
-			usagecleanuptask.Table:        usagecleanuptask.ValidColumn,
-			usagelog.Table:                usagelog.ValidColumn,
-			user.Table:                    user.ValidColumn,
-			userallowedgroup.Table:        userallowedgroup.ValidColumn,
-			userattributedefinition.Table: userattributedefinition.ValidColumn,
-			userattributevalue.Table:      userattributevalue.ValidColumn,
-			usersubscription.Table:        usersubscription.ValidColumn,
+			apikey.Table:                    apikey.ValidColumn,
+			account.Table:                   account.ValidColumn,
+			accountgroup.Table:              accountgroup.ValidColumn,
+			announcement.Table:              announcement.ValidColumn,
+			announcementread.Table:          announcementread.ValidColumn,
+			errorpassthroughrule.Table:      errorpassthroughrule.ValidColumn,
+			group.Table:                     group.ValidColumn,
+			idempotencyrecord.Table:         idempotencyrecord.ValidColumn,
+			promocode.Table:                 promocode.ValidColumn,
+			promocodeusage.Table:            promocodeusage.ValidColumn,
+			proxy.Table:                     proxy.ValidColumn,
+			rechargeorder.Table:             rechargeorder.ValidColumn,
+			redeemcode.Table:                redeemcode.ValidColumn,
+			referralcommission.Table:        referralcommission.ValidColumn,
+			referralwithdrawalrequest.Table: referralwithdrawalrequest.ValidColumn,
+			securitysecret.Table:            securitysecret.ValidColumn,
+			setting.Table:                   setting.ValidColumn,
+			tlsfingerprintprofile.Table:     tlsfingerprintprofile.ValidColumn,
+			usagecleanuptask.Table:          usagecleanuptask.ValidColumn,
+			usagelog.Table:                  usagelog.ValidColumn,
+			user.Table:                      user.ValidColumn,
+			userallowedgroup.Table:          userallowedgroup.ValidColumn,
+			userattributedefinition.Table:   userattributedefinition.ValidColumn,
+			userattributevalue.Table:        userattributevalue.ValidColumn,
+			usersubscription.Table:          usersubscription.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

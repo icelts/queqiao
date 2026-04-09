@@ -193,11 +193,12 @@ func TestAPIKeyService_GetByKey_UsesL2Cache(t *testing.T) {
 			GroupID:  &groupID,
 			Status:   StatusActive,
 			User: APIKeyAuthUserSnapshot{
-				ID:          2,
-				Status:      StatusActive,
-				Role:        RoleUser,
-				Balance:     10,
-				Concurrency: 3,
+				ID:                                 2,
+				Status:                             StatusActive,
+				Role:                               RoleUser,
+				Balance:                            10,
+				Concurrency:                        3,
+				SubscriptionLimitFallbackToBalance: true,
 			},
 			Group: &APIKeyAuthGroupSnapshot{
 				ID:                  groupID,
@@ -221,6 +222,7 @@ func TestAPIKeyService_GetByKey_UsesL2Cache(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(1), apiKey.ID)
 	require.Equal(t, int64(2), apiKey.User.ID)
+	require.True(t, apiKey.User.SubscriptionLimitFallbackToBalance)
 	require.Equal(t, groupID, apiKey.Group.ID)
 	require.True(t, apiKey.Group.ModelRoutingEnabled)
 	require.Equal(t, map[string][]int64{"claude-opus-*": {1, 2}}, apiKey.Group.ModelRouting)

@@ -3,16 +3,17 @@ package dto
 import "time"
 
 type User struct {
-	ID            int64     `json:"id"`
-	Email         string    `json:"email"`
-	Username      string    `json:"username"`
-	Role          string    `json:"role"`
-	Balance       float64   `json:"balance"`
-	Concurrency   int       `json:"concurrency"`
-	Status        string    `json:"status"`
-	AllowedGroups []int64   `json:"allowed_groups"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID                                 int64     `json:"id"`
+	Email                              string    `json:"email"`
+	Username                           string    `json:"username"`
+	Role                               string    `json:"role"`
+	Balance                            float64   `json:"balance"`
+	Concurrency                        int       `json:"concurrency"`
+	Status                             string    `json:"status"`
+	SubscriptionLimitFallbackToBalance bool      `json:"subscription_limit_fallback_to_balance"`
+	AllowedGroups                      []int64   `json:"allowed_groups"`
+	CreatedAt                          time.Time `json:"created_at"`
+	UpdatedAt                          time.Time `json:"updated_at"`
 
 	APIKeys       []APIKey           `json:"api_keys,omitempty"`
 	Subscriptions []UserSubscription `json:"subscriptions,omitempty"`
@@ -23,7 +24,12 @@ type User struct {
 type AdminUser struct {
 	User
 
-	Notes string `json:"notes"`
+	Notes                         string   `json:"notes"`
+	InviterID                     *int64   `json:"inviter_id,omitempty"`
+	ReferralCode                  string   `json:"referral_code,omitempty"`
+	CustomFirstCommissionRate     *float64 `json:"custom_first_commission_rate,omitempty"`
+	CustomRecurringCommissionRate *float64 `json:"custom_recurring_commission_rate,omitempty"`
+	RecurringCommissionEnabled    bool     `json:"recurring_commission_enabled"`
 	// GroupRates 用户专属分组倍率配置
 	// map[groupID]rateMultiplier
 	GroupRates            map[int64]float64 `json:"group_rates,omitempty"`
@@ -78,6 +84,9 @@ type Group struct {
 	DailyLimitUSD    *float64 `json:"daily_limit_usd"`
 	WeeklyLimitUSD   *float64 `json:"weekly_limit_usd"`
 	MonthlyLimitUSD  *float64 `json:"monthly_limit_usd"`
+	DefaultValidityDays int      `json:"default_validity_days"`
+	PurchaseEnabled     bool     `json:"purchase_enabled"`
+	PurchasePrice       *float64 `json:"purchase_price"`
 
 	// 图片生成计费配置（仅 antigravity 平台使用）
 	ImagePrice1K *float64 `json:"image_price_1k"`

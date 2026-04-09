@@ -8,7 +8,7 @@ type SystemSettings struct {
 	PasswordResetEnabled             bool
 	FrontendURL                      string
 	InvitationCodeEnabled            bool
-	TotpEnabled                      bool // TOTP 双因素认证
+	TotpEnabled                      bool
 
 	SMTPHost               string
 	SMTPPort               int
@@ -24,7 +24,6 @@ type SystemSettings struct {
 	TurnstileSecretKey           string
 	TurnstileSecretKeyConfigured bool
 
-	// LinuxDo Connect OAuth 登录
 	LinuxDoConnectEnabled                bool
 	LinuxDoConnectClientID               string
 	LinuxDoConnectClientSecret           string
@@ -42,43 +41,55 @@ type SystemSettings struct {
 	PurchaseSubscriptionEnabled bool
 	PurchaseSubscriptionURL     string
 	SoraClientEnabled           bool
-	CustomMenuItems             string // JSON array of custom menu items
-	CustomEndpoints             string // JSON array of custom endpoints
+	CustomMenuItems             string
+	CustomEndpoints             string
+
+	XunhuPayEnabled             bool
+	XunhuPayBaseURL             string
+	XunhuPayAppID               string
+	XunhuPayAppSecret           string
+	XunhuPayAppSecretConfigured bool
+	XunhuPayNotifyURL           string
+	XunhuPayReturnURL           string
+	XunhuPayCallbackURL         string
+	XunhuPayPlugins             string
+	BalanceRechargeRatio        float64
+
+	AffiliateEnabled               bool
+	FirstCommissionEnabled         bool
+	RecurringCommissionEnabled     bool
+	DefaultFirstCommissionRate     float64
+	DefaultRecurringCommissionRate float64
+	AffiliateWithdrawEnabled       bool
+	AffiliateWithdrawMinAmount     float64
+	AffiliateWithdrawMinInvitees   int64
 
 	DefaultConcurrency   int
 	DefaultBalance       float64
 	DefaultSubscriptions []DefaultSubscriptionSetting
 
-	// Model fallback configuration
-	EnableModelFallback      bool   `json:"enable_model_fallback"`
-	FallbackModelAnthropic   string `json:"fallback_model_anthropic"`
-	FallbackModelOpenAI      string `json:"fallback_model_openai"`
-	FallbackModelGemini      string `json:"fallback_model_gemini"`
-	FallbackModelAntigravity string `json:"fallback_model_antigravity"`
+	EnableModelFallback      bool
+	FallbackModelAnthropic   string
+	FallbackModelOpenAI      string
+	FallbackModelGemini      string
+	FallbackModelAntigravity string
 
-	// Identity patch configuration (Claude -> Gemini)
-	EnableIdentityPatch bool   `json:"enable_identity_patch"`
-	IdentityPatchPrompt string `json:"identity_patch_prompt"`
+	EnableIdentityPatch bool
+	IdentityPatchPrompt string
 
-	// Ops monitoring (vNext)
 	OpsMonitoringEnabled         bool
 	OpsRealtimeMonitoringEnabled bool
 	OpsQueryModeDefault          string
 	OpsMetricsIntervalSeconds    int
 
-	// Claude Code version check
 	MinClaudeCodeVersion string
 	MaxClaudeCodeVersion string
 
-	// 分组隔离：允许未分组 Key 调度（默认 false → 403）
 	AllowUngroupedKeyScheduling bool
+	BackendModeEnabled          bool
 
-	// Backend 模式：禁用用户注册和自助服务，仅管理员可登录
-	BackendModeEnabled bool
-
-	// Gateway forwarding behavior
-	EnableFingerprintUnification bool // 是否统一 OAuth 账号的指纹头（默认 true）
-	EnableMetadataPassthrough    bool // 是否透传客户端原始 metadata（默认 false）
+	EnableFingerprintUnification bool
+	EnableMetadataPassthrough    bool
 }
 
 type DefaultSubscriptionSetting struct {
@@ -93,7 +104,7 @@ type PublicSettings struct {
 	PromoCodeEnabled                 bool
 	PasswordResetEnabled             bool
 	InvitationCodeEnabled            bool
-	TotpEnabled                      bool // TOTP 双因素认证
+	TotpEnabled                      bool
 	TurnstileEnabled                 bool
 	TurnstileSiteKey                 string
 	SiteName                         string
@@ -107,31 +118,32 @@ type PublicSettings struct {
 
 	PurchaseSubscriptionEnabled bool
 	PurchaseSubscriptionURL     string
+	XunhuPayEnabled             bool
+	BalanceRechargeRatio        float64
+	AffiliateEnabled            bool
 	SoraClientEnabled           bool
-	CustomMenuItems             string // JSON array of custom menu items
-	CustomEndpoints             string // JSON array of custom endpoints
+	CustomMenuItems             string
+	CustomEndpoints             string
 
 	LinuxDoOAuthEnabled bool
 	BackendModeEnabled  bool
 	Version             string
 }
 
-// SoraS3Settings Sora S3 存储配置
 type SoraS3Settings struct {
 	Enabled                   bool   `json:"enabled"`
 	Endpoint                  string `json:"endpoint"`
 	Region                    string `json:"region"`
 	Bucket                    string `json:"bucket"`
 	AccessKeyID               string `json:"access_key_id"`
-	SecretAccessKey           string `json:"secret_access_key"`            // 仅内部使用，不直接返回前端
-	SecretAccessKeyConfigured bool   `json:"secret_access_key_configured"` // 前端展示用
+	SecretAccessKey           string `json:"secret_access_key"`
+	SecretAccessKeyConfigured bool   `json:"secret_access_key_configured"`
 	Prefix                    string `json:"prefix"`
 	ForcePathStyle            bool   `json:"force_path_style"`
 	CDNURL                    string `json:"cdn_url"`
 	DefaultStorageQuotaBytes  int64  `json:"default_storage_quota_bytes"`
 }
 
-// SoraS3Profile Sora S3 多配置项（服务内部模型）
 type SoraS3Profile struct {
 	ProfileID                 string `json:"profile_id"`
 	Name                      string `json:"name"`
@@ -141,8 +153,8 @@ type SoraS3Profile struct {
 	Region                    string `json:"region"`
 	Bucket                    string `json:"bucket"`
 	AccessKeyID               string `json:"access_key_id"`
-	SecretAccessKey           string `json:"-"`                            // 仅内部使用，不直接返回前端
-	SecretAccessKeyConfigured bool   `json:"secret_access_key_configured"` // 前端展示用
+	SecretAccessKey           string `json:"-"`
+	SecretAccessKeyConfigured bool   `json:"secret_access_key_configured"`
 	Prefix                    string `json:"prefix"`
 	ForcePathStyle            bool   `json:"force_path_style"`
 	CDNURL                    string `json:"cdn_url"`
@@ -150,34 +162,25 @@ type SoraS3Profile struct {
 	UpdatedAt                 string `json:"updated_at"`
 }
 
-// SoraS3ProfileList Sora S3 多配置列表
 type SoraS3ProfileList struct {
 	ActiveProfileID string          `json:"active_profile_id"`
 	Items           []SoraS3Profile `json:"items"`
 }
 
-// StreamTimeoutSettings 流超时处理配置（仅控制超时后的处理方式，超时判定由网关配置控制）
 type StreamTimeoutSettings struct {
-	// Enabled 是否启用流超时处理
-	Enabled bool `json:"enabled"`
-	// Action 超时后的处理方式: "temp_unsched" | "error" | "none"
-	Action string `json:"action"`
-	// TempUnschedMinutes 临时不可调度持续时间（分钟）
-	TempUnschedMinutes int `json:"temp_unsched_minutes"`
-	// ThresholdCount 触发阈值次数（累计多少次超时才触发）
-	ThresholdCount int `json:"threshold_count"`
-	// ThresholdWindowMinutes 阈值窗口时间（分钟）
-	ThresholdWindowMinutes int `json:"threshold_window_minutes"`
+	Enabled                bool   `json:"enabled"`
+	Action                 string `json:"action"`
+	TempUnschedMinutes     int    `json:"temp_unsched_minutes"`
+	ThresholdCount         int    `json:"threshold_count"`
+	ThresholdWindowMinutes int    `json:"threshold_window_minutes"`
 }
 
-// StreamTimeoutAction 流超时处理方式常量
 const (
-	StreamTimeoutActionTempUnsched = "temp_unsched" // 临时不可调度
-	StreamTimeoutActionError       = "error"        // 标记为错误状态
-	StreamTimeoutActionNone        = "none"         // 不处理
+	StreamTimeoutActionTempUnsched = "temp_unsched"
+	StreamTimeoutActionError       = "error"
+	StreamTimeoutActionNone        = "none"
 )
 
-// DefaultStreamTimeoutSettings 返回默认的流超时配置
 func DefaultStreamTimeoutSettings() *StreamTimeoutSettings {
 	return &StreamTimeoutSettings{
 		Enabled:                false,
@@ -188,16 +191,14 @@ func DefaultStreamTimeoutSettings() *StreamTimeoutSettings {
 	}
 }
 
-// RectifierSettings 请求整流器配置
 type RectifierSettings struct {
-	Enabled                  bool     `json:"enabled"`                    // 总开关
-	ThinkingSignatureEnabled bool     `json:"thinking_signature_enabled"` // Thinking 签名整流
-	ThinkingBudgetEnabled    bool     `json:"thinking_budget_enabled"`    // Thinking Budget 整流
-	APIKeySignatureEnabled   bool     `json:"apikey_signature_enabled"`   // API Key 签名整流开关
-	APIKeySignaturePatterns  []string `json:"apikey_signature_patterns"`  // API Key 自定义匹配关键词
+	Enabled                  bool     `json:"enabled"`
+	ThinkingSignatureEnabled bool     `json:"thinking_signature_enabled"`
+	ThinkingBudgetEnabled    bool     `json:"thinking_budget_enabled"`
+	APIKeySignatureEnabled   bool     `json:"apikey_signature_enabled"`
+	APIKeySignaturePatterns  []string `json:"apikey_signature_patterns"`
 }
 
-// DefaultRectifierSettings 返回默认的整流器配置（全部启用）
 func DefaultRectifierSettings() *RectifierSettings {
 	return &RectifierSettings{
 		Enabled:                  true,
@@ -206,40 +207,33 @@ func DefaultRectifierSettings() *RectifierSettings {
 	}
 }
 
-// Beta Policy 策略常量
 const (
-	BetaPolicyActionPass   = "pass"   // 透传，不做任何处理
-	BetaPolicyActionFilter = "filter" // 过滤，从 beta header 中移除该 token
-	BetaPolicyActionBlock  = "block"  // 拦截，直接返回错误
+	BetaPolicyActionPass   = "pass"
+	BetaPolicyActionFilter = "filter"
+	BetaPolicyActionBlock  = "block"
 
-	BetaPolicyScopeAll     = "all"     // 所有账号类型
-	BetaPolicyScopeOAuth   = "oauth"   // 仅 OAuth 账号
-	BetaPolicyScopeAPIKey  = "apikey"  // 仅 API Key 账号
-	BetaPolicyScopeBedrock = "bedrock" // 仅 AWS Bedrock 账号
+	BetaPolicyScopeAll     = "all"
+	BetaPolicyScopeOAuth   = "oauth"
+	BetaPolicyScopeAPIKey  = "apikey"
+	BetaPolicyScopeBedrock = "bedrock"
 )
 
-// BetaPolicyRule 单条 Beta 策略规则
 type BetaPolicyRule struct {
-	BetaToken    string `json:"beta_token"`              // beta token 值
-	Action       string `json:"action"`                  // "pass" | "filter" | "block"
-	Scope        string `json:"scope"`                   // "all" | "oauth" | "apikey" | "bedrock"
-	ErrorMessage string `json:"error_message,omitempty"` // 自定义错误消息 (action=block 时生效)
+	BetaToken    string `json:"beta_token"`
+	Action       string `json:"action"`
+	Scope        string `json:"scope"`
+	ErrorMessage string `json:"error_message,omitempty"`
 }
 
-// BetaPolicySettings Beta 策略配置
 type BetaPolicySettings struct {
 	Rules []BetaPolicyRule `json:"rules"`
 }
 
-// OverloadCooldownSettings 529过载冷却配置
 type OverloadCooldownSettings struct {
-	// Enabled 是否在收到529时暂停账号调度
-	Enabled bool `json:"enabled"`
-	// CooldownMinutes 冷却时长（分钟）
-	CooldownMinutes int `json:"cooldown_minutes"`
+	Enabled         bool `json:"enabled"`
+	CooldownMinutes int  `json:"cooldown_minutes"`
 }
 
-// DefaultOverloadCooldownSettings 返回默认的过载冷却配置（启用，10分钟）
 func DefaultOverloadCooldownSettings() *OverloadCooldownSettings {
 	return &OverloadCooldownSettings{
 		Enabled:         true,
@@ -247,7 +241,6 @@ func DefaultOverloadCooldownSettings() *OverloadCooldownSettings {
 	}
 }
 
-// DefaultBetaPolicySettings 返回默认的 Beta 策略配置
 func DefaultBetaPolicySettings() *BetaPolicySettings {
 	return &BetaPolicySettings{
 		Rules: []BetaPolicyRule{

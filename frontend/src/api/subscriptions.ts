@@ -5,6 +5,8 @@
 
 import { apiClient } from './client'
 import type { UserSubscription, SubscriptionProgress } from '@/types'
+import type { RechargeOrder, XunhuPaymentResult } from './recharge'
+import { createIdempotencyKey } from '@/utils/idempotency'
 
 /**
  * Subscription summary for user dashboard
@@ -21,6 +23,29 @@ export interface SubscriptionSummary {
     expires_at: string | null
     days_remaining: number | null
   }>
+}
+
+export interface SubscriptionPurchaseOption {
+  group_id: number
+  group_name: string
+  description: string
+  platform: string
+  validity_days: number
+  purchase_enabled: boolean
+  purchase_price: number
+  currency: string
+  sort_order: number
+  daily_limit_usd?: number | null
+  weekly_limit_usd?: number | null
+  monthly_limit_usd?: number | null
+  current_subscription?: UserSubscription | null
+  is_renewal: boolean
+}
+
+export interface SubscriptionPurchaseOrderResponse {
+  product?: SubscriptionPurchaseOption
+  order: RechargeOrder
+  payment?: XunhuPaymentResult
 }
 
 /**
@@ -67,10 +92,32 @@ export async function getSubscriptionProgress(
   return response.data
 }
 
+export async function getPurchaseOptions(): Promise<SubscriptionPurchaseOption[]> {
+  const response = await apiClient.get<SubscriptionPurchaseOption[]>('/subscriptions/purchase-options')
+  return response.data
+}
+
+export async function createPurchaseOrder(groupId: number): Promise<SubscriptionPurchaseOrderResponse> {
+  const response = await apiClient.post<SubscriptionPurchaseOrderResponse>(
+    '/subscriptions/purchase-orders',
+    {
+      group_id: groupId
+    },
+    {
+      headers: {
+        'Idempotency-Key': createIdempotencyKey('subscription-purchase')
+      }
+    }
+  )
+  return response.data
+}
+
 export default {
   getMySubscriptions,
   getActiveSubscriptions,
   getSubscriptionsProgress,
   getSubscriptionSummary,
-  getSubscriptionProgress
+  getSubscriptionProgress,
+  getPurchaseOptions,
+  createPurchaseOrder
 }

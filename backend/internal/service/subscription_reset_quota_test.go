@@ -21,6 +21,9 @@ type resetQuotaUserSubRepoStub struct {
 	resetDailyCalled   bool
 	resetWeeklyCalled  bool
 	resetMonthlyCalled bool
+	resetDailyAt       *time.Time
+	resetWeeklyAt      *time.Time
+	resetMonthlyAt     *time.Time
 	resetDailyErr      error
 	resetWeeklyErr     error
 	resetMonthlyErr    error
@@ -36,6 +39,7 @@ func (r *resetQuotaUserSubRepoStub) GetByID(_ context.Context, id int64) (*UserS
 
 func (r *resetQuotaUserSubRepoStub) ResetDailyUsage(_ context.Context, _ int64, windowStart time.Time) error {
 	r.resetDailyCalled = true
+	r.resetDailyAt = &windowStart
 	if r.resetDailyErr == nil && r.sub != nil {
 		r.sub.DailyUsageUSD = 0
 		r.sub.DailyWindowStart = &windowStart
@@ -43,13 +47,15 @@ func (r *resetQuotaUserSubRepoStub) ResetDailyUsage(_ context.Context, _ int64, 
 	return r.resetDailyErr
 }
 
-func (r *resetQuotaUserSubRepoStub) ResetWeeklyUsage(_ context.Context, _ int64, _ time.Time) error {
+func (r *resetQuotaUserSubRepoStub) ResetWeeklyUsage(_ context.Context, _ int64, windowStart time.Time) error {
 	r.resetWeeklyCalled = true
+	r.resetWeeklyAt = &windowStart
 	return r.resetWeeklyErr
 }
 
-func (r *resetQuotaUserSubRepoStub) ResetMonthlyUsage(_ context.Context, _ int64, _ time.Time) error {
+func (r *resetQuotaUserSubRepoStub) ResetMonthlyUsage(_ context.Context, _ int64, windowStart time.Time) error {
 	r.resetMonthlyCalled = true
+	r.resetMonthlyAt = &windowStart
 	return r.resetMonthlyErr
 }
 
@@ -204,4 +210,20 @@ func TestAdminResetQuota_ReturnsRefreshedSub(t *testing.T) {
 	// 服务应返回第二次 GetByID 的刷新值而非初始的 99.9
 	require.Equal(t, float64(0), result.DailyUsageUSD, "返回的订阅应反映已归零的用量")
 	require.True(t, stub.resetDailyCalled)
+}
+
+func TestAdminResetQuota_UsesCurrentTimeAsRollingStart(t *testing.T) {
+	fixedNow := time.Date(2026, 4, 7, 15, 23, 45, 0, time.UTC)
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{ID: 10, UserID: 10, GroupID: 20},
+	}
+
+	svc := newResetQuotaSvc(stub)
+	svc.now = func() time.Time { return fixedNow }
+
+	_, err := svc.AdminResetQuota(context.Background(), 10, true, false, false)
+
+	require.NoError(t, err)
+	require.NotNil(t, stub.resetDailyAt)
+	require.Equal(t, fixedNow, *stub.resetDailyAt)
 }

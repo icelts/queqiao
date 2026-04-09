@@ -1,4 +1,4 @@
-package ent
+﻿package ent
 
 import "entgo.io/ent/dialect"
 

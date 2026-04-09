@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -61,4 +62,33 @@ func TestSettingService_GetPublicSettings_ExposesRegistrationEmailSuffixWhitelis
 	settings, err := svc.GetPublicSettings(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, []string{"@example.com", "@foo.bar"}, settings.RegistrationEmailSuffixWhitelist)
+}
+
+func TestSettingService_GetPublicSettings_ExposesBalanceRechargeRatio(t *testing.T) {
+	repo := &settingPublicRepoStub{
+		values: map[string]string{
+			SettingKeyBalanceRechargeRatio: "100",
+		},
+	}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.InDelta(t, 100.0, settings.BalanceRechargeRatio, 1e-9)
+}
+
+func TestSettingService_GetPublicSettingsForInjection_ExposesAffiliateEnabled(t *testing.T) {
+	repo := &settingPublicRepoStub{
+		values: map[string]string{
+			SettingKeyAffiliateEnabled: "true",
+		},
+	}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetPublicSettingsForInjection(context.Background())
+	require.NoError(t, err)
+
+	raw, err := json.Marshal(settings)
+	require.NoError(t, err)
+	require.Contains(t, string(raw), `"affiliate_enabled":true`)
 }

@@ -162,6 +162,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyHideCcsImportButton,
 		SettingKeyPurchaseSubscriptionEnabled,
 		SettingKeyPurchaseSubscriptionURL,
+		SettingKeyXunhuPayEnabled,
+		SettingKeyBalanceRechargeRatio,
+		SettingKeyAffiliateEnabled,
 		SettingKeySoraClientEnabled,
 		SettingKeyCustomMenuItems,
 		SettingKeyCustomEndpoints,
@@ -208,6 +211,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		HideCcsImportButton:              settings[SettingKeyHideCcsImportButton] == "true",
 		PurchaseSubscriptionEnabled:      settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
 		PurchaseSubscriptionURL:          strings.TrimSpace(settings[SettingKeyPurchaseSubscriptionURL]),
+		XunhuPayEnabled:                  settings[SettingKeyXunhuPayEnabled] == "true",
+		BalanceRechargeRatio:             parseBalanceRechargeRatio(settings[SettingKeyBalanceRechargeRatio]),
+		AffiliateEnabled:                 settings[SettingKeyAffiliateEnabled] == "true",
 		SoraClientEnabled:                settings[SettingKeySoraClientEnabled] == "true",
 		CustomMenuItems:                  settings[SettingKeyCustomMenuItems],
 		CustomEndpoints:                  settings[SettingKeyCustomEndpoints],
@@ -261,6 +267,9 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		HideCcsImportButton              bool            `json:"hide_ccs_import_button"`
 		PurchaseSubscriptionEnabled      bool            `json:"purchase_subscription_enabled"`
 		PurchaseSubscriptionURL          string          `json:"purchase_subscription_url,omitempty"`
+		XunhuPayEnabled                  bool            `json:"xunhupay_enabled"`
+		BalanceRechargeRatio             float64         `json:"balance_recharge_ratio"`
+		AffiliateEnabled                 bool            `json:"affiliate_enabled"`
 		SoraClientEnabled                bool            `json:"sora_client_enabled"`
 		CustomMenuItems                  json.RawMessage `json:"custom_menu_items"`
 		CustomEndpoints                  json.RawMessage `json:"custom_endpoints"`
@@ -287,6 +296,9 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		HideCcsImportButton:              settings.HideCcsImportButton,
 		PurchaseSubscriptionEnabled:      settings.PurchaseSubscriptionEnabled,
 		PurchaseSubscriptionURL:          settings.PurchaseSubscriptionURL,
+		XunhuPayEnabled:                  settings.XunhuPayEnabled,
+		BalanceRechargeRatio:             settings.BalanceRechargeRatio,
+		AffiliateEnabled:                 settings.AffiliateEnabled,
 		SoraClientEnabled:                settings.SoraClientEnabled,
 		CustomMenuItems:                  filterUserVisibleMenuItems(settings.CustomMenuItems),
 		CustomEndpoints:                  safeRawJSONArray(settings.CustomEndpoints),
@@ -485,6 +497,28 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	updates[SettingKeySoraClientEnabled] = strconv.FormatBool(settings.SoraClientEnabled)
 	updates[SettingKeyCustomMenuItems] = settings.CustomMenuItems
 	updates[SettingKeyCustomEndpoints] = settings.CustomEndpoints
+	updates[SettingKeyXunhuPayEnabled] = strconv.FormatBool(settings.XunhuPayEnabled)
+	updates[SettingKeyXunhuPayBaseURL] = strings.TrimSpace(settings.XunhuPayBaseURL)
+	updates[SettingKeyXunhuPayAppID] = strings.TrimSpace(settings.XunhuPayAppID)
+	if settings.XunhuPayAppSecret != "" {
+		updates[SettingKeyXunhuPayAppSecret] = settings.XunhuPayAppSecret
+	}
+	updates[SettingKeyXunhuPayNotifyURL] = strings.TrimSpace(settings.XunhuPayNotifyURL)
+	updates[SettingKeyXunhuPayReturnURL] = strings.TrimSpace(settings.XunhuPayReturnURL)
+	updates[SettingKeyXunhuPayCallbackURL] = strings.TrimSpace(settings.XunhuPayCallbackURL)
+	updates[SettingKeyXunhuPayPlugins] = strings.TrimSpace(settings.XunhuPayPlugins)
+	updates[SettingKeyBalanceRechargeRatio] = strconv.FormatFloat(parseBalanceRechargeRatio(strconv.FormatFloat(settings.BalanceRechargeRatio, 'f', 8, 64)), 'f', 8, 64)
+	updates[SettingKeyAffiliateEnabled] = strconv.FormatBool(settings.AffiliateEnabled)
+	updates[SettingKeyFirstCommissionEnabled] = strconv.FormatBool(settings.FirstCommissionEnabled)
+	updates[SettingKeyRecurringCommissionEnabled] = strconv.FormatBool(settings.RecurringCommissionEnabled)
+	updates[SettingKeyDefaultFirstCommissionRate] = strconv.FormatFloat(normalizeCommissionRate(settings.DefaultFirstCommissionRate), 'f', 4, 64)
+	updates[SettingKeyDefaultRecurringCommissionRate] = strconv.FormatFloat(normalizeCommissionRate(settings.DefaultRecurringCommissionRate), 'f', 4, 64)
+	updates[SettingKeyAffiliateWithdrawEnabled] = strconv.FormatBool(settings.AffiliateWithdrawEnabled)
+	updates[SettingKeyAffiliateWithdrawMinAmount] = strconv.FormatFloat(roundMoney(settings.AffiliateWithdrawMinAmount), 'f', 8, 64)
+	if settings.AffiliateWithdrawMinInvitees < 0 {
+		settings.AffiliateWithdrawMinInvitees = 0
+	}
+	updates[SettingKeyAffiliateWithdrawMinInvitees] = strconv.FormatInt(settings.AffiliateWithdrawMinInvitees, 10)
 
 	// 默认配置
 	updates[SettingKeyDefaultConcurrency] = strconv.Itoa(settings.DefaultConcurrency)
@@ -799,6 +833,15 @@ func (s *SettingService) GetDefaultBalance(ctx context.Context) float64 {
 	return s.cfg.Default.UserBalance
 }
 
+// GetBalanceRechargeRatio returns how many balance units are credited for 1 CNY.
+func (s *SettingService) GetBalanceRechargeRatio(ctx context.Context) float64 {
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyBalanceRechargeRatio)
+	if err != nil {
+		return 1
+	}
+	return parseBalanceRechargeRatio(value)
+}
+
 // GetDefaultSubscriptions 获取新用户默认订阅配置列表。
 func (s *SettingService) GetDefaultSubscriptions(ctx context.Context) []DefaultSubscriptionSetting {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyDefaultSubscriptions)
@@ -835,6 +878,7 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyCustomEndpoints:                  "[]",
 		SettingKeyDefaultConcurrency:               strconv.Itoa(s.cfg.Default.UserConcurrency),
 		SettingKeyDefaultBalance:                   strconv.FormatFloat(s.cfg.Default.UserBalance, 'f', 8, 64),
+		SettingKeyBalanceRechargeRatio:             "1",
 		SettingKeyDefaultSubscriptions:             "[]",
 		SettingKeySMTPPort:                         "587",
 		SettingKeySMTPUseTLS:                       "false",
@@ -855,8 +899,24 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyOpsMetricsIntervalSeconds:    "60",
 
 		// Claude Code version check (default: empty = disabled)
-		SettingKeyMinClaudeCodeVersion: "",
-		SettingKeyMaxClaudeCodeVersion: "",
+		SettingKeyMinClaudeCodeVersion:           "",
+		SettingKeyMaxClaudeCodeVersion:           "",
+		SettingKeyXunhuPayEnabled:                "false",
+		SettingKeyXunhuPayBaseURL:                "https://api.xunhupay.com",
+		SettingKeyXunhuPayAppID:                  "",
+		SettingKeyXunhuPayAppSecret:              "",
+		SettingKeyXunhuPayNotifyURL:              "",
+		SettingKeyXunhuPayReturnURL:              "",
+		SettingKeyXunhuPayCallbackURL:            "",
+		SettingKeyXunhuPayPlugins:                "sub2api",
+		SettingKeyAffiliateEnabled:               "false",
+		SettingKeyFirstCommissionEnabled:         "true",
+		SettingKeyRecurringCommissionEnabled:     "false",
+		SettingKeyDefaultFirstCommissionRate:     "70.0000",
+		SettingKeyDefaultRecurringCommissionRate: "0.0000",
+		SettingKeyAffiliateWithdrawEnabled:       "false",
+		SettingKeyAffiliateWithdrawMinAmount:     "100.00000000",
+		SettingKeyAffiliateWithdrawMinInvitees:   "3",
 
 		// 分组隔离（默认不允许未分组 Key 调度）
 		SettingKeyAllowUngroupedKeyScheduling: "false",
@@ -899,6 +959,18 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		SoraClientEnabled:                settings[SettingKeySoraClientEnabled] == "true",
 		CustomMenuItems:                  settings[SettingKeyCustomMenuItems],
 		CustomEndpoints:                  settings[SettingKeyCustomEndpoints],
+		XunhuPayEnabled:                  settings[SettingKeyXunhuPayEnabled] == "true",
+		XunhuPayBaseURL:                  s.getStringOrDefault(settings, SettingKeyXunhuPayBaseURL, "https://api.xunhupay.com"),
+		XunhuPayAppID:                    strings.TrimSpace(settings[SettingKeyXunhuPayAppID]),
+		XunhuPayNotifyURL:                strings.TrimSpace(settings[SettingKeyXunhuPayNotifyURL]),
+		XunhuPayReturnURL:                strings.TrimSpace(settings[SettingKeyXunhuPayReturnURL]),
+		XunhuPayCallbackURL:              strings.TrimSpace(settings[SettingKeyXunhuPayCallbackURL]),
+		XunhuPayPlugins:                  s.getStringOrDefault(settings, SettingKeyXunhuPayPlugins, "sub2api"),
+		BalanceRechargeRatio:             parseBalanceRechargeRatio(settings[SettingKeyBalanceRechargeRatio]),
+		AffiliateEnabled:                 settings[SettingKeyAffiliateEnabled] == "true",
+		FirstCommissionEnabled:           settings[SettingKeyFirstCommissionEnabled] == "true",
+		RecurringCommissionEnabled:       settings[SettingKeyRecurringCommissionEnabled] == "true",
+		AffiliateWithdrawEnabled:         settings[SettingKeyAffiliateWithdrawEnabled] == "true",
 		BackendModeEnabled:               settings[SettingKeyBackendModeEnabled] == "true",
 	}
 
@@ -921,11 +993,31 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	} else {
 		result.DefaultBalance = s.cfg.Default.UserBalance
 	}
+	if rate, err := strconv.ParseFloat(settings[SettingKeyDefaultFirstCommissionRate], 64); err == nil {
+		result.DefaultFirstCommissionRate = normalizeCommissionRate(rate)
+	} else {
+		result.DefaultFirstCommissionRate = 70
+	}
+	if rate, err := strconv.ParseFloat(settings[SettingKeyDefaultRecurringCommissionRate], 64); err == nil {
+		result.DefaultRecurringCommissionRate = normalizeCommissionRate(rate)
+	}
+	if amount, err := strconv.ParseFloat(settings[SettingKeyAffiliateWithdrawMinAmount], 64); err == nil {
+		result.AffiliateWithdrawMinAmount = roundMoney(amount)
+	} else {
+		result.AffiliateWithdrawMinAmount = 100
+	}
+	if invitees, err := strconv.ParseInt(settings[SettingKeyAffiliateWithdrawMinInvitees], 10, 64); err == nil && invitees >= 0 {
+		result.AffiliateWithdrawMinInvitees = invitees
+	} else {
+		result.AffiliateWithdrawMinInvitees = 3
+	}
 	result.DefaultSubscriptions = parseDefaultSubscriptions(settings[SettingKeyDefaultSubscriptions])
 
 	// 敏感信息直接返回，方便测试连接时使用
 	result.SMTPPassword = settings[SettingKeySMTPPassword]
 	result.TurnstileSecretKey = settings[SettingKeyTurnstileSecretKey]
+	result.XunhuPayAppSecret = strings.TrimSpace(settings[SettingKeyXunhuPayAppSecret])
+	result.XunhuPayAppSecretConfigured = result.XunhuPayAppSecret != ""
 
 	// LinuxDo Connect 设置：
 	// - 兼容 config.yaml/env（避免老部署因为未迁移到数据库设置而被意外关闭）
@@ -1007,6 +1099,14 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	result.EnableMetadataPassthrough = settings[SettingKeyEnableMetadataPassthrough] == "true"
 
 	return result
+}
+
+func parseBalanceRechargeRatio(value string) float64 {
+	ratio, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+	if err != nil || ratio <= 0 {
+		return 1
+	}
+	return roundMoney(ratio)
 }
 
 func isFalseSettingValue(value string) bool {

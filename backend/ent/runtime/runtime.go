@@ -16,7 +16,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
+	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/schema"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
@@ -430,44 +433,48 @@ func init() {
 	groupDescDefaultValidityDays := groupFields[10].Descriptor()
 	// group.DefaultDefaultValidityDays holds the default value on creation for the default_validity_days field.
 	group.DefaultDefaultValidityDays = groupDescDefaultValidityDays.Default.(int)
+	// groupDescPurchaseEnabled is the schema descriptor for purchase_enabled field.
+	groupDescPurchaseEnabled := groupFields[11].Descriptor()
+	// group.DefaultPurchaseEnabled holds the default value on creation for the purchase_enabled field.
+	group.DefaultPurchaseEnabled = groupDescPurchaseEnabled.Default.(bool)
 	// groupDescSoraStorageQuotaBytes is the schema descriptor for sora_storage_quota_bytes field.
-	groupDescSoraStorageQuotaBytes := groupFields[18].Descriptor()
+	groupDescSoraStorageQuotaBytes := groupFields[20].Descriptor()
 	// group.DefaultSoraStorageQuotaBytes holds the default value on creation for the sora_storage_quota_bytes field.
 	group.DefaultSoraStorageQuotaBytes = groupDescSoraStorageQuotaBytes.Default.(int64)
 	// groupDescClaudeCodeOnly is the schema descriptor for claude_code_only field.
-	groupDescClaudeCodeOnly := groupFields[19].Descriptor()
+	groupDescClaudeCodeOnly := groupFields[21].Descriptor()
 	// group.DefaultClaudeCodeOnly holds the default value on creation for the claude_code_only field.
 	group.DefaultClaudeCodeOnly = groupDescClaudeCodeOnly.Default.(bool)
 	// groupDescModelRoutingEnabled is the schema descriptor for model_routing_enabled field.
-	groupDescModelRoutingEnabled := groupFields[23].Descriptor()
+	groupDescModelRoutingEnabled := groupFields[25].Descriptor()
 	// group.DefaultModelRoutingEnabled holds the default value on creation for the model_routing_enabled field.
 	group.DefaultModelRoutingEnabled = groupDescModelRoutingEnabled.Default.(bool)
 	// groupDescMcpXMLInject is the schema descriptor for mcp_xml_inject field.
-	groupDescMcpXMLInject := groupFields[24].Descriptor()
+	groupDescMcpXMLInject := groupFields[26].Descriptor()
 	// group.DefaultMcpXMLInject holds the default value on creation for the mcp_xml_inject field.
 	group.DefaultMcpXMLInject = groupDescMcpXMLInject.Default.(bool)
 	// groupDescSupportedModelScopes is the schema descriptor for supported_model_scopes field.
-	groupDescSupportedModelScopes := groupFields[25].Descriptor()
+	groupDescSupportedModelScopes := groupFields[27].Descriptor()
 	// group.DefaultSupportedModelScopes holds the default value on creation for the supported_model_scopes field.
 	group.DefaultSupportedModelScopes = groupDescSupportedModelScopes.Default.([]string)
 	// groupDescSortOrder is the schema descriptor for sort_order field.
-	groupDescSortOrder := groupFields[26].Descriptor()
+	groupDescSortOrder := groupFields[28].Descriptor()
 	// group.DefaultSortOrder holds the default value on creation for the sort_order field.
 	group.DefaultSortOrder = groupDescSortOrder.Default.(int)
 	// groupDescAllowMessagesDispatch is the schema descriptor for allow_messages_dispatch field.
-	groupDescAllowMessagesDispatch := groupFields[27].Descriptor()
+	groupDescAllowMessagesDispatch := groupFields[29].Descriptor()
 	// group.DefaultAllowMessagesDispatch holds the default value on creation for the allow_messages_dispatch field.
 	group.DefaultAllowMessagesDispatch = groupDescAllowMessagesDispatch.Default.(bool)
 	// groupDescRequireOauthOnly is the schema descriptor for require_oauth_only field.
-	groupDescRequireOauthOnly := groupFields[28].Descriptor()
+	groupDescRequireOauthOnly := groupFields[30].Descriptor()
 	// group.DefaultRequireOauthOnly holds the default value on creation for the require_oauth_only field.
 	group.DefaultRequireOauthOnly = groupDescRequireOauthOnly.Default.(bool)
 	// groupDescRequirePrivacySet is the schema descriptor for require_privacy_set field.
-	groupDescRequirePrivacySet := groupFields[29].Descriptor()
+	groupDescRequirePrivacySet := groupFields[31].Descriptor()
 	// group.DefaultRequirePrivacySet holds the default value on creation for the require_privacy_set field.
 	group.DefaultRequirePrivacySet = groupDescRequirePrivacySet.Default.(bool)
 	// groupDescDefaultMappedModel is the schema descriptor for default_mapped_model field.
-	groupDescDefaultMappedModel := groupFields[30].Descriptor()
+	groupDescDefaultMappedModel := groupFields[32].Descriptor()
 	// group.DefaultDefaultMappedModel holds the default value on creation for the default_mapped_model field.
 	group.DefaultDefaultMappedModel = groupDescDefaultMappedModel.Default.(string)
 	// group.DefaultMappedModelValidator is a validator for the "default_mapped_model" field. It is called by the builders before save.
@@ -648,6 +655,81 @@ func init() {
 	proxy.DefaultStatus = proxyDescStatus.Default.(string)
 	// proxy.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	proxy.StatusValidator = proxyDescStatus.Validators[0].(func(string) error)
+	rechargeorderMixin := schema.RechargeOrder{}.Mixin()
+	rechargeorderMixinFields0 := rechargeorderMixin[0].Fields()
+	_ = rechargeorderMixinFields0
+	rechargeorderFields := schema.RechargeOrder{}.Fields()
+	_ = rechargeorderFields
+	// rechargeorderDescCreatedAt is the schema descriptor for created_at field.
+	rechargeorderDescCreatedAt := rechargeorderMixinFields0[0].Descriptor()
+	// rechargeorder.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rechargeorder.DefaultCreatedAt = rechargeorderDescCreatedAt.Default.(func() time.Time)
+	// rechargeorderDescUpdatedAt is the schema descriptor for updated_at field.
+	rechargeorderDescUpdatedAt := rechargeorderMixinFields0[1].Descriptor()
+	// rechargeorder.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	rechargeorder.DefaultUpdatedAt = rechargeorderDescUpdatedAt.Default.(func() time.Time)
+	// rechargeorder.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	rechargeorder.UpdateDefaultUpdatedAt = rechargeorderDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// rechargeorderDescOrderNo is the schema descriptor for order_no field.
+	rechargeorderDescOrderNo := rechargeorderFields[1].Descriptor()
+	// rechargeorder.OrderNoValidator is a validator for the "order_no" field. It is called by the builders before save.
+	rechargeorder.OrderNoValidator = func() func(string) error {
+		validators := rechargeorderDescOrderNo.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(order_no string) error {
+			for _, fn := range fns {
+				if err := fn(order_no); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// rechargeorderDescExternalOrderID is the schema descriptor for external_order_id field.
+	rechargeorderDescExternalOrderID := rechargeorderFields[2].Descriptor()
+	// rechargeorder.ExternalOrderIDValidator is a validator for the "external_order_id" field. It is called by the builders before save.
+	rechargeorder.ExternalOrderIDValidator = rechargeorderDescExternalOrderID.Validators[0].(func(string) error)
+	// rechargeorderDescChannel is the schema descriptor for channel field.
+	rechargeorderDescChannel := rechargeorderFields[3].Descriptor()
+	// rechargeorder.DefaultChannel holds the default value on creation for the channel field.
+	rechargeorder.DefaultChannel = rechargeorderDescChannel.Default.(string)
+	// rechargeorder.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
+	rechargeorder.ChannelValidator = rechargeorderDescChannel.Validators[0].(func(string) error)
+	// rechargeorderDescSource is the schema descriptor for source field.
+	rechargeorderDescSource := rechargeorderFields[4].Descriptor()
+	// rechargeorder.DefaultSource holds the default value on creation for the source field.
+	rechargeorder.DefaultSource = rechargeorderDescSource.Default.(string)
+	// rechargeorder.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	rechargeorder.SourceValidator = rechargeorderDescSource.Validators[0].(func(string) error)
+	// rechargeorderDescCurrency is the schema descriptor for currency field.
+	rechargeorderDescCurrency := rechargeorderFields[5].Descriptor()
+	// rechargeorder.DefaultCurrency holds the default value on creation for the currency field.
+	rechargeorder.DefaultCurrency = rechargeorderDescCurrency.Default.(string)
+	// rechargeorder.CurrencyValidator is a validator for the "currency" field. It is called by the builders before save.
+	rechargeorder.CurrencyValidator = rechargeorderDescCurrency.Validators[0].(func(string) error)
+	// rechargeorderDescAmount is the schema descriptor for amount field.
+	rechargeorderDescAmount := rechargeorderFields[6].Descriptor()
+	// rechargeorder.DefaultAmount holds the default value on creation for the amount field.
+	rechargeorder.DefaultAmount = rechargeorderDescAmount.Default.(float64)
+	// rechargeorderDescCreditedAmount is the schema descriptor for credited_amount field.
+	rechargeorderDescCreditedAmount := rechargeorderFields[7].Descriptor()
+	// rechargeorder.DefaultCreditedAmount holds the default value on creation for the credited_amount field.
+	rechargeorder.DefaultCreditedAmount = rechargeorderDescCreditedAmount.Default.(float64)
+	// rechargeorderDescStatus is the schema descriptor for status field.
+	rechargeorderDescStatus := rechargeorderFields[8].Descriptor()
+	// rechargeorder.DefaultStatus holds the default value on creation for the status field.
+	rechargeorder.DefaultStatus = rechargeorderDescStatus.Default.(string)
+	// rechargeorder.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	rechargeorder.StatusValidator = rechargeorderDescStatus.Validators[0].(func(string) error)
+	// rechargeorderDescCallbackIdempotencyKey is the schema descriptor for callback_idempotency_key field.
+	rechargeorderDescCallbackIdempotencyKey := rechargeorderFields[11].Descriptor()
+	// rechargeorder.DefaultCallbackIdempotencyKey holds the default value on creation for the callback_idempotency_key field.
+	rechargeorder.DefaultCallbackIdempotencyKey = rechargeorderDescCallbackIdempotencyKey.Default.(string)
+	// rechargeorder.CallbackIdempotencyKeyValidator is a validator for the "callback_idempotency_key" field. It is called by the builders before save.
+	rechargeorder.CallbackIdempotencyKeyValidator = rechargeorderDescCallbackIdempotencyKey.Validators[0].(func(string) error)
 	redeemcodeFields := schema.RedeemCode{}.Fields()
 	_ = redeemcodeFields
 	// redeemcodeDescCode is the schema descriptor for code field.
@@ -692,6 +774,86 @@ func init() {
 	redeemcodeDescValidityDays := redeemcodeFields[9].Descriptor()
 	// redeemcode.DefaultValidityDays holds the default value on creation for the validity_days field.
 	redeemcode.DefaultValidityDays = redeemcodeDescValidityDays.Default.(int)
+	referralcommissionMixin := schema.ReferralCommission{}.Mixin()
+	referralcommissionMixinFields0 := referralcommissionMixin[0].Fields()
+	_ = referralcommissionMixinFields0
+	referralcommissionFields := schema.ReferralCommission{}.Fields()
+	_ = referralcommissionFields
+	// referralcommissionDescCreatedAt is the schema descriptor for created_at field.
+	referralcommissionDescCreatedAt := referralcommissionMixinFields0[0].Descriptor()
+	// referralcommission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referralcommission.DefaultCreatedAt = referralcommissionDescCreatedAt.Default.(func() time.Time)
+	// referralcommissionDescUpdatedAt is the schema descriptor for updated_at field.
+	referralcommissionDescUpdatedAt := referralcommissionMixinFields0[1].Descriptor()
+	// referralcommission.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	referralcommission.DefaultUpdatedAt = referralcommissionDescUpdatedAt.Default.(func() time.Time)
+	// referralcommission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	referralcommission.UpdateDefaultUpdatedAt = referralcommissionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// referralcommissionDescCommissionType is the schema descriptor for commission_type field.
+	referralcommissionDescCommissionType := referralcommissionFields[3].Descriptor()
+	// referralcommission.DefaultCommissionType holds the default value on creation for the commission_type field.
+	referralcommission.DefaultCommissionType = referralcommissionDescCommissionType.Default.(string)
+	// referralcommission.CommissionTypeValidator is a validator for the "commission_type" field. It is called by the builders before save.
+	referralcommission.CommissionTypeValidator = referralcommissionDescCommissionType.Validators[0].(func(string) error)
+	// referralcommissionDescStatus is the schema descriptor for status field.
+	referralcommissionDescStatus := referralcommissionFields[4].Descriptor()
+	// referralcommission.DefaultStatus holds the default value on creation for the status field.
+	referralcommission.DefaultStatus = referralcommissionDescStatus.Default.(string)
+	// referralcommission.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	referralcommission.StatusValidator = referralcommissionDescStatus.Validators[0].(func(string) error)
+	// referralcommissionDescSourceAmount is the schema descriptor for source_amount field.
+	referralcommissionDescSourceAmount := referralcommissionFields[5].Descriptor()
+	// referralcommission.DefaultSourceAmount holds the default value on creation for the source_amount field.
+	referralcommission.DefaultSourceAmount = referralcommissionDescSourceAmount.Default.(float64)
+	// referralcommissionDescRateSnapshot is the schema descriptor for rate_snapshot field.
+	referralcommissionDescRateSnapshot := referralcommissionFields[6].Descriptor()
+	// referralcommission.DefaultRateSnapshot holds the default value on creation for the rate_snapshot field.
+	referralcommission.DefaultRateSnapshot = referralcommissionDescRateSnapshot.Default.(float64)
+	// referralcommissionDescCommissionAmount is the schema descriptor for commission_amount field.
+	referralcommissionDescCommissionAmount := referralcommissionFields[7].Descriptor()
+	// referralcommission.DefaultCommissionAmount holds the default value on creation for the commission_amount field.
+	referralcommission.DefaultCommissionAmount = referralcommissionDescCommissionAmount.Default.(float64)
+	referralwithdrawalrequestMixin := schema.ReferralWithdrawalRequest{}.Mixin()
+	referralwithdrawalrequestMixinFields0 := referralwithdrawalrequestMixin[0].Fields()
+	_ = referralwithdrawalrequestMixinFields0
+	referralwithdrawalrequestFields := schema.ReferralWithdrawalRequest{}.Fields()
+	_ = referralwithdrawalrequestFields
+	// referralwithdrawalrequestDescCreatedAt is the schema descriptor for created_at field.
+	referralwithdrawalrequestDescCreatedAt := referralwithdrawalrequestMixinFields0[0].Descriptor()
+	// referralwithdrawalrequest.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referralwithdrawalrequest.DefaultCreatedAt = referralwithdrawalrequestDescCreatedAt.Default.(func() time.Time)
+	// referralwithdrawalrequestDescUpdatedAt is the schema descriptor for updated_at field.
+	referralwithdrawalrequestDescUpdatedAt := referralwithdrawalrequestMixinFields0[1].Descriptor()
+	// referralwithdrawalrequest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	referralwithdrawalrequest.DefaultUpdatedAt = referralwithdrawalrequestDescUpdatedAt.Default.(func() time.Time)
+	// referralwithdrawalrequest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	referralwithdrawalrequest.UpdateDefaultUpdatedAt = referralwithdrawalrequestDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// referralwithdrawalrequestDescAmount is the schema descriptor for amount field.
+	referralwithdrawalrequestDescAmount := referralwithdrawalrequestFields[2].Descriptor()
+	// referralwithdrawalrequest.DefaultAmount holds the default value on creation for the amount field.
+	referralwithdrawalrequest.DefaultAmount = referralwithdrawalrequestDescAmount.Default.(float64)
+	// referralwithdrawalrequestDescCurrency is the schema descriptor for currency field.
+	referralwithdrawalrequestDescCurrency := referralwithdrawalrequestFields[3].Descriptor()
+	// referralwithdrawalrequest.DefaultCurrency holds the default value on creation for the currency field.
+	referralwithdrawalrequest.DefaultCurrency = referralwithdrawalrequestDescCurrency.Default.(string)
+	// referralwithdrawalrequest.CurrencyValidator is a validator for the "currency" field. It is called by the builders before save.
+	referralwithdrawalrequest.CurrencyValidator = referralwithdrawalrequestDescCurrency.Validators[0].(func(string) error)
+	// referralwithdrawalrequestDescPaymentMethod is the schema descriptor for payment_method field.
+	referralwithdrawalrequestDescPaymentMethod := referralwithdrawalrequestFields[4].Descriptor()
+	// referralwithdrawalrequest.DefaultPaymentMethod holds the default value on creation for the payment_method field.
+	referralwithdrawalrequest.DefaultPaymentMethod = referralwithdrawalrequestDescPaymentMethod.Default.(string)
+	// referralwithdrawalrequest.PaymentMethodValidator is a validator for the "payment_method" field. It is called by the builders before save.
+	referralwithdrawalrequest.PaymentMethodValidator = referralwithdrawalrequestDescPaymentMethod.Validators[0].(func(string) error)
+	// referralwithdrawalrequestDescAccountName is the schema descriptor for account_name field.
+	referralwithdrawalrequestDescAccountName := referralwithdrawalrequestFields[5].Descriptor()
+	// referralwithdrawalrequest.AccountNameValidator is a validator for the "account_name" field. It is called by the builders before save.
+	referralwithdrawalrequest.AccountNameValidator = referralwithdrawalrequestDescAccountName.Validators[0].(func(string) error)
+	// referralwithdrawalrequestDescStatus is the schema descriptor for status field.
+	referralwithdrawalrequestDescStatus := referralwithdrawalrequestFields[7].Descriptor()
+	// referralwithdrawalrequest.DefaultStatus holds the default value on creation for the status field.
+	referralwithdrawalrequest.DefaultStatus = referralwithdrawalrequestDescStatus.Default.(string)
+	// referralwithdrawalrequest.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	referralwithdrawalrequest.StatusValidator = referralwithdrawalrequestDescStatus.Validators[0].(func(string) error)
 	securitysecretMixin := schema.SecuritySecret{}.Mixin()
 	securitysecretMixinFields0 := securitysecretMixin[0].Fields()
 	_ = securitysecretMixinFields0
@@ -1038,26 +1200,40 @@ func init() {
 	user.DefaultStatus = userDescStatus.Default.(string)
 	// user.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	user.StatusValidator = userDescStatus.Validators[0].(func(string) error)
+	// userDescSubscriptionLimitFallbackToBalance is the schema descriptor for subscription_limit_fallback_to_balance field.
+	userDescSubscriptionLimitFallbackToBalance := userFields[6].Descriptor()
+	// user.DefaultSubscriptionLimitFallbackToBalance holds the default value on creation for the subscription_limit_fallback_to_balance field.
+	user.DefaultSubscriptionLimitFallbackToBalance = userDescSubscriptionLimitFallbackToBalance.Default.(bool)
 	// userDescUsername is the schema descriptor for username field.
-	userDescUsername := userFields[6].Descriptor()
+	userDescUsername := userFields[7].Descriptor()
 	// user.DefaultUsername holds the default value on creation for the username field.
 	user.DefaultUsername = userDescUsername.Default.(string)
 	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
 	// userDescNotes is the schema descriptor for notes field.
-	userDescNotes := userFields[7].Descriptor()
+	userDescNotes := userFields[8].Descriptor()
 	// user.DefaultNotes holds the default value on creation for the notes field.
 	user.DefaultNotes = userDescNotes.Default.(string)
+	// userDescReferralCode is the schema descriptor for referral_code field.
+	userDescReferralCode := userFields[10].Descriptor()
+	// user.DefaultReferralCode holds the default value on creation for the referral_code field.
+	user.DefaultReferralCode = userDescReferralCode.Default.(string)
+	// user.ReferralCodeValidator is a validator for the "referral_code" field. It is called by the builders before save.
+	user.ReferralCodeValidator = userDescReferralCode.Validators[0].(func(string) error)
+	// userDescRecurringCommissionEnabled is the schema descriptor for recurring_commission_enabled field.
+	userDescRecurringCommissionEnabled := userFields[13].Descriptor()
+	// user.DefaultRecurringCommissionEnabled holds the default value on creation for the recurring_commission_enabled field.
+	user.DefaultRecurringCommissionEnabled = userDescRecurringCommissionEnabled.Default.(bool)
 	// userDescTotpEnabled is the schema descriptor for totp_enabled field.
-	userDescTotpEnabled := userFields[9].Descriptor()
+	userDescTotpEnabled := userFields[15].Descriptor()
 	// user.DefaultTotpEnabled holds the default value on creation for the totp_enabled field.
 	user.DefaultTotpEnabled = userDescTotpEnabled.Default.(bool)
 	// userDescSoraStorageQuotaBytes is the schema descriptor for sora_storage_quota_bytes field.
-	userDescSoraStorageQuotaBytes := userFields[11].Descriptor()
+	userDescSoraStorageQuotaBytes := userFields[17].Descriptor()
 	// user.DefaultSoraStorageQuotaBytes holds the default value on creation for the sora_storage_quota_bytes field.
 	user.DefaultSoraStorageQuotaBytes = userDescSoraStorageQuotaBytes.Default.(int64)
 	// userDescSoraStorageUsedBytes is the schema descriptor for sora_storage_used_bytes field.
-	userDescSoraStorageUsedBytes := userFields[12].Descriptor()
+	userDescSoraStorageUsedBytes := userFields[18].Descriptor()
 	// user.DefaultSoraStorageUsedBytes holds the default value on creation for the sora_storage_used_bytes field.
 	user.DefaultSoraStorageUsedBytes = userDescSoraStorageUsedBytes.Default.(int64)
 	userallowedgroupFields := schema.UserAllowedGroup{}.Fields()

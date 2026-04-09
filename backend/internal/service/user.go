@@ -20,19 +20,25 @@ type User struct {
 	TokenVersion  int64 // Incremented on password change to invalidate existing tokens
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	InviterID     *int64
+	ReferralCode  string
 
-	// GroupRates 用户专属分组倍率配置
-	// map[groupID]rateMultiplier
+	CustomFirstCommissionRate     *float64
+	CustomRecurringCommissionRate *float64
+	RecurringCommissionEnabled    bool
+
+	// GroupRates maps group ID to user-specific rate multiplier overrides.
 	GroupRates map[int64]float64
 
-	// Sora 存储配额
-	SoraStorageQuotaBytes int64 // 用户级 Sora 存储配额（0 表示使用分组或系统默认值）
-	SoraStorageUsedBytes  int64 // Sora 存储已用量
+	// SubscriptionLimitFallbackToBalance controls whether requests can fall back to
+	// wallet balance billing when subscription daily/weekly/monthly limits are exhausted.
+	SubscriptionLimitFallbackToBalance bool
 
-	// TOTP 双因素认证字段
-	TotpSecretEncrypted *string    // AES-256-GCM 加密的 TOTP 密钥
-	TotpEnabled         bool       // 是否启用 TOTP
-	TotpEnabledAt       *time.Time // TOTP 启用时间
+	SoraStorageQuotaBytes int64
+	SoraStorageUsedBytes  int64
+	TotpSecretEncrypted   *string
+	TotpEnabled           bool
+	TotpEnabledAt         *time.Time
 
 	APIKeys       []APIKey
 	Subscriptions []UserSubscription
@@ -51,11 +57,9 @@ func (u *User) IsActive() bool {
 // - Public groups (non-exclusive): all users can bind
 // - Exclusive groups: only users with the group in AllowedGroups can bind
 func (u *User) CanBindGroup(groupID int64, isExclusive bool) bool {
-	// 公开分组（非专属）：所有用户都可以绑定
 	if !isExclusive {
 		return true
 	}
-	// 专属分组：需要在 AllowedGroups 中
 	for _, id := range u.AllowedGroups {
 		if id == groupID {
 			return true
