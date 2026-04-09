@@ -1253,6 +1253,46 @@ func (h *SettingHandler) DeleteAdminAPIKey(c *gin.Context) {
 	response.Success(c, gin.H{"message": "Admin API key deleted"})
 }
 
+// GetPaymentWebhookAPIKey 获取支付 webhook 专用密钥状态
+// GET /api/v1/admin/settings/payment-webhook-key
+func (h *SettingHandler) GetPaymentWebhookAPIKey(c *gin.Context) {
+	maskedKey, exists, err := h.settingService.GetPaymentWebhookAPIKeyStatus(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{
+		"exists":     exists,
+		"masked_key": maskedKey,
+	})
+}
+
+// RegeneratePaymentWebhookAPIKey 生成/重置支付 webhook 专用密钥
+// POST /api/v1/admin/settings/payment-webhook-key/regenerate
+func (h *SettingHandler) RegeneratePaymentWebhookAPIKey(c *gin.Context) {
+	key, err := h.settingService.GeneratePaymentWebhookAPIKey(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{
+		"key": key,
+	})
+}
+
+// DeletePaymentWebhookAPIKey 删除支付 webhook 专用密钥
+// DELETE /api/v1/admin/settings/payment-webhook-key
+func (h *SettingHandler) DeletePaymentWebhookAPIKey(c *gin.Context) {
+	if err := h.settingService.DeletePaymentWebhookAPIKey(c.Request.Context()); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "Payment webhook key deleted"})
+}
+
 // GetOverloadCooldownSettings 获取529过载冷却配置
 // GET /api/v1/admin/settings/overload-cooldown
 func (h *SettingHandler) GetOverloadCooldownSettings(c *gin.Context) {

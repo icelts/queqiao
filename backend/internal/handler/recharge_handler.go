@@ -2,11 +2,16 @@ package handler
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -51,6 +56,12 @@ type ReconcileRechargeOrderResponse struct {
 	Payment     *service.XunhuQueryPaymentResult `json:"payment,omitempty"`
 	Commissions []service.ReferralCommission     `json:"commissions,omitempty"`
 }
+
+const (
+	paymentWebhookTimestampHeader = "x-webhook-timestamp"
+	paymentWebhookSignatureHeader = "x-webhook-signature"
+	paymentWebhookMaxSkew         = 5 * time.Minute
+)
 
 func NewRechargeHandler(referralService *service.ReferralService, settingService *service.SettingService, xunhuPayService *service.XunhuPayService) *RechargeHandler {
 	return &RechargeHandler{
@@ -227,9 +238,6 @@ func (h *RechargeHandler) ReconcileOrder(c *gin.Context) {
 	}
 
 	amount := payment.TotalFee
-	if amount <= 0 {
-		amount = order.Amount
-	}
 	currency := strings.TrimSpace(order.Currency)
 	if currency == "" {
 		currency = "CNY"
@@ -267,13 +275,12 @@ func (h *RechargeHandler) HandleWebhook(c *gin.Context) {
 		return
 	}
 
-	if !h.authorizeWebhook(c) {
-		return
-	}
-
 	rawBody, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		response.BadRequest(c, "Invalid request body")
+		return
+	}
+	if !h.authorizeWebhook(c, rawBody) {
 		return
 	}
 
@@ -291,7 +298,7 @@ func (h *RechargeHandler) HandleWebhook(c *gin.Context) {
 		Channel:                channel,
 		Status:                 req.Status,
 		Amount:                 req.Amount,
-		CreditedAmount:         req.CreditedAmount,
+		CreditedAmount:         0,
 		Currency:               req.Currency,
 		CallbackIdempotencyKey: req.CallbackIdempotencyKey,
 		CallbackRaw:            strings.TrimSpace(string(rawBody)),
@@ -433,32 +440,70 @@ func writePlainWebhookError(c *gin.Context, err error) {
 	c.String(statusCode, status.Message)
 }
 
-func (h *RechargeHandler) authorizeWebhook(c *gin.Context) bool {
+func (h *RechargeHandler) authorizeWebhook(c *gin.Context, rawBody []byte) bool {
 	if h.settingService == nil {
 		response.Forbidden(c, "Payment webhook is not configured")
 		return false
 	}
 
-	incomingKey := strings.TrimSpace(c.GetHeader("x-api-key"))
-	if incomingKey == "" {
-		response.Unauthorized(c, "Webhook authentication required")
+	timestampRaw := strings.TrimSpace(c.GetHeader(paymentWebhookTimestampHeader))
+	if timestampRaw == "" {
+		response.Unauthorized(c, "Webhook timestamp required")
+		return false
+	}
+	timestampUnix, err := strconv.ParseInt(timestampRaw, 10, 64)
+	if err != nil || timestampUnix <= 0 {
+		response.BadRequest(c, "Invalid webhook timestamp")
+		return false
+	}
+	timestamp := time.Unix(timestampUnix, 0)
+	now := time.Now()
+	if timestamp.Before(now.Add(-paymentWebhookMaxSkew)) || timestamp.After(now.Add(paymentWebhookMaxSkew)) {
+		response.Unauthorized(c, "Webhook timestamp expired")
 		return false
 	}
 
-	storedKey, err := h.settingService.GetAdminAPIKey(c.Request.Context())
+	incomingSignature := canonicalizeWebhookSignature(c.GetHeader(paymentWebhookSignatureHeader))
+	if incomingSignature == "" {
+		response.Unauthorized(c, "Webhook signature required")
+		return false
+	}
+
+	storedKey, err := h.settingService.GetPaymentWebhookAPIKey(c.Request.Context())
 	if err != nil {
 		response.InternalError(c, "Failed to validate webhook authentication")
 		return false
 	}
 	storedKey = strings.TrimSpace(storedKey)
 	if storedKey == "" {
-		response.Forbidden(c, "Admin API key is not configured")
+		response.Forbidden(c, "Payment webhook key is not configured")
 		return false
 	}
-	if subtle.ConstantTimeCompare([]byte(incomingKey), []byte(storedKey)) != 1 {
-		response.Unauthorized(c, "Invalid webhook key")
+	expectedSignature := computePaymentWebhookSignature(timestampRaw, rawBody, storedKey)
+	if subtle.ConstantTimeCompare([]byte(incomingSignature), []byte(expectedSignature)) != 1 {
+		response.Unauthorized(c, "Invalid webhook signature")
 		return false
 	}
 
 	return true
+}
+
+func canonicalizeWebhookSignature(value string) string {
+	value = strings.TrimSpace(value)
+	if strings.HasPrefix(strings.ToLower(value), "sha256=") {
+		value = strings.TrimSpace(value[len("sha256="):])
+	}
+	value = strings.ToLower(value)
+	if _, err := hex.DecodeString(value); err != nil {
+		return ""
+	}
+	return value
+}
+
+func computePaymentWebhookSignature(timestamp string, rawBody []byte, secret string) string {
+	mac := hmac.New(sha256.New, []byte(strings.TrimSpace(secret)))
+	mac.Write([]byte(strings.TrimSpace(timestamp)))
+	mac.Write([]byte{'.'})
+	mac.Write(rawBody)
+	return hex.EncodeToString(mac.Sum(nil))
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 )
 
@@ -169,6 +170,20 @@ func (_u *ReferralCommissionUpdate) AddCommissionAmount(v float64) *ReferralComm
 	return _u
 }
 
+// SetCurrency sets the "currency" field.
+func (_u *ReferralCommissionUpdate) SetCurrency(v string) *ReferralCommissionUpdate {
+	_u.mutation.SetCurrency(v)
+	return _u
+}
+
+// SetNillableCurrency sets the "currency" field if the given value is not nil.
+func (_u *ReferralCommissionUpdate) SetNillableCurrency(v *string) *ReferralCommissionUpdate {
+	if v != nil {
+		_u.SetCurrency(*v)
+	}
+	return _u
+}
+
 // SetReversedAt sets the "reversed_at" field.
 func (_u *ReferralCommissionUpdate) SetReversedAt(v time.Time) *ReferralCommissionUpdate {
 	_u.mutation.SetReversedAt(v)
@@ -250,6 +265,21 @@ func (_u *ReferralCommissionUpdate) SetRechargeOrder(v *RechargeOrder) *Referral
 	return _u.SetRechargeOrderID(v.ID)
 }
 
+// AddWithdrawalAllocationIDs adds the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_u *ReferralCommissionUpdate) AddWithdrawalAllocationIDs(ids ...int64) *ReferralCommissionUpdate {
+	_u.mutation.AddWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// AddWithdrawalAllocations adds the "withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *ReferralCommissionUpdate) AddWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *ReferralCommissionUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWithdrawalAllocationIDs(ids...)
+}
+
 // Mutation returns the ReferralCommissionMutation object of the builder.
 func (_u *ReferralCommissionUpdate) Mutation() *ReferralCommissionMutation {
 	return _u.mutation
@@ -271,6 +301,27 @@ func (_u *ReferralCommissionUpdate) ClearReferredUser() *ReferralCommissionUpdat
 func (_u *ReferralCommissionUpdate) ClearRechargeOrder() *ReferralCommissionUpdate {
 	_u.mutation.ClearRechargeOrder()
 	return _u
+}
+
+// ClearWithdrawalAllocations clears all "withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *ReferralCommissionUpdate) ClearWithdrawalAllocations() *ReferralCommissionUpdate {
+	_u.mutation.ClearWithdrawalAllocations()
+	return _u
+}
+
+// RemoveWithdrawalAllocationIDs removes the "withdrawal_allocations" edge to ReferralWithdrawalAllocation entities by IDs.
+func (_u *ReferralCommissionUpdate) RemoveWithdrawalAllocationIDs(ids ...int64) *ReferralCommissionUpdate {
+	_u.mutation.RemoveWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// RemoveWithdrawalAllocations removes "withdrawal_allocations" edges to ReferralWithdrawalAllocation entities.
+func (_u *ReferralCommissionUpdate) RemoveWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *ReferralCommissionUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWithdrawalAllocationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -319,6 +370,11 @@ func (_u *ReferralCommissionUpdate) check() error {
 	if v, ok := _u.mutation.Status(); ok {
 		if err := referralcommission.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "ReferralCommission.status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Currency(); ok {
+		if err := referralcommission.CurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "currency", err: fmt.Errorf(`ent: validator failed for field "ReferralCommission.currency": %w`, err)}
 		}
 	}
 	if _u.mutation.PromoterCleared() && len(_u.mutation.PromoterIDs()) > 0 {
@@ -371,6 +427,9 @@ func (_u *ReferralCommissionUpdate) sqlSave(ctx context.Context) (_node int, err
 	}
 	if value, ok := _u.mutation.AddedCommissionAmount(); ok {
 		_spec.AddField(referralcommission.FieldCommissionAmount, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.Currency(); ok {
+		_spec.SetField(referralcommission.FieldCurrency, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.ReversedAt(); ok {
 		_spec.SetField(referralcommission.FieldReversedAt, field.TypeTime, value)
@@ -470,6 +529,51 @@ func (_u *ReferralCommissionUpdate) sqlSave(ctx context.Context) (_node int, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(rechargeorder.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWithdrawalAllocationsIDs(); len(nodes) > 0 && !_u.mutation.WithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WithdrawalAllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -636,6 +740,20 @@ func (_u *ReferralCommissionUpdateOne) AddCommissionAmount(v float64) *ReferralC
 	return _u
 }
 
+// SetCurrency sets the "currency" field.
+func (_u *ReferralCommissionUpdateOne) SetCurrency(v string) *ReferralCommissionUpdateOne {
+	_u.mutation.SetCurrency(v)
+	return _u
+}
+
+// SetNillableCurrency sets the "currency" field if the given value is not nil.
+func (_u *ReferralCommissionUpdateOne) SetNillableCurrency(v *string) *ReferralCommissionUpdateOne {
+	if v != nil {
+		_u.SetCurrency(*v)
+	}
+	return _u
+}
+
 // SetReversedAt sets the "reversed_at" field.
 func (_u *ReferralCommissionUpdateOne) SetReversedAt(v time.Time) *ReferralCommissionUpdateOne {
 	_u.mutation.SetReversedAt(v)
@@ -717,6 +835,21 @@ func (_u *ReferralCommissionUpdateOne) SetRechargeOrder(v *RechargeOrder) *Refer
 	return _u.SetRechargeOrderID(v.ID)
 }
 
+// AddWithdrawalAllocationIDs adds the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_u *ReferralCommissionUpdateOne) AddWithdrawalAllocationIDs(ids ...int64) *ReferralCommissionUpdateOne {
+	_u.mutation.AddWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// AddWithdrawalAllocations adds the "withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *ReferralCommissionUpdateOne) AddWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *ReferralCommissionUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWithdrawalAllocationIDs(ids...)
+}
+
 // Mutation returns the ReferralCommissionMutation object of the builder.
 func (_u *ReferralCommissionUpdateOne) Mutation() *ReferralCommissionMutation {
 	return _u.mutation
@@ -738,6 +871,27 @@ func (_u *ReferralCommissionUpdateOne) ClearReferredUser() *ReferralCommissionUp
 func (_u *ReferralCommissionUpdateOne) ClearRechargeOrder() *ReferralCommissionUpdateOne {
 	_u.mutation.ClearRechargeOrder()
 	return _u
+}
+
+// ClearWithdrawalAllocations clears all "withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *ReferralCommissionUpdateOne) ClearWithdrawalAllocations() *ReferralCommissionUpdateOne {
+	_u.mutation.ClearWithdrawalAllocations()
+	return _u
+}
+
+// RemoveWithdrawalAllocationIDs removes the "withdrawal_allocations" edge to ReferralWithdrawalAllocation entities by IDs.
+func (_u *ReferralCommissionUpdateOne) RemoveWithdrawalAllocationIDs(ids ...int64) *ReferralCommissionUpdateOne {
+	_u.mutation.RemoveWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// RemoveWithdrawalAllocations removes "withdrawal_allocations" edges to ReferralWithdrawalAllocation entities.
+func (_u *ReferralCommissionUpdateOne) RemoveWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *ReferralCommissionUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWithdrawalAllocationIDs(ids...)
 }
 
 // Where appends a list predicates to the ReferralCommissionUpdate builder.
@@ -799,6 +953,11 @@ func (_u *ReferralCommissionUpdateOne) check() error {
 	if v, ok := _u.mutation.Status(); ok {
 		if err := referralcommission.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "ReferralCommission.status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Currency(); ok {
+		if err := referralcommission.CurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "currency", err: fmt.Errorf(`ent: validator failed for field "ReferralCommission.currency": %w`, err)}
 		}
 	}
 	if _u.mutation.PromoterCleared() && len(_u.mutation.PromoterIDs()) > 0 {
@@ -868,6 +1027,9 @@ func (_u *ReferralCommissionUpdateOne) sqlSave(ctx context.Context) (_node *Refe
 	}
 	if value, ok := _u.mutation.AddedCommissionAmount(); ok {
 		_spec.AddField(referralcommission.FieldCommissionAmount, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.Currency(); ok {
+		_spec.SetField(referralcommission.FieldCurrency, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.ReversedAt(); ok {
 		_spec.SetField(referralcommission.FieldReversedAt, field.TypeTime, value)
@@ -967,6 +1129,51 @@ func (_u *ReferralCommissionUpdateOne) sqlSave(ctx context.Context) (_node *Refe
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(rechargeorder.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWithdrawalAllocationsIDs(); len(nodes) > 0 && !_u.mutation.WithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WithdrawalAllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

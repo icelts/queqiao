@@ -1,12 +1,20 @@
 package routes
 
 import (
+	"time"
+
 	"github.com/Wei-Shaw/sub2api/internal/handler"
+	ratemiddleware "github.com/Wei-Shaw/sub2api/internal/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
+
+const referralWithdrawalBodyLimitBytes int64 = 32 * 1024
+const referralWriteRateLimitWindow = time.Minute
+const referralWriteRateLimit = 10
 
 // RegisterUserRoutes 注册用户相关路由（需要认证）
 func RegisterUserRoutes(
@@ -14,7 +22,9 @@ func RegisterUserRoutes(
 	h *handler.Handlers,
 	jwtAuth middleware.JWTAuthMiddleware,
 	settingService *service.SettingService,
+	redisClient *redis.Client,
 ) {
+	referralWriteLimiter := ratemiddleware.NewRateLimiter(redisClient)
 	authenticated := v1.Group("")
 	authenticated.Use(gin.HandlerFunc(jwtAuth))
 	authenticated.Use(middleware.BackendModeUserGuard(settingService))
@@ -89,8 +99,21 @@ func RegisterUserRoutes(
 			referral.GET("/invitees", h.Referral.ListInvitees)
 			referral.GET("/commissions", h.Referral.ListCommissions)
 			referral.GET("/withdrawals", h.Referral.ListWithdrawalRequests)
-			referral.POST("/withdrawals", h.Referral.CreateWithdrawalRequest)
-			referral.POST("/withdrawals/:id/cancel", h.Referral.CancelWithdrawalRequest)
+			referral.POST(
+				"/withdrawals",
+				referralWriteLimiter.LimitWithOptions("referral-withdrawals-create", referralWriteRateLimit, referralWriteRateLimitWindow, ratemiddleware.RateLimitOptions{
+					FailureMode: ratemiddleware.RateLimitFailClose,
+				}),
+				middleware.RequestBodyLimit(referralWithdrawalBodyLimitBytes),
+				h.Referral.CreateWithdrawalRequest,
+			)
+			referral.POST(
+				"/withdrawals/:id/cancel",
+				referralWriteLimiter.LimitWithOptions("referral-withdrawals-cancel", referralWriteRateLimit, referralWriteRateLimitWindow, ratemiddleware.RateLimitOptions{
+					FailureMode: ratemiddleware.RateLimitFailClose,
+				}),
+				h.Referral.CancelWithdrawalRequest,
+			)
 		}
 
 		// 用户订阅

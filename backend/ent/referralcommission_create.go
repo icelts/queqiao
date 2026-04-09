@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 )
 
@@ -140,6 +141,20 @@ func (_c *ReferralCommissionCreate) SetNillableCommissionAmount(v *float64) *Ref
 	return _c
 }
 
+// SetCurrency sets the "currency" field.
+func (_c *ReferralCommissionCreate) SetCurrency(v string) *ReferralCommissionCreate {
+	_c.mutation.SetCurrency(v)
+	return _c
+}
+
+// SetNillableCurrency sets the "currency" field if the given value is not nil.
+func (_c *ReferralCommissionCreate) SetNillableCurrency(v *string) *ReferralCommissionCreate {
+	if v != nil {
+		_c.SetCurrency(*v)
+	}
+	return _c
+}
+
 // SetReversedAt sets the "reversed_at" field.
 func (_c *ReferralCommissionCreate) SetReversedAt(v time.Time) *ReferralCommissionCreate {
 	_c.mutation.SetReversedAt(v)
@@ -201,6 +216,21 @@ func (_c *ReferralCommissionCreate) SetReferredUser(v *User) *ReferralCommission
 // SetRechargeOrder sets the "recharge_order" edge to the RechargeOrder entity.
 func (_c *ReferralCommissionCreate) SetRechargeOrder(v *RechargeOrder) *ReferralCommissionCreate {
 	return _c.SetRechargeOrderID(v.ID)
+}
+
+// AddWithdrawalAllocationIDs adds the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_c *ReferralCommissionCreate) AddWithdrawalAllocationIDs(ids ...int64) *ReferralCommissionCreate {
+	_c.mutation.AddWithdrawalAllocationIDs(ids...)
+	return _c
+}
+
+// AddWithdrawalAllocations adds the "withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_c *ReferralCommissionCreate) AddWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *ReferralCommissionCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWithdrawalAllocationIDs(ids...)
 }
 
 // Mutation returns the ReferralCommissionMutation object of the builder.
@@ -266,6 +296,10 @@ func (_c *ReferralCommissionCreate) defaults() {
 		v := referralcommission.DefaultCommissionAmount
 		_c.mutation.SetCommissionAmount(v)
 	}
+	if _, ok := _c.mutation.Currency(); !ok {
+		v := referralcommission.DefaultCurrency
+		_c.mutation.SetCurrency(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -309,6 +343,14 @@ func (_c *ReferralCommissionCreate) check() error {
 	}
 	if _, ok := _c.mutation.CommissionAmount(); !ok {
 		return &ValidationError{Name: "commission_amount", err: errors.New(`ent: missing required field "ReferralCommission.commission_amount"`)}
+	}
+	if _, ok := _c.mutation.Currency(); !ok {
+		return &ValidationError{Name: "currency", err: errors.New(`ent: missing required field "ReferralCommission.currency"`)}
+	}
+	if v, ok := _c.mutation.Currency(); ok {
+		if err := referralcommission.CurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "currency", err: fmt.Errorf(`ent: validator failed for field "ReferralCommission.currency": %w`, err)}
+		}
 	}
 	if len(_c.mutation.PromoterIDs()) == 0 {
 		return &ValidationError{Name: "promoter", err: errors.New(`ent: missing required edge "ReferralCommission.promoter"`)}
@@ -374,6 +416,10 @@ func (_c *ReferralCommissionCreate) createSpec() (*ReferralCommission, *sqlgraph
 		_spec.SetField(referralcommission.FieldCommissionAmount, field.TypeFloat64, value)
 		_node.CommissionAmount = value
 	}
+	if value, ok := _c.mutation.Currency(); ok {
+		_spec.SetField(referralcommission.FieldCurrency, field.TypeString, value)
+		_node.Currency = value
+	}
 	if value, ok := _c.mutation.ReversedAt(); ok {
 		_spec.SetField(referralcommission.FieldReversedAt, field.TypeTime, value)
 		_node.ReversedAt = &value
@@ -435,6 +481,22 @@ func (_c *ReferralCommissionCreate) createSpec() (*ReferralCommission, *sqlgraph
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.RechargeOrderID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WithdrawalAllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralcommission.WithdrawalAllocationsTable,
+			Columns: []string{referralcommission.WithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -612,6 +674,18 @@ func (u *ReferralCommissionUpsert) UpdateCommissionAmount() *ReferralCommissionU
 // AddCommissionAmount adds v to the "commission_amount" field.
 func (u *ReferralCommissionUpsert) AddCommissionAmount(v float64) *ReferralCommissionUpsert {
 	u.Add(referralcommission.FieldCommissionAmount, v)
+	return u
+}
+
+// SetCurrency sets the "currency" field.
+func (u *ReferralCommissionUpsert) SetCurrency(v string) *ReferralCommissionUpsert {
+	u.Set(referralcommission.FieldCurrency, v)
+	return u
+}
+
+// UpdateCurrency sets the "currency" field to the value that was provided on create.
+func (u *ReferralCommissionUpsert) UpdateCurrency() *ReferralCommissionUpsert {
+	u.SetExcluded(referralcommission.FieldCurrency)
 	return u
 }
 
@@ -858,6 +932,20 @@ func (u *ReferralCommissionUpsertOne) AddCommissionAmount(v float64) *ReferralCo
 func (u *ReferralCommissionUpsertOne) UpdateCommissionAmount() *ReferralCommissionUpsertOne {
 	return u.Update(func(s *ReferralCommissionUpsert) {
 		s.UpdateCommissionAmount()
+	})
+}
+
+// SetCurrency sets the "currency" field.
+func (u *ReferralCommissionUpsertOne) SetCurrency(v string) *ReferralCommissionUpsertOne {
+	return u.Update(func(s *ReferralCommissionUpsert) {
+		s.SetCurrency(v)
+	})
+}
+
+// UpdateCurrency sets the "currency" field to the value that was provided on create.
+func (u *ReferralCommissionUpsertOne) UpdateCurrency() *ReferralCommissionUpsertOne {
+	return u.Update(func(s *ReferralCommissionUpsert) {
+		s.UpdateCurrency()
 	})
 }
 
@@ -1279,6 +1367,20 @@ func (u *ReferralCommissionUpsertBulk) AddCommissionAmount(v float64) *ReferralC
 func (u *ReferralCommissionUpsertBulk) UpdateCommissionAmount() *ReferralCommissionUpsertBulk {
 	return u.Update(func(s *ReferralCommissionUpsert) {
 		s.UpdateCommissionAmount()
+	})
+}
+
+// SetCurrency sets the "currency" field.
+func (u *ReferralCommissionUpsertBulk) SetCurrency(v string) *ReferralCommissionUpsertBulk {
+	return u.Update(func(s *ReferralCommissionUpsert) {
+		s.SetCurrency(v)
+	})
+}
+
+// UpdateCurrency sets the "currency" field to the value that was provided on create.
+func (u *ReferralCommissionUpsertBulk) UpdateCurrency() *ReferralCommissionUpsertBulk {
+	return u.Update(func(s *ReferralCommissionUpsert) {
+		s.UpdateCurrency()
 	})
 }
 

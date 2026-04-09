@@ -49,6 +49,7 @@ type ReferralCommission struct {
 	SourceAmount     float64    `json:"source_amount"`
 	RateSnapshot     float64    `json:"rate_snapshot"`
 	CommissionAmount float64    `json:"commission_amount"`
+	Currency         string     `json:"currency"`
 	ReversedAt       *time.Time `json:"reversed_at,omitempty"`
 	ReversedReason   *string    `json:"reversed_reason,omitempty"`
 	Notes            *string    `json:"notes,omitempty"`
@@ -57,23 +58,27 @@ type ReferralCommission struct {
 }
 
 type ReferralSummary struct {
-	ReferralCode             string
-	InviteeCount             int64
-	FirstCommissionCount     int64
-	TotalRechargeAmount      float64
-	TotalFirstCommission     float64
-	TotalRecurringCommission float64
-	TotalCommission          float64
-	EffectiveInviteeCount    int64
-	WithdrawEnabled          bool
-	WithdrawMinAmount        float64
-	WithdrawMinInvitees      int64
-	AvailableCommission      float64
-	FrozenCommission         float64
-	NextUnlockAt             *time.Time
-	PendingWithdrawalAmount  float64
-	ApprovedWithdrawalAmount float64
-	CanWithdraw              bool
+	ReferralCode                 string
+	InviteeCount                 int64
+	FirstCommissionCount         int64
+	TotalRechargeAmount          float64
+	TotalFirstCommission         float64
+	TotalRecurringCommission     float64
+	TotalCommission              float64
+	EffectiveInviteeCount        int64
+	WithdrawEnabled              bool
+	WithdrawMinAmount            float64
+	WithdrawMinInvitees          int64
+	CommissionCurrency           string
+	HasMixedCommissionCurrencies bool
+	AvailableCommission          float64
+	FrozenCommission             float64
+	NextUnlockAt                 *time.Time
+	PendingWithdrawalAmount      float64
+	ApprovedWithdrawalAmount     float64
+	PaidWithdrawalAmount         float64
+	WithdrawalDebt               float64
+	CanWithdraw                  bool
 }
 
 type ReferralInvitee struct {
@@ -106,6 +111,7 @@ type ReferralWithdrawalRequest struct {
 	AccountIdentifier *string    `json:"account_identifier,omitempty"`
 	Status            string     `json:"status"`
 	ReviewedAt        *time.Time `json:"reviewed_at,omitempty"`
+	PaidAt            *time.Time `json:"paid_at,omitempty"`
 	Notes             *string    `json:"notes,omitempty"`
 	ReviewNotes       *string    `json:"review_notes,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
@@ -233,64 +239,43 @@ func (s *ReferralService) GetSummary(ctx context.Context, promoterUserID int64) 
 		return nil, err
 	}
 
-	commissions, err := s.entClient.ReferralCommission.Query().
-		Where(
-			referralcommission.PromoterUserIDEQ(promoterUserID),
-			referralcommission.StatusEQ(ReferralCommissionStatusRecorded),
-		).
-		All(ctx)
+	withdrawalStats, err := s.getWithdrawalStats(ctx, promoterUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	firstCommissionCount, totalFirstCommission, totalRecurringCommission, totalCommission, err := s.getCommissionSummaryStats(ctx, promoterUserID, withdrawalStats)
+	if err != nil {
+		return nil, err
+	}
+	totalRechargeAmount, err := s.getTotalPaidRechargeAmount(ctx, promoterUserID, withdrawalStats)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := &ReferralSummary{
-		ReferralCode: referralCode,
-		InviteeCount: int64(inviteeCount),
+		ReferralCode:                 referralCode,
+		InviteeCount:                 int64(inviteeCount),
+		FirstCommissionCount:         firstCommissionCount,
+		TotalRechargeAmount:          totalRechargeAmount,
+		TotalFirstCommission:         totalFirstCommission,
+		TotalRecurringCommission:     totalRecurringCommission,
+		TotalCommission:              totalCommission,
+		WithdrawEnabled:              withdrawalStats.WithdrawEnabled,
+		WithdrawMinAmount:            withdrawalStats.WithdrawMinAmount,
+		WithdrawMinInvitees:          withdrawalStats.WithdrawMinInvitees,
+		CommissionCurrency:           withdrawalStats.Currency,
+		HasMixedCommissionCurrencies: withdrawalStats.HasMixedCurrencies,
+		AvailableCommission:          withdrawalStats.AvailableCommission,
+		FrozenCommission:             withdrawalStats.FrozenCommission,
+		NextUnlockAt:                 withdrawalStats.NextUnlockAt,
+		PendingWithdrawalAmount:      withdrawalStats.PendingWithdrawalAmount,
+		ApprovedWithdrawalAmount:     withdrawalStats.ApprovedWithdrawalAmount,
+		PaidWithdrawalAmount:         withdrawalStats.PaidWithdrawalAmount,
+		WithdrawalDebt:               withdrawalStats.WithdrawalDebt,
+		EffectiveInviteeCount:        withdrawalStats.EffectiveInviteeCount,
+		CanWithdraw:                  withdrawalStats.CanWithdraw,
 	}
-	for _, item := range commissions {
-		summary.TotalCommission = roundMoney(summary.TotalCommission + item.CommissionAmount)
-		switch item.CommissionType {
-		case ReferralCommissionTypeFirst:
-			summary.FirstCommissionCount++
-			summary.TotalFirstCommission = roundMoney(summary.TotalFirstCommission + item.CommissionAmount)
-		case ReferralCommissionTypeRecurring:
-			summary.TotalRecurringCommission = roundMoney(summary.TotalRecurringCommission + item.CommissionAmount)
-		}
-	}
-
-	invitees, err := s.entClient.User.Query().
-		Where(dbuser.InviterIDEQ(promoterUserID), dbuser.DeletedAtIsNil()).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, invitee := range invitees {
-		orders, err := s.entClient.RechargeOrder.Query().
-			Where(
-				rechargeorder.UserIDEQ(invitee.ID),
-				rechargeorder.StatusEQ(RechargeOrderStatusPaid),
-			).
-			All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, order := range orders {
-			summary.TotalRechargeAmount = roundMoney(summary.TotalRechargeAmount + order.Amount)
-		}
-	}
-
-	withdrawalStats, err := s.getWithdrawalStats(ctx, promoterUserID)
-	if err != nil {
-		return nil, err
-	}
-	summary.EffectiveInviteeCount = withdrawalStats.EffectiveInviteeCount
-	summary.WithdrawEnabled = withdrawalStats.WithdrawEnabled
-	summary.WithdrawMinAmount = withdrawalStats.WithdrawMinAmount
-	summary.WithdrawMinInvitees = withdrawalStats.WithdrawMinInvitees
-	summary.AvailableCommission = withdrawalStats.AvailableCommission
-	summary.PendingWithdrawalAmount = withdrawalStats.PendingWithdrawalAmount
-	summary.ApprovedWithdrawalAmount = withdrawalStats.ApprovedWithdrawalAmount
-	summary.CanWithdraw = withdrawalStats.CanWithdraw
 
 	return summary, nil
 }
@@ -317,8 +302,13 @@ func (s *ReferralService) ListInvitees(ctx context.Context, promoterUserID int64
 	if err != nil {
 		return nil, 0, err
 	}
+	if len(items) == 0 {
+		return []ReferralInvitee{}, int64(total), nil
+	}
 
 	result := make([]ReferralInvitee, 0, len(items))
+	inviteeIDs := make([]int64, 0, len(items))
+	resultIndexByUserID := make(map[int64]int, len(items))
 	for _, invitee := range items {
 		out := ReferralInvitee{
 			UserID:       invitee.ID,
@@ -326,48 +316,137 @@ func (s *ReferralService) ListInvitees(ctx context.Context, promoterUserID int64
 			Username:     invitee.Username,
 			RegisteredAt: invitee.CreatedAt,
 		}
-
-		orders, err := s.entClient.RechargeOrder.Query().
-			Where(
-				rechargeorder.UserIDEQ(invitee.ID),
-				rechargeorder.StatusEQ(RechargeOrderStatusPaid),
-			).
-			Order(rechargeorder.ByPaidAt()).
-			All(ctx)
-		if err != nil {
-			return nil, 0, err
-		}
-		for idx, order := range orders {
-			out.TotalPaidAmount = roundMoney(out.TotalPaidAmount + order.Amount)
-			if idx == 0 {
-				out.FirstPaidAt = order.PaidAt
-				out.FirstPaidAmount = order.Amount
-			}
-		}
-
-		commissions, err := s.entClient.ReferralCommission.Query().
-			Where(
-				referralcommission.PromoterUserIDEQ(promoterUserID),
-				referralcommission.ReferredUserIDEQ(invitee.ID),
-				referralcommission.StatusEQ(ReferralCommissionStatusRecorded),
-			).
-			All(ctx)
-		if err != nil {
-			return nil, 0, err
-		}
-		for _, commission := range commissions {
-			out.TotalCommissionAmount = roundMoney(out.TotalCommissionAmount + commission.CommissionAmount)
-			if commission.CommissionType == ReferralCommissionTypeFirst {
-				out.FirstCommissionAmount = roundMoney(out.FirstCommissionAmount + commission.CommissionAmount)
-			} else if commission.CommissionType == ReferralCommissionTypeRecurring {
-				out.RecurringCommissionAmount = roundMoney(out.RecurringCommissionAmount + commission.CommissionAmount)
-			}
-		}
-
+		inviteeIDs = append(inviteeIDs, invitee.ID)
+		resultIndexByUserID[invitee.ID] = len(result)
 		result = append(result, out)
 	}
 
+	orders, err := s.entClient.RechargeOrder.Query().
+		Where(
+			rechargeorder.UserIDIn(inviteeIDs...),
+			rechargeorder.StatusEQ(RechargeOrderStatusPaid),
+		).
+		Order(
+			dbent.Asc(rechargeorder.FieldUserID),
+			rechargeorder.ByPaidAt(),
+			dbent.Asc(rechargeorder.FieldID),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, order := range orders {
+		idx, ok := resultIndexByUserID[order.UserID]
+		if !ok {
+			continue
+		}
+		result[idx].TotalPaidAmount = roundMoney(result[idx].TotalPaidAmount + order.Amount)
+		if result[idx].FirstPaidAt == nil {
+			result[idx].FirstPaidAt = order.PaidAt
+			result[idx].FirstPaidAmount = order.Amount
+		}
+	}
+
+	commissions, err := s.entClient.ReferralCommission.Query().
+		Where(
+			referralcommission.PromoterUserIDEQ(promoterUserID),
+			referralcommission.ReferredUserIDIn(inviteeIDs...),
+			referralcommission.StatusEQ(ReferralCommissionStatusRecorded),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	for _, commission := range commissions {
+		idx, ok := resultIndexByUserID[commission.ReferredUserID]
+		if !ok {
+			continue
+		}
+		result[idx].TotalCommissionAmount = roundMoney(result[idx].TotalCommissionAmount + commission.CommissionAmount)
+		if commission.CommissionType == ReferralCommissionTypeFirst {
+			result[idx].FirstCommissionAmount = roundMoney(result[idx].FirstCommissionAmount + commission.CommissionAmount)
+		} else if commission.CommissionType == ReferralCommissionTypeRecurring {
+			result[idx].RecurringCommissionAmount = roundMoney(result[idx].RecurringCommissionAmount + commission.CommissionAmount)
+		}
+	}
+
 	return result, int64(total), nil
+}
+
+func (s *ReferralService) getCommissionSummaryStats(ctx context.Context, promoterUserID int64, withdrawalStats *referralWithdrawalStats) (int64, float64, float64, float64, error) {
+	firstCommissionCount, err := s.entClient.ReferralCommission.Query().
+		Where(
+			referralcommission.PromoterUserIDEQ(promoterUserID),
+			referralcommission.StatusEQ(ReferralCommissionStatusRecorded),
+			referralcommission.CommissionTypeEQ(ReferralCommissionTypeFirst),
+		).
+		Count(ctx)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	if withdrawalStats == nil || withdrawalStats.HasMixedCurrencies {
+		return int64(firstCommissionCount), 0, 0, 0, nil
+	}
+
+	var rows []struct {
+		CommissionType string  `json:"commission_type"`
+		Total          float64 `json:"total"`
+	}
+	err = s.entClient.ReferralCommission.Query().
+		Where(
+			referralcommission.PromoterUserIDEQ(promoterUserID),
+			referralcommission.StatusEQ(ReferralCommissionStatusRecorded),
+			referralcommission.CurrencyEQ(withdrawalStats.Currency),
+		).
+		GroupBy(referralcommission.FieldCommissionType).
+		Aggregate(dbent.As(dbent.Sum(referralcommission.FieldCommissionAmount), "total")).
+		Scan(ctx, &rows)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	totalFirstCommission := 0.0
+	totalRecurringCommission := 0.0
+	totalCommission := 0.0
+	for _, row := range rows {
+		totalCommission = roundMoney(totalCommission + row.Total)
+		switch row.CommissionType {
+		case ReferralCommissionTypeFirst:
+			totalFirstCommission = roundMoney(totalFirstCommission + row.Total)
+		case ReferralCommissionTypeRecurring:
+			totalRecurringCommission = roundMoney(totalRecurringCommission + row.Total)
+		}
+	}
+
+	return int64(firstCommissionCount), totalFirstCommission, totalRecurringCommission, totalCommission, nil
+}
+
+func (s *ReferralService) getTotalPaidRechargeAmount(ctx context.Context, promoterUserID int64, withdrawalStats *referralWithdrawalStats) (float64, error) {
+	if withdrawalStats == nil || withdrawalStats.HasMixedCurrencies {
+		return 0, nil
+	}
+
+	var rows []struct {
+		Total float64 `json:"total"`
+	}
+	err := s.entClient.RechargeOrder.Query().
+		Where(
+			rechargeorder.StatusEQ(RechargeOrderStatusPaid),
+			rechargeorder.CurrencyEQ(withdrawalStats.Currency),
+			rechargeorder.HasUserWith(
+				dbuser.InviterIDEQ(promoterUserID),
+				dbuser.DeletedAtIsNil(),
+			),
+		).
+		Aggregate(dbent.As(dbent.Sum(rechargeorder.FieldAmount), "total")).
+		Scan(ctx, &rows)
+	if err != nil {
+		return 0, err
+	}
+	if len(rows) == 0 {
+		return 0, nil
+	}
+	return roundMoney(rows[0].Total), nil
 }
 
 func (s *ReferralService) ListCommissions(ctx context.Context, promoterUserID int64, page, pageSize int) ([]ReferralCommissionDetail, int64, error) {
@@ -450,15 +529,22 @@ func (s *ReferralService) RecordPaidRecharge(ctx context.Context, input *RecordP
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	referredUser, err := tx.User.Query().
+	referredUserQuery := tx.User.Query().
 		Where(dbuser.IDEQ(input.UserID), dbuser.DeletedAtIsNil()).
-		Only(ctx)
+		ForUpdate()
+	referredUser, err := referredUserQuery.Only(ctx)
+	if err != nil && isForUpdateUnsupportedError(err) {
+		referredUser, err = tx.User.Query().
+			Where(dbuser.IDEQ(input.UserID), dbuser.DeletedAtIsNil()).
+			Only(ctx)
+	}
 	if err != nil {
 		if dbent.IsNotFound(err) {
 			return nil, nil, ErrUserNotFound
 		}
 		return nil, nil, err
 	}
+	hadSuccessfulRechargeBefore := referredUser.HasSuccessfulRecharge
 
 	orderEntity, err := s.upsertRechargeOrderTx(ctx, tx, input)
 	if err != nil {
@@ -477,11 +563,14 @@ func (s *ReferralService) RecordPaidRecharge(ctx context.Context, input *RecordP
 		return rechargeOrderEntityToService(orderEntity), commissions, nil
 	}
 
-	if _, err := tx.User.UpdateOneID(referredUser.ID).AddBalance(input.CreditedAmount).Save(ctx); err != nil {
+	if _, err := tx.User.UpdateOneID(referredUser.ID).
+		SetHasSuccessfulRecharge(true).
+		AddBalance(input.CreditedAmount).
+		Save(ctx); err != nil {
 		return nil, nil, err
 	}
 
-	commissions, err := s.settleCommissionTx(ctx, tx, referredUser, orderEntity, input.Amount)
+	commissions, err := s.settleCommissionTx(ctx, tx, referredUser, orderEntity, input.Amount, hadSuccessfulRechargeBefore)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -491,14 +580,18 @@ func (s *ReferralService) RecordPaidRecharge(ctx context.Context, input *RecordP
 	}
 
 	s.invalidateBalanceCaches(ctx, referredUser.ID)
-	for _, commission := range commissions {
-		s.invalidateBalanceCaches(ctx, commission.PromoterUserID)
-	}
 
 	return rechargeOrderEntityToService(orderEntity), commissions, nil
 }
 
-func (s *ReferralService) settleCommissionTx(ctx context.Context, tx *dbent.Tx, referredUser *dbent.User, order *dbent.RechargeOrder, commissionBase float64) ([]ReferralCommission, error) {
+func (s *ReferralService) settleCommissionTx(
+	ctx context.Context,
+	tx *dbent.Tx,
+	referredUser *dbent.User,
+	order *dbent.RechargeOrder,
+	commissionBase float64,
+	hadSuccessfulRechargeBefore bool,
+) ([]ReferralCommission, error) {
 	if referredUser == nil || referredUser.InviterID == nil || *referredUser.InviterID <= 0 {
 		return nil, nil
 	}
@@ -508,20 +601,12 @@ func (s *ReferralService) settleCommissionTx(ctx context.Context, tx *dbent.Tx, 
 	if s.settingService == nil || !s.settingService.IsAffiliateEnabled(ctx) {
 		return nil, nil
 	}
-
-	paidBeforeCount, err := tx.RechargeOrder.Query().
-		Where(
-			rechargeorder.UserIDEQ(referredUser.ID),
-			rechargeorder.StatusEQ(RechargeOrderStatusPaid),
-			rechargeorder.IDNEQ(order.ID),
-		).
-		Count(ctx)
-	if err != nil {
-		return nil, err
+	if normalizeReferralCurrency(order.Currency) != ReferralDefaultCurrency {
+		return nil, nil
 	}
 
 	commissionType := ""
-	if paidBeforeCount == 0 {
+	if !hadSuccessfulRechargeBefore {
 		if s.settingService.IsFirstCommissionEnabled(ctx) {
 			commissionType = ReferralCommissionTypeFirst
 		}
@@ -558,6 +643,24 @@ func (s *ReferralService) settleCommissionTx(ctx context.Context, tx *dbent.Tx, 
 		return nil, nil
 	}
 
+	if promoter.ReferralWithdrawalDebt > 0 {
+		offset := math.Min(commissionAmount, promoter.ReferralWithdrawalDebt)
+		offset = roundMoney(offset)
+		if offset > 0 {
+			commissionAmount = roundMoney(commissionAmount - offset)
+			newDebt := roundMoney(promoter.ReferralWithdrawalDebt - offset)
+			if newDebt < 0 {
+				newDebt = 0
+			}
+			if _, err := tx.User.UpdateOneID(promoter.ID).SetReferralWithdrawalDebt(newDebt).Save(ctx); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if commissionAmount <= 0 {
+		return nil, nil
+	}
+
 	entity, err := tx.ReferralCommission.Create().
 		SetPromoterUserID(promoter.ID).
 		SetReferredUserID(referredUser.ID).
@@ -567,12 +670,9 @@ func (s *ReferralService) settleCommissionTx(ctx context.Context, tx *dbent.Tx, 
 		SetSourceAmount(commissionBase).
 		SetRateSnapshot(rate).
 		SetCommissionAmount(commissionAmount).
+		SetCurrency(ReferralDefaultCurrency).
 		Save(ctx)
 	if err != nil {
-		return nil, err
-	}
-
-	if _, err := tx.User.UpdateOneID(promoter.ID).AddBalance(commissionAmount).Save(ctx); err != nil {
 		return nil, err
 	}
 
@@ -838,6 +938,7 @@ func referralCommissionEntityToService(entity *dbent.ReferralCommission) Referra
 		SourceAmount:     entity.SourceAmount,
 		RateSnapshot:     entity.RateSnapshot,
 		CommissionAmount: entity.CommissionAmount,
+		Currency:         normalizeReferralCurrency(entity.Currency),
 		ReversedAt:       entity.ReversedAt,
 		ReversedReason:   entity.ReversedReason,
 		Notes:            entity.Notes,
@@ -890,6 +991,22 @@ func derefString(value *string) string {
 
 func referralCommissionUnlockAt(createdAt time.Time) time.Time {
 	return createdAt.AddDate(0, 1, 0)
+}
+
+func normalizeReferralCurrency(currency string) string {
+	currency = strings.ToUpper(strings.TrimSpace(currency))
+	if currency == "" {
+		return ReferralDefaultCurrency
+	}
+	return currency
+}
+
+func isForUpdateUnsupportedError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "for update/share not supported in sqlite")
 }
 
 func (s *ReferralService) DebugString(order *RechargeOrder) string {

@@ -49,6 +49,10 @@ const (
 	FieldCustomRecurringCommissionRate = "custom_recurring_commission_rate"
 	// FieldRecurringCommissionEnabled holds the string denoting the recurring_commission_enabled field in the database.
 	FieldRecurringCommissionEnabled = "recurring_commission_enabled"
+	// FieldHasSuccessfulRecharge holds the string denoting the has_successful_recharge field in the database.
+	FieldHasSuccessfulRecharge = "has_successful_recharge"
+	// FieldReferralWithdrawalDebt holds the string denoting the referral_withdrawal_debt field in the database.
+	FieldReferralWithdrawalDebt = "referral_withdrawal_debt"
 	// FieldTotpSecretEncrypted holds the string denoting the totp_secret_encrypted field in the database.
 	FieldTotpSecretEncrypted = "totp_secret_encrypted"
 	// FieldTotpEnabled holds the string denoting the totp_enabled field in the database.
@@ -89,6 +93,8 @@ const (
 	EdgeReferredCommissions = "referred_commissions"
 	// EdgeReferralWithdrawalRequests holds the string denoting the referral_withdrawal_requests edge name in mutations.
 	EdgeReferralWithdrawalRequests = "referral_withdrawal_requests"
+	// EdgeReferralWithdrawalAllocations holds the string denoting the referral_withdrawal_allocations edge name in mutations.
+	EdgeReferralWithdrawalAllocations = "referral_withdrawal_allocations"
 	// EdgeReviewedReferralWithdrawals holds the string denoting the reviewed_referral_withdrawals edge name in mutations.
 	EdgeReviewedReferralWithdrawals = "reviewed_referral_withdrawals"
 	// EdgeUserAllowedGroups holds the string denoting the user_allowed_groups edge name in mutations.
@@ -192,6 +198,13 @@ const (
 	ReferralWithdrawalRequestsInverseTable = "referral_withdrawal_requests"
 	// ReferralWithdrawalRequestsColumn is the table column denoting the referral_withdrawal_requests relation/edge.
 	ReferralWithdrawalRequestsColumn = "promoter_user_id"
+	// ReferralWithdrawalAllocationsTable is the table that holds the referral_withdrawal_allocations relation/edge.
+	ReferralWithdrawalAllocationsTable = "referral_withdrawal_allocations"
+	// ReferralWithdrawalAllocationsInverseTable is the table name for the ReferralWithdrawalAllocation entity.
+	// It exists in this package in order to avoid circular dependency with the "referralwithdrawalallocation" package.
+	ReferralWithdrawalAllocationsInverseTable = "referral_withdrawal_allocations"
+	// ReferralWithdrawalAllocationsColumn is the table column denoting the referral_withdrawal_allocations relation/edge.
+	ReferralWithdrawalAllocationsColumn = "promoter_user_id"
 	// ReviewedReferralWithdrawalsTable is the table that holds the reviewed_referral_withdrawals relation/edge.
 	ReviewedReferralWithdrawalsTable = "referral_withdrawal_requests"
 	// ReviewedReferralWithdrawalsInverseTable is the table name for the ReferralWithdrawalRequest entity.
@@ -228,6 +241,8 @@ var Columns = []string{
 	FieldCustomFirstCommissionRate,
 	FieldCustomRecurringCommissionRate,
 	FieldRecurringCommissionEnabled,
+	FieldHasSuccessfulRecharge,
+	FieldReferralWithdrawalDebt,
 	FieldTotpSecretEncrypted,
 	FieldTotpEnabled,
 	FieldTotpEnabledAt,
@@ -295,6 +310,10 @@ var (
 	ReferralCodeValidator func(string) error
 	// DefaultRecurringCommissionEnabled holds the default value on creation for the "recurring_commission_enabled" field.
 	DefaultRecurringCommissionEnabled bool
+	// DefaultHasSuccessfulRecharge holds the default value on creation for the "has_successful_recharge" field.
+	DefaultHasSuccessfulRecharge bool
+	// DefaultReferralWithdrawalDebt holds the default value on creation for the "referral_withdrawal_debt" field.
+	DefaultReferralWithdrawalDebt float64
 	// DefaultTotpEnabled holds the default value on creation for the "totp_enabled" field.
 	DefaultTotpEnabled bool
 	// DefaultSoraStorageQuotaBytes holds the default value on creation for the "sora_storage_quota_bytes" field.
@@ -394,6 +413,16 @@ func ByCustomRecurringCommissionRate(opts ...sql.OrderTermOption) OrderOption {
 // ByRecurringCommissionEnabled orders the results by the recurring_commission_enabled field.
 func ByRecurringCommissionEnabled(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRecurringCommissionEnabled, opts...).ToFunc()
+}
+
+// ByHasSuccessfulRecharge orders the results by the has_successful_recharge field.
+func ByHasSuccessfulRecharge(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHasSuccessfulRecharge, opts...).ToFunc()
+}
+
+// ByReferralWithdrawalDebt orders the results by the referral_withdrawal_debt field.
+func ByReferralWithdrawalDebt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReferralWithdrawalDebt, opts...).ToFunc()
 }
 
 // ByTotpSecretEncrypted orders the results by the totp_secret_encrypted field.
@@ -624,6 +653,20 @@ func ByReferralWithdrawalRequests(term sql.OrderTerm, terms ...sql.OrderTerm) Or
 	}
 }
 
+// ByReferralWithdrawalAllocationsCount orders the results by referral_withdrawal_allocations count.
+func ByReferralWithdrawalAllocationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReferralWithdrawalAllocationsStep(), opts...)
+	}
+}
+
+// ByReferralWithdrawalAllocations orders the results by referral_withdrawal_allocations terms.
+func ByReferralWithdrawalAllocations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReferralWithdrawalAllocationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByReviewedReferralWithdrawalsCount orders the results by reviewed_referral_withdrawals count.
 func ByReviewedReferralWithdrawalsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -754,6 +797,13 @@ func newReferralWithdrawalRequestsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ReferralWithdrawalRequestsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ReferralWithdrawalRequestsTable, ReferralWithdrawalRequestsColumn),
+	)
+}
+func newReferralWithdrawalAllocationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReferralWithdrawalAllocationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReferralWithdrawalAllocationsTable, ReferralWithdrawalAllocationsColumn),
 	)
 }
 func newReviewedReferralWithdrawalsStep() *sqlgraph.Step {

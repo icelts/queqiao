@@ -72,7 +72,7 @@
               </div>
 
               <template v-else>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
                   <div class="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/40 dark:bg-emerald-900/10">
                     <div class="text-xs text-emerald-700 dark:text-emerald-300">{{ t('referral.summary.availableCommission') }}</div>
                     <div class="mt-2 text-xl font-semibold text-emerald-700 dark:text-emerald-300">
@@ -89,6 +89,18 @@
                     <div class="text-xs text-blue-700 dark:text-blue-300">{{ t('referral.summary.approvedWithdrawal') }}</div>
                     <div class="mt-2 text-xl font-semibold text-blue-700 dark:text-blue-300">
                       {{ formatMoney(summary?.approved_withdrawal_amount ?? 0) }}
+                    </div>
+                  </div>
+                  <div class="rounded-xl border border-cyan-100 bg-cyan-50/70 p-4 dark:border-cyan-900/40 dark:bg-cyan-900/10">
+                    <div class="text-xs text-cyan-700 dark:text-cyan-300">{{ t('referral.summary.paidWithdrawal') }}</div>
+                    <div class="mt-2 text-xl font-semibold text-cyan-700 dark:text-cyan-300">
+                      {{ formatMoney(summary?.paid_withdrawal_amount ?? 0) }}
+                    </div>
+                  </div>
+                  <div class="rounded-xl border border-rose-100 bg-rose-50/70 p-4 dark:border-rose-900/40 dark:bg-rose-900/10">
+                    <div class="text-xs text-rose-700 dark:text-rose-300">{{ t('referral.summary.withdrawalDebt') }}</div>
+                    <div class="mt-2 text-xl font-semibold text-rose-700 dark:text-rose-300">
+                      {{ formatMoney(summary?.withdrawal_debt ?? 0) }}
                     </div>
                   </div>
                   <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/20">
@@ -413,8 +425,8 @@
                 <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium" :class="getWithdrawalStatusClass(row.status)">
                   {{ getWithdrawalStatusLabel(row.status) }}
                 </span>
-                <div v-if="row.reviewed_at" class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ formatDateTime(row.reviewed_at) }}
+                <div v-if="row.paid_at || row.reviewed_at" class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ formatDateTime(row.paid_at || row.reviewed_at) }}
                 </div>
               </div>
             </template>
@@ -574,7 +586,7 @@ const withdrawalColumns = computed<Column[]>(() => [
 ])
 
 function formatMoney(value: number): string {
-  return `$${(value || 0).toFixed(2)}`
+  return `CNY ${(value || 0).toFixed(2)}`
 }
 
 function paymentMethodLabel(method: string): string {
@@ -604,7 +616,7 @@ function getCommissionStatusLabel(status: string): string {
 }
 
 function getWithdrawalStatusLabel(status: string): string {
-  if (['recorded', 'reversed', 'pending', 'approved', 'rejected', 'canceled'].includes(status)) {
+  if (['recorded', 'reversed', 'pending', 'approved', 'paid', 'rejected', 'canceled'].includes(status)) {
     return t(`referral.statuses.${status}`)
   }
   return status || '-'
@@ -626,6 +638,8 @@ function getWithdrawalStatusClass(status: string): string {
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
     case 'approved':
       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    case 'paid':
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
     case 'rejected':
       return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
     case 'canceled':

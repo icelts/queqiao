@@ -42,6 +42,8 @@ type Tx struct {
 	RedeemCode *RedeemCodeClient
 	// ReferralCommission is the client for interacting with the ReferralCommission builders.
 	ReferralCommission *ReferralCommissionClient
+	// ReferralWithdrawalAllocation is the client for interacting with the ReferralWithdrawalAllocation builders.
+	ReferralWithdrawalAllocation *ReferralWithdrawalAllocationClient
 	// ReferralWithdrawalRequest is the client for interacting with the ReferralWithdrawalRequest builders.
 	ReferralWithdrawalRequest *ReferralWithdrawalRequestClient
 	// SecuritySecret is the client for interacting with the SecuritySecret builders.
@@ -209,6 +211,7 @@ func (tx *Tx) init() {
 	tx.RechargeOrder = NewRechargeOrderClient(tx.config)
 	tx.RedeemCode = NewRedeemCodeClient(tx.config)
 	tx.ReferralCommission = NewReferralCommissionClient(tx.config)
+	tx.ReferralWithdrawalAllocation = NewReferralWithdrawalAllocationClient(tx.config)
 	tx.ReferralWithdrawalRequest = NewReferralWithdrawalRequestClient(tx.config)
 	tx.SecuritySecret = NewSecuritySecretClient(tx.config)
 	tx.Setting = NewSettingClient(tx.config)

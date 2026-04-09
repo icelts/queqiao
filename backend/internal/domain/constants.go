@@ -91,6 +91,7 @@ const (
 const (
 	ReferralWithdrawalStatusPending  = "pending"
 	ReferralWithdrawalStatusApproved = "approved"
+	ReferralWithdrawalStatusPaid     = "paid"
 	ReferralWithdrawalStatusRejected = "rejected"
 	ReferralWithdrawalStatusCanceled = "canceled"
 )

@@ -46,6 +46,9 @@ type AdminService interface {
 	GetGroupRateMultipliers(ctx context.Context, groupID int64) ([]UserGroupRateEntry, error)
 	ClearGroupRateMultipliers(ctx context.Context, groupID int64) error
 	BatchSetGroupRateMultipliers(ctx context.Context, groupID int64, entries []GroupRateMultiplierInput) error
+	GetGroupSubscriptionPurchasePrices(ctx context.Context, groupID int64) ([]UserSubscriptionPurchasePriceEntry, error)
+	ClearGroupSubscriptionPurchasePrices(ctx context.Context, groupID int64) error
+	BatchSetGroupSubscriptionPurchasePrices(ctx context.Context, groupID int64, entries []GroupSubscriptionPurchasePriceInput) error
 	UpdateGroupSortOrders(ctx context.Context, updates []GroupSortOrderUpdate) error
 
 	// API Key management (admin)
@@ -138,15 +141,15 @@ type UpdateUserInput struct {
 }
 
 type CreateGroupInput struct {
-	Name             string
-	Description      string
-	Platform         string
-	RateMultiplier   float64
-	IsExclusive      bool
-	SubscriptionType string   // standard/subscription
-	DailyLimitUSD    *float64 // 日限额 (USD)
-	WeeklyLimitUSD   *float64 // 周限额 (USD)
-	MonthlyLimitUSD  *float64 // 月限额 (USD)
+	Name                string
+	Description         string
+	Platform            string
+	RateMultiplier      float64
+	IsExclusive         bool
+	SubscriptionType    string   // standard/subscription
+	DailyLimitUSD       *float64 // 日限额 (USD)
+	WeeklyLimitUSD      *float64 // 周限额 (USD)
+	MonthlyLimitUSD     *float64 // 月限额 (USD)
 	DefaultValidityDays int
 	PurchaseEnabled     bool
 	PurchasePrice       *float64
@@ -181,16 +184,16 @@ type CreateGroupInput struct {
 }
 
 type UpdateGroupInput struct {
-	Name             string
-	Description      string
-	Platform         string
-	RateMultiplier   *float64 // 使用指针以支持设置为0
-	IsExclusive      *bool
-	Status           string
-	SubscriptionType string   // standard/subscription
-	DailyLimitUSD    *float64 // 日限额 (USD)
-	WeeklyLimitUSD   *float64 // 周限额 (USD)
-	MonthlyLimitUSD  *float64 // 月限额 (USD)
+	Name                string
+	Description         string
+	Platform            string
+	RateMultiplier      *float64 // 使用指针以支持设置为0
+	IsExclusive         *bool
+	Status              string
+	SubscriptionType    string   // standard/subscription
+	DailyLimitUSD       *float64 // 日限额 (USD)
+	WeeklyLimitUSD      *float64 // 周限额 (USD)
+	MonthlyLimitUSD     *float64 // 月限额 (USD)
 	DefaultValidityDays *int
 	PurchaseEnabled     *bool
 	PurchasePrice       *float64
@@ -459,23 +462,24 @@ const (
 
 // adminServiceImpl implements AdminService
 type adminServiceImpl struct {
-	userRepo             UserRepository
-	groupRepo            GroupRepository
-	accountRepo          AccountRepository
-	soraAccountRepo      SoraAccountRepository // Sora 账号扩展表仓储
-	proxyRepo            ProxyRepository
-	apiKeyRepo           APIKeyRepository
-	redeemCodeRepo       RedeemCodeRepository
-	userGroupRateRepo    UserGroupRateRepository
-	billingCacheService  *BillingCacheService
-	proxyProber          ProxyExitInfoProber
-	proxyLatencyCache    ProxyLatencyCache
-	authCacheInvalidator APIKeyAuthCacheInvalidator
-	entClient            *dbent.Client // 用于开启数据库事务
-	settingService       *SettingService
-	defaultSubAssigner   DefaultSubscriptionAssigner
-	userSubRepo          UserSubscriptionRepository
-	privacyClientFactory PrivacyClientFactory
+	userRepo                      UserRepository
+	groupRepo                     GroupRepository
+	accountRepo                   AccountRepository
+	soraAccountRepo               SoraAccountRepository // Sora 账号扩展表仓储
+	proxyRepo                     ProxyRepository
+	apiKeyRepo                    APIKeyRepository
+	redeemCodeRepo                RedeemCodeRepository
+	userGroupRateRepo             UserGroupRateRepository
+	subscriptionPurchasePriceRepo SubscriptionPurchasePriceRepository
+	billingCacheService           *BillingCacheService
+	proxyProber                   ProxyExitInfoProber
+	proxyLatencyCache             ProxyLatencyCache
+	authCacheInvalidator          APIKeyAuthCacheInvalidator
+	entClient                     *dbent.Client // 用于开启数据库事务
+	settingService                *SettingService
+	defaultSubAssigner            DefaultSubscriptionAssigner
+	userSubRepo                   UserSubscriptionRepository
+	privacyClientFactory          PrivacyClientFactory
 }
 
 type userGroupRateBatchReader interface {
@@ -492,6 +496,7 @@ func NewAdminService(
 	apiKeyRepo APIKeyRepository,
 	redeemCodeRepo RedeemCodeRepository,
 	userGroupRateRepo UserGroupRateRepository,
+	subscriptionPurchasePriceRepo SubscriptionPurchasePriceRepository,
 	billingCacheService *BillingCacheService,
 	proxyProber ProxyExitInfoProber,
 	proxyLatencyCache ProxyLatencyCache,
@@ -503,23 +508,24 @@ func NewAdminService(
 	privacyClientFactory PrivacyClientFactory,
 ) AdminService {
 	return &adminServiceImpl{
-		userRepo:             userRepo,
-		groupRepo:            groupRepo,
-		accountRepo:          accountRepo,
-		soraAccountRepo:      soraAccountRepo,
-		proxyRepo:            proxyRepo,
-		apiKeyRepo:           apiKeyRepo,
-		redeemCodeRepo:       redeemCodeRepo,
-		userGroupRateRepo:    userGroupRateRepo,
-		billingCacheService:  billingCacheService,
-		proxyProber:          proxyProber,
-		proxyLatencyCache:    proxyLatencyCache,
-		authCacheInvalidator: authCacheInvalidator,
-		entClient:            entClient,
-		settingService:       settingService,
-		defaultSubAssigner:   defaultSubAssigner,
-		userSubRepo:          userSubRepo,
-		privacyClientFactory: privacyClientFactory,
+		userRepo:                      userRepo,
+		groupRepo:                     groupRepo,
+		accountRepo:                   accountRepo,
+		soraAccountRepo:               soraAccountRepo,
+		proxyRepo:                     proxyRepo,
+		apiKeyRepo:                    apiKeyRepo,
+		redeemCodeRepo:                redeemCodeRepo,
+		userGroupRateRepo:             userGroupRateRepo,
+		subscriptionPurchasePriceRepo: subscriptionPurchasePriceRepo,
+		billingCacheService:           billingCacheService,
+		proxyProber:                   proxyProber,
+		proxyLatencyCache:             proxyLatencyCache,
+		authCacheInvalidator:          authCacheInvalidator,
+		entClient:                     entClient,
+		settingService:                settingService,
+		defaultSubAssigner:            defaultSubAssigner,
+		userSubRepo:                   userSubRepo,
+		privacyClientFactory:          privacyClientFactory,
 	}
 }
 
@@ -918,9 +924,6 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		purchaseEnabled = false
 		purchasePrice = nil
 	}
-	if purchaseEnabled && (purchasePrice == nil || *purchasePrice <= 0) {
-		return nil, infraerrors.BadRequest("PURCHASE_PRICE_REQUIRED", "purchase price must be greater than 0 when purchase is enabled")
-	}
 
 	// MCPXMLInject：默认为 true，仅当显式传入 false 时关闭
 	mcpXMLInject := true
@@ -1258,9 +1261,6 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 		group.PurchaseEnabled = false
 		group.PurchasePrice = nil
 	}
-	if group.PurchaseEnabled && (group.PurchasePrice == nil || *group.PurchasePrice <= 0) {
-		return nil, infraerrors.BadRequest("PURCHASE_PRICE_REQUIRED", "purchase price must be greater than 0 when purchase is enabled")
-	}
 
 	if err := s.groupRepo.Update(ctx, group); err != nil {
 		return nil, err
@@ -1407,8 +1407,64 @@ func (s *adminServiceImpl) BatchSetGroupRateMultipliers(ctx context.Context, gro
 	return s.userGroupRateRepo.SyncGroupRateMultipliers(ctx, groupID, entries)
 }
 
+func (s *adminServiceImpl) GetGroupSubscriptionPurchasePrices(ctx context.Context, groupID int64) ([]UserSubscriptionPurchasePriceEntry, error) {
+	if s.subscriptionPurchasePriceRepo == nil {
+		return nil, nil
+	}
+	if _, err := s.validateSubscriptionPurchasePriceGroup(ctx, groupID); err != nil {
+		return nil, err
+	}
+	return s.subscriptionPurchasePriceRepo.GetByGroupID(ctx, groupID)
+}
+
+func (s *adminServiceImpl) ClearGroupSubscriptionPurchasePrices(ctx context.Context, groupID int64) error {
+	if s.subscriptionPurchasePriceRepo == nil {
+		return nil
+	}
+	if _, err := s.validateSubscriptionPurchasePriceGroup(ctx, groupID); err != nil {
+		return err
+	}
+	return s.subscriptionPurchasePriceRepo.DeleteByGroupID(ctx, groupID)
+}
+
+func (s *adminServiceImpl) BatchSetGroupSubscriptionPurchasePrices(ctx context.Context, groupID int64, entries []GroupSubscriptionPurchasePriceInput) error {
+	if s.subscriptionPurchasePriceRepo == nil {
+		return nil
+	}
+	if _, err := s.validateSubscriptionPurchasePriceGroup(ctx, groupID); err != nil {
+		return err
+	}
+
+	seenUsers := make(map[int64]struct{}, len(entries))
+	for _, entry := range entries {
+		if entry.UserID <= 0 {
+			return infraerrors.BadRequest("INVALID_USER_ID", "user_id must be greater than 0")
+		}
+		if entry.PurchasePrice <= 0 {
+			return infraerrors.BadRequest("INVALID_PURCHASE_PRICE", "purchase price must be greater than 0")
+		}
+		if _, exists := seenUsers[entry.UserID]; exists {
+			return infraerrors.BadRequest("DUPLICATE_USER_SUBSCRIPTION_PURCHASE_PRICE", "duplicate user-specific purchase price entry")
+		}
+		seenUsers[entry.UserID] = struct{}{}
+	}
+
+	return s.subscriptionPurchasePriceRepo.SyncGroupPurchasePrices(ctx, groupID, entries)
+}
+
 func (s *adminServiceImpl) UpdateGroupSortOrders(ctx context.Context, updates []GroupSortOrderUpdate) error {
 	return s.groupRepo.UpdateSortOrders(ctx, updates)
+}
+
+func (s *adminServiceImpl) validateSubscriptionPurchasePriceGroup(ctx context.Context, groupID int64) (*Group, error) {
+	group, err := s.groupRepo.GetByID(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+	if !group.IsSubscriptionType() {
+		return nil, ErrGroupNotSubscriptionType
+	}
+	return group, nil
 }
 
 // AdminUpdateAPIKeyGroupID 管理员修改 API Key 分组绑定

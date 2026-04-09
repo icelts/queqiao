@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -15,20 +16,22 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 )
 
 // ReferralCommissionQuery is the builder for querying ReferralCommission entities.
 type ReferralCommissionQuery struct {
 	config
-	ctx               *QueryContext
-	order             []referralcommission.OrderOption
-	inters            []Interceptor
-	predicates        []predicate.ReferralCommission
-	withPromoter      *UserQuery
-	withReferredUser  *UserQuery
-	withRechargeOrder *RechargeOrderQuery
-	modifiers         []func(*sql.Selector)
+	ctx                       *QueryContext
+	order                     []referralcommission.OrderOption
+	inters                    []Interceptor
+	predicates                []predicate.ReferralCommission
+	withPromoter              *UserQuery
+	withReferredUser          *UserQuery
+	withRechargeOrder         *RechargeOrderQuery
+	withWithdrawalAllocations *ReferralWithdrawalAllocationQuery
+	modifiers                 []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -124,6 +127,28 @@ func (_q *ReferralCommissionQuery) QueryRechargeOrder() *RechargeOrderQuery {
 			sqlgraph.From(referralcommission.Table, referralcommission.FieldID, selector),
 			sqlgraph.To(rechargeorder.Table, rechargeorder.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, referralcommission.RechargeOrderTable, referralcommission.RechargeOrderColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWithdrawalAllocations chains the current query on the "withdrawal_allocations" edge.
+func (_q *ReferralCommissionQuery) QueryWithdrawalAllocations() *ReferralWithdrawalAllocationQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralcommission.Table, referralcommission.FieldID, selector),
+			sqlgraph.To(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, referralcommission.WithdrawalAllocationsTable, referralcommission.WithdrawalAllocationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -318,14 +343,15 @@ func (_q *ReferralCommissionQuery) Clone() *ReferralCommissionQuery {
 		return nil
 	}
 	return &ReferralCommissionQuery{
-		config:            _q.config,
-		ctx:               _q.ctx.Clone(),
-		order:             append([]referralcommission.OrderOption{}, _q.order...),
-		inters:            append([]Interceptor{}, _q.inters...),
-		predicates:        append([]predicate.ReferralCommission{}, _q.predicates...),
-		withPromoter:      _q.withPromoter.Clone(),
-		withReferredUser:  _q.withReferredUser.Clone(),
-		withRechargeOrder: _q.withRechargeOrder.Clone(),
+		config:                    _q.config,
+		ctx:                       _q.ctx.Clone(),
+		order:                     append([]referralcommission.OrderOption{}, _q.order...),
+		inters:                    append([]Interceptor{}, _q.inters...),
+		predicates:                append([]predicate.ReferralCommission{}, _q.predicates...),
+		withPromoter:              _q.withPromoter.Clone(),
+		withReferredUser:          _q.withReferredUser.Clone(),
+		withRechargeOrder:         _q.withRechargeOrder.Clone(),
+		withWithdrawalAllocations: _q.withWithdrawalAllocations.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -362,6 +388,17 @@ func (_q *ReferralCommissionQuery) WithRechargeOrder(opts ...func(*RechargeOrder
 		opt(query)
 	}
 	_q.withRechargeOrder = query
+	return _q
+}
+
+// WithWithdrawalAllocations tells the query-builder to eager-load the nodes that are connected to
+// the "withdrawal_allocations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ReferralCommissionQuery) WithWithdrawalAllocations(opts ...func(*ReferralWithdrawalAllocationQuery)) *ReferralCommissionQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWithdrawalAllocations = query
 	return _q
 }
 
@@ -443,10 +480,11 @@ func (_q *ReferralCommissionQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	var (
 		nodes       = []*ReferralCommission{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withPromoter != nil,
 			_q.withReferredUser != nil,
 			_q.withRechargeOrder != nil,
+			_q.withWithdrawalAllocations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,6 +523,15 @@ func (_q *ReferralCommissionQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	if query := _q.withRechargeOrder; query != nil {
 		if err := _q.loadRechargeOrder(ctx, query, nodes, nil,
 			func(n *ReferralCommission, e *RechargeOrder) { n.Edges.RechargeOrder = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWithdrawalAllocations; query != nil {
+		if err := _q.loadWithdrawalAllocations(ctx, query, nodes,
+			func(n *ReferralCommission) { n.Edges.WithdrawalAllocations = []*ReferralWithdrawalAllocation{} },
+			func(n *ReferralCommission, e *ReferralWithdrawalAllocation) {
+				n.Edges.WithdrawalAllocations = append(n.Edges.WithdrawalAllocations, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -575,6 +622,36 @@ func (_q *ReferralCommissionQuery) loadRechargeOrder(ctx context.Context, query 
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (_q *ReferralCommissionQuery) loadWithdrawalAllocations(ctx context.Context, query *ReferralWithdrawalAllocationQuery, nodes []*ReferralCommission, init func(*ReferralCommission), assign func(*ReferralCommission, *ReferralWithdrawalAllocation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*ReferralCommission)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(referralwithdrawalallocation.FieldCommissionID)
+	}
+	query.Where(predicate.ReferralWithdrawalAllocation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(referralcommission.WithdrawalAllocationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CommissionID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "commission_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

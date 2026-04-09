@@ -105,6 +105,11 @@ func CommissionAmount(v float64) predicate.ReferralCommission {
 	return predicate.ReferralCommission(sql.FieldEQ(FieldCommissionAmount, v))
 }
 
+// Currency applies equality check predicate on the "currency" field. It's identical to CurrencyEQ.
+func Currency(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldEQ(FieldCurrency, v))
+}
+
 // ReversedAt applies equality check predicate on the "reversed_at" field. It's identical to ReversedAtEQ.
 func ReversedAt(v time.Time) predicate.ReferralCommission {
 	return predicate.ReferralCommission(sql.FieldEQ(FieldReversedAt, v))
@@ -510,6 +515,71 @@ func CommissionAmountLTE(v float64) predicate.ReferralCommission {
 	return predicate.ReferralCommission(sql.FieldLTE(FieldCommissionAmount, v))
 }
 
+// CurrencyEQ applies the EQ predicate on the "currency" field.
+func CurrencyEQ(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldEQ(FieldCurrency, v))
+}
+
+// CurrencyNEQ applies the NEQ predicate on the "currency" field.
+func CurrencyNEQ(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldNEQ(FieldCurrency, v))
+}
+
+// CurrencyIn applies the In predicate on the "currency" field.
+func CurrencyIn(vs ...string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldIn(FieldCurrency, vs...))
+}
+
+// CurrencyNotIn applies the NotIn predicate on the "currency" field.
+func CurrencyNotIn(vs ...string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldNotIn(FieldCurrency, vs...))
+}
+
+// CurrencyGT applies the GT predicate on the "currency" field.
+func CurrencyGT(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldGT(FieldCurrency, v))
+}
+
+// CurrencyGTE applies the GTE predicate on the "currency" field.
+func CurrencyGTE(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldGTE(FieldCurrency, v))
+}
+
+// CurrencyLT applies the LT predicate on the "currency" field.
+func CurrencyLT(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldLT(FieldCurrency, v))
+}
+
+// CurrencyLTE applies the LTE predicate on the "currency" field.
+func CurrencyLTE(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldLTE(FieldCurrency, v))
+}
+
+// CurrencyContains applies the Contains predicate on the "currency" field.
+func CurrencyContains(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldContains(FieldCurrency, v))
+}
+
+// CurrencyHasPrefix applies the HasPrefix predicate on the "currency" field.
+func CurrencyHasPrefix(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldHasPrefix(FieldCurrency, v))
+}
+
+// CurrencyHasSuffix applies the HasSuffix predicate on the "currency" field.
+func CurrencyHasSuffix(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldHasSuffix(FieldCurrency, v))
+}
+
+// CurrencyEqualFold applies the EqualFold predicate on the "currency" field.
+func CurrencyEqualFold(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldEqualFold(FieldCurrency, v))
+}
+
+// CurrencyContainsFold applies the ContainsFold predicate on the "currency" field.
+func CurrencyContainsFold(v string) predicate.ReferralCommission {
+	return predicate.ReferralCommission(sql.FieldContainsFold(FieldCurrency, v))
+}
+
 // ReversedAtEQ applies the EQ predicate on the "reversed_at" field.
 func ReversedAtEQ(v time.Time) predicate.ReferralCommission {
 	return predicate.ReferralCommission(sql.FieldEQ(FieldReversedAt, v))
@@ -771,6 +841,29 @@ func HasRechargeOrder() predicate.ReferralCommission {
 func HasRechargeOrderWith(preds ...predicate.RechargeOrder) predicate.ReferralCommission {
 	return predicate.ReferralCommission(func(s *sql.Selector) {
 		step := newRechargeOrderStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasWithdrawalAllocations applies the HasEdge predicate on the "withdrawal_allocations" edge.
+func HasWithdrawalAllocations() predicate.ReferralCommission {
+	return predicate.ReferralCommission(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WithdrawalAllocationsTable, WithdrawalAllocationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWithdrawalAllocationsWith applies the HasEdge predicate on the "withdrawal_allocations" edge with a given conditions (other predicates).
+func HasWithdrawalAllocationsWith(preds ...predicate.ReferralWithdrawalAllocation) predicate.ReferralCommission {
+	return predicate.ReferralCommission(func(s *sql.Selector) {
+		step := newWithdrawalAllocationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

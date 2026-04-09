@@ -221,6 +221,15 @@
                 <span class="text-xs">{{ t('common.edit') }}</span>
               </button>
               <button
+                v-if="row.subscription_type === 'subscription'"
+                @click="handlePurchasePrices(row)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-emerald-600 dark:hover:bg-dark-700 dark:hover:text-emerald-400"
+              >
+                <Icon name="creditCard" size="sm" />
+                <span class="text-xs">{{ t('admin.groups.purchasePrices') }}</span>
+              </button>
+              <button
+                v-else
                 @click="handleRateMultipliers(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
               >
@@ -2039,6 +2048,12 @@
       @close="showRateMultipliersModal = false"
       @success="loadGroups"
     />
+    <GroupPurchasePricesModal
+      :show="showPurchasePricesModal"
+      :group="purchasePricesGroup"
+      @close="showPurchasePricesModal = false"
+      @success="loadGroups"
+    />
   </AppLayout>
 </template>
 
@@ -2061,6 +2076,7 @@ import Select from '@/components/common/Select.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import Icon from '@/components/icons/Icon.vue'
 import GroupRateMultipliersModal from '@/components/admin/group/GroupRateMultipliersModal.vue'
+import GroupPurchasePricesModal from '@/components/admin/group/GroupPurchasePricesModal.vue'
 import GroupCapacityBadge from '@/components/common/GroupCapacityBadge.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { createStableObjectKeyResolver } from '@/utils/stableObjectKey'
@@ -2244,6 +2260,8 @@ const editingGroup = ref<AdminGroup | null>(null)
 const deletingGroup = ref<AdminGroup | null>(null)
 const showRateMultipliersModal = ref(false)
 const rateMultipliersGroup = ref<AdminGroup | null>(null)
+const showPurchasePricesModal = ref(false)
+const purchasePricesGroup = ref<AdminGroup | null>(null)
 const sortableGroups = ref<AdminGroup[]>([])
 
 const createForm = reactive({
@@ -2840,6 +2858,11 @@ const handleUpdateGroup = async () => {
 const handleRateMultipliers = (group: AdminGroup) => {
   rateMultipliersGroup.value = group
   showRateMultipliersModal.value = true
+}
+
+const handlePurchasePrices = (group: AdminGroup) => {
+  purchasePricesGroup.value = group
+  showPurchasePricesModal.value = true
 }
 
 const handleDelete = (group: AdminGroup) => {

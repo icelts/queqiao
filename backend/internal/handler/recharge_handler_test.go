@@ -4,7 +4,9 @@ package handler
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/md5"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -138,11 +140,13 @@ func newRechargeHandlerForTests(t *testing.T, queryResponder http.HandlerFunc) (
 
 	repo := &rechargeSettingRepoStub{
 		values: map[string]string{
-			service.SettingKeyXunhuPayEnabled:     "true",
-			service.SettingKeyXunhuPayBaseURL:     queryServer.URL,
-			service.SettingKeyXunhuPayAppID:       "test-app",
-			service.SettingKeyXunhuPayAppSecret:   "test-secret",
-			service.SettingKeyXunhuPayNotifyURL:   "https://merchant.example.com/api/v1/payments/webhook/xunhupay",
+			service.SettingKeyXunhuPayEnabled:      "true",
+			service.SettingKeyXunhuPayBaseURL:      queryServer.URL,
+			service.SettingKeyXunhuPayAppID:        "test-app",
+			service.SettingKeyXunhuPayAppSecret:    "test-secret",
+			service.SettingKeyXunhuPayNotifyURL:    "https://merchant.example.com/api/v1/payments/webhook/xunhupay",
+			service.SettingKeyAdminAPIKey:          "admin-secret",
+			service.SettingKeyPaymentWebhookAPIKey: "payment-webhook-secret",
 			service.SettingKeyBalanceRechargeRatio: "100",
 		},
 	}
@@ -180,6 +184,14 @@ func signXunhuPayload(values map[string]string, secret string) string {
 	}
 	sum := md5.Sum([]byte(strings.Join(parts, "&") + secret))
 	return hex.EncodeToString(sum[:])
+}
+
+func signCustomWebhookPayload(timestamp string, body string, secret string) string {
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(strings.TrimSpace(timestamp)))
+	mac.Write([]byte{'.'})
+	mac.Write([]byte(body))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func makeXunhuQueryResponse(orderNo string, amount float64) string {
@@ -239,7 +251,7 @@ func makeXunhuCreateResponse(errCode int, message string) string {
 func decodeRechargeCreateEnvelope(t *testing.T, body []byte) CreateRechargeOrderResponse {
 	t.Helper()
 	var envelope struct {
-		Code int                       `json:"code"`
+		Code int                         `json:"code"`
 		Data CreateRechargeOrderResponse `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal(body, &envelope))
@@ -445,4 +457,191 @@ func TestRechargeHandlerCreateOrderMarksFailedWhenPaymentInitializationFails(t *
 	require.NoError(t, err)
 	require.Len(t, orders, 1)
 	require.Equal(t, service.RechargeOrderStatusFailed, orders[0].Status)
+}
+
+func TestRechargeHandlerHandleWebhookRequiresValidSignature(t *testing.T) {
+	handler, client, referralService, _ := newRechargeHandlerForTests(t, func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+
+	ctx := context.Background()
+	userID := mustCreateRechargeTestUser(t, ctx, client, "custom-webhook@test.com")
+	order, err := referralService.CreateRechargeOrder(ctx, &service.CreateRechargeOrderInput{
+		UserID:   userID,
+		Amount:   10,
+		Channel:  "custom",
+		Currency: "CNY",
+		Source:   service.RechargeOrderSourceBalance,
+	})
+	require.NoError(t, err)
+
+	requestBody := `{"order_no":"` + order.OrderNo + `","status":"paid","amount":10,"currency":"CNY"}`
+
+	adminReq := httptest.NewRequest(http.MethodPost, "/api/v1/payments/webhook/custom", strings.NewReader(requestBody))
+	adminReq.Header.Set("Content-Type", "application/json")
+	adminReq.Header.Set(paymentWebhookTimestampHeader, strconv.FormatInt(time.Now().Unix(), 10))
+	adminReq.Header.Set(paymentWebhookSignatureHeader, signCustomWebhookPayload(adminReq.Header.Get(paymentWebhookTimestampHeader), requestBody, "admin-secret"))
+	adminRec := httptest.NewRecorder()
+	adminCtx, _ := gin.CreateTestContext(adminRec)
+	adminCtx.Request = adminReq
+	adminCtx.Params = gin.Params{{Key: "channel", Value: "custom"}}
+
+	handler.HandleWebhook(adminCtx)
+
+	require.Equal(t, http.StatusUnauthorized, adminRec.Code)
+
+	orderAfterAdmin, err := client.RechargeOrder.Query().Where(rechargeorder.OrderNoEQ(order.OrderNo)).Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, service.RechargeOrderStatusPending, orderAfterAdmin.Status)
+
+	signedBody := `{"order_no":"` + order.OrderNo + `","status":"paid","amount":10,"credited_amount":99999,"currency":"CNY"}`
+	webhookReq := httptest.NewRequest(http.MethodPost, "/api/v1/payments/webhook/custom", strings.NewReader(signedBody))
+	webhookReq.Header.Set("Content-Type", "application/json")
+	webhookReq.Header.Set(paymentWebhookTimestampHeader, strconv.FormatInt(time.Now().Unix(), 10))
+	webhookReq.Header.Set(paymentWebhookSignatureHeader, signCustomWebhookPayload(webhookReq.Header.Get(paymentWebhookTimestampHeader), signedBody, "payment-webhook-secret"))
+	webhookRec := httptest.NewRecorder()
+	webhookCtx, _ := gin.CreateTestContext(webhookRec)
+	webhookCtx.Request = webhookReq
+	webhookCtx.Params = gin.Params{{Key: "channel", Value: "custom"}}
+
+	handler.HandleWebhook(webhookCtx)
+
+	require.Equal(t, http.StatusOK, webhookRec.Code)
+
+	user, err := client.User.Query().Where(dbuser.IDEQ(userID)).Only(ctx)
+	require.NoError(t, err)
+	require.InDelta(t, 1000.0, user.Balance, 1e-9)
+
+	orderAfterWebhook, err := client.RechargeOrder.Query().Where(rechargeorder.OrderNoEQ(order.OrderNo)).Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, service.RechargeOrderStatusPaid, orderAfterWebhook.Status)
+	require.InDelta(t, 1000.0, orderAfterWebhook.CreditedAmount, 1e-9)
+}
+
+func TestRechargeHandlerHandleWebhookRejectsExpiredTimestamp(t *testing.T) {
+	handler, client, referralService, _ := newRechargeHandlerForTests(t, func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+
+	ctx := context.Background()
+	userID := mustCreateRechargeTestUser(t, ctx, client, "custom-webhook-expired@test.com")
+	order, err := referralService.CreateRechargeOrder(ctx, &service.CreateRechargeOrderInput{
+		UserID:   userID,
+		Amount:   10,
+		Channel:  "custom",
+		Currency: "CNY",
+		Source:   service.RechargeOrderSourceBalance,
+	})
+	require.NoError(t, err)
+
+	requestBody := `{"order_no":"` + order.OrderNo + `","status":"paid","amount":10,"currency":"CNY"}`
+	expiredTimestamp := strconv.FormatInt(time.Now().Add(-10*time.Minute).Unix(), 10)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/webhook/custom", strings.NewReader(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(paymentWebhookTimestampHeader, expiredTimestamp)
+	req.Header.Set(paymentWebhookSignatureHeader, signCustomWebhookPayload(expiredTimestamp, requestBody, "payment-webhook-secret"))
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = req
+	c.Params = gin.Params{{Key: "channel", Value: "custom"}}
+
+	handler.HandleWebhook(c)
+
+	require.Equal(t, http.StatusUnauthorized, rec.Code)
+
+	orderAfter, err := client.RechargeOrder.Query().Where(rechargeorder.OrderNoEQ(order.OrderNo)).Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, service.RechargeOrderStatusPending, orderAfter.Status)
+}
+
+func TestRechargeHandlerReconcileOrderRejectsAmountMismatch(t *testing.T) {
+	handler, client, referralService, _ := newRechargeHandlerForTests(t, func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/payment/query.html", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(makeXunhuQueryResponse("RC-RECONCILE-MISMATCH", 8)))
+	})
+
+	ctx := context.Background()
+	userID := mustCreateRechargeTestUser(t, ctx, client, "reconcile-mismatch@test.com")
+	order, err := referralService.CreateRechargeOrder(ctx, &service.CreateRechargeOrderInput{
+		UserID:   userID,
+		Amount:   10,
+		Channel:  service.XunhuPayChannel,
+		Currency: "CNY",
+		Source:   service.RechargeOrderSourceBalance,
+	})
+	require.NoError(t, err)
+
+	queryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/payment/query.html", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(makeXunhuQueryResponse(order.OrderNo, 8)))
+	}))
+	defer queryServer.Close()
+
+	settingRepo := &rechargeSettingRepoStub{
+		values: map[string]string{
+			service.SettingKeyXunhuPayEnabled:      "true",
+			service.SettingKeyXunhuPayBaseURL:      queryServer.URL,
+			service.SettingKeyXunhuPayAppID:        "test-app",
+			service.SettingKeyXunhuPayAppSecret:    "test-secret",
+			service.SettingKeyBalanceRechargeRatio: "100",
+		},
+	}
+	settingService := service.NewSettingService(settingRepo, &config.Config{})
+	referralService = service.NewReferralService(client, settingService, nil, nil, nil)
+	handler = NewRechargeHandler(referralService, settingService, service.NewXunhuPayService(settingService))
+
+	c, rec := makeAuthenticatedContext(http.MethodPost, "/api/v1/recharges/orders/"+order.OrderNo+"/reconcile", nil, userID)
+	c.Params = gin.Params{{Key: "orderNo", Value: order.OrderNo}}
+
+	handler.ReconcileOrder(c)
+
+	require.Equal(t, http.StatusConflict, rec.Code)
+
+	user, err := client.User.Query().Where(dbuser.IDEQ(userID)).Only(ctx)
+	require.NoError(t, err)
+	require.InDelta(t, 0.0, user.Balance, 1e-9)
+
+	orderAfter, err := client.RechargeOrder.Query().Where(rechargeorder.OrderNoEQ(order.OrderNo)).Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, service.RechargeOrderStatusPending, orderAfter.Status)
+}
+
+func TestRechargeHandlerXunhuWebhookRejectsAmountMismatch(t *testing.T) {
+	handler, client, referralService, _ := newRechargeHandlerForTests(t, func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+
+	ctx := context.Background()
+	userID := mustCreateRechargeTestUser(t, ctx, client, "webhook-mismatch@test.com")
+	order, err := referralService.CreateRechargeOrder(ctx, &service.CreateRechargeOrderInput{
+		UserID:   userID,
+		Amount:   10,
+		Channel:  service.XunhuPayChannel,
+		Currency: "CNY",
+		Source:   service.RechargeOrderSourceBalance,
+	})
+	require.NoError(t, err)
+
+	form := makeXunhuWebhookForm(order.OrderNo, 8)
+	body := strings.NewReader(form.Encode())
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/payments/webhook/xunhupay", body)
+	c.Request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	handler.handleXunhuPayWebhook(c)
+
+	require.Equal(t, http.StatusConflict, rec.Code)
+	require.Contains(t, rec.Body.String(), "paid amount does not match recharge order")
+
+	user, err := client.User.Query().Where(dbuser.IDEQ(userID)).Only(ctx)
+	require.NoError(t, err)
+	require.InDelta(t, 0.0, user.Balance, 1e-9)
+
+	orderAfter, err := client.RechargeOrder.Query().Where(rechargeorder.OrderNoEQ(order.OrderNo)).Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, service.RechargeOrderStatusPending, orderAfter.Status)
 }

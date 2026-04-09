@@ -547,7 +547,9 @@ export default {
       totalRecharge: '累计充值',
       availableCommission: '可提现佣金',
       pendingWithdrawal: '待审核提现',
-      approvedWithdrawal: '已提现佣金'
+      approvedWithdrawal: '已通过待打款',
+      paidWithdrawal: '已完成打款',
+      withdrawalDebt: '推广欠款'
     },
     invitees: {
       title: '邀请用户',
@@ -577,6 +579,7 @@ export default {
       reversed: '已冲回',
       pending: '待审核',
       approved: '已通过',
+      paid: '已打款',
       rejected: '已驳回',
       canceled: '已取消'
     },
@@ -1128,6 +1131,9 @@ export default {
       loadFailed: '加载提现申请失败',
       approveSuccess: '提现申请已通过。',
       approveFailed: '提现申请通过失败',
+      paySuccess: '提现申请已标记为已打款。',
+      payFailed: '标记提现已打款失败',
+      payConfirm: '确认已完成该提现的打款吗？',
       rejectSuccess: '提现申请已驳回。',
       rejectFailed: '提现申请驳回失败',
       rejectConfirm: '确认驳回这笔提现申请吗？',
@@ -1147,15 +1153,18 @@ export default {
       statuses: {
         pending: '待审核',
         approved: '已通过',
+        paid: '已打款',
         rejected: '已驳回',
         canceled: '已取消'
       },
       actions: {
         approve: '通过',
+        pay: '标记已打款',
         reject: '驳回'
       },
       prompts: {
         approve: '可选：填写审核备注',
+        pay: '可选：填写打款备注',
         reject: '可选：填写驳回原因'
       }
     },
@@ -1858,6 +1867,14 @@ export default {
       failedToLoad: '加载分组列表失败',
       failedToSave: '保存分组失败',
       failedToDelete: '删除分组失败',
+      purchasePrices: '订阅售价',
+      purchasePricesTitle: '用户订阅售价管理',
+      defaultPurchasePrice: '默认售价',
+      addUserPurchasePrice: '添加用户专属售价',
+      noPurchasePrices: '暂无用户专属售价配置',
+      purchasePriceSaved: '订阅售价已保存',
+      failedToLoadPurchasePrices: '加载订阅售价失败',
+      failedToSavePurchasePrices: '保存订阅售价失败',
       allPlatforms: '全部平台',
       allStatus: '全部状态',
       allGroups: '全部分组',

@@ -115,22 +115,23 @@ const (
 	SettingKeyCustomMenuItems             = "custom_menu_items"
 	SettingKeyCustomEndpoints             = "custom_endpoints"
 
-	SettingKeyXunhuPayEnabled     = "xunhupay_enabled"
-	SettingKeyXunhuPayBaseURL     = "xunhupay_base_url"
-	SettingKeyXunhuPayAppID       = "xunhupay_appid"
-	SettingKeyXunhuPayAppSecret   = "xunhupay_appsecret"
-	SettingKeyXunhuPayNotifyURL   = "xunhupay_notify_url"
-	SettingKeyXunhuPayReturnURL   = "xunhupay_return_url"
-	SettingKeyXunhuPayCallbackURL = "xunhupay_callback_url"
-	SettingKeyXunhuPayPlugins     = "xunhupay_plugins"
+	SettingKeyXunhuPayEnabled      = "xunhupay_enabled"
+	SettingKeyXunhuPayBaseURL      = "xunhupay_base_url"
+	SettingKeyXunhuPayAppID        = "xunhupay_appid"
+	SettingKeyXunhuPayAppSecret    = "xunhupay_appsecret"
+	SettingKeyXunhuPayNotifyURL    = "xunhupay_notify_url"
+	SettingKeyXunhuPayReturnURL    = "xunhupay_return_url"
+	SettingKeyXunhuPayCallbackURL  = "xunhupay_callback_url"
+	SettingKeyXunhuPayPlugins      = "xunhupay_plugins"
 	SettingKeyBalanceRechargeRatio = "balance_recharge_ratio"
 
 	SettingKeyDefaultConcurrency   = "default_concurrency"
 	SettingKeyDefaultBalance       = "default_balance"
 	SettingKeyDefaultSubscriptions = "default_subscriptions"
 
-	SettingKeyAdminAPIKey       = "admin_api_key"
-	SettingKeyGeminiQuotaPolicy = "gemini_quota_policy"
+	SettingKeyAdminAPIKey          = "admin_api_key"
+	SettingKeyPaymentWebhookAPIKey = "payment_webhook_api_key"
+	SettingKeyGeminiQuotaPolicy    = "gemini_quota_policy"
 
 	SettingKeyEnableModelFallback      = "enable_model_fallback"
 	SettingKeyFallbackModelAnthropic   = "fallback_model_anthropic"
@@ -180,3 +181,6 @@ const (
 
 // AdminAPIKeyPrefix is the prefix for admin API keys (distinct from user "sk-" keys).
 const AdminAPIKeyPrefix = "admin-"
+
+// PaymentWebhookAPIKeyPrefix is the prefix for dedicated payment webhook credentials.
+const PaymentWebhookAPIKeyPrefix = "pwhk-"

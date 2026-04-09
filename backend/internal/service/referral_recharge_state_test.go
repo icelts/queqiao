@@ -118,6 +118,44 @@ func TestReferralService_CreateRechargeOrder_UsesFixedBalanceRechargeRatio(t *te
 	require.InDelta(t, 10.0, order.Amount, 1e-9)
 }
 
+func TestReferralService_CreateRechargeOrder_NormalizesXunhuAmountPrecision(t *testing.T) {
+	svc, client := newReferralServiceSQLiteWithSettings(t, map[string]string{
+		SettingKeyBalanceRechargeRatio: "100",
+	})
+	ctx := context.Background()
+
+	userID := mustCreateReferralTestUser(t, ctx, client, "xunhu-precision@test.com", 0)
+
+	order, err := svc.CreateRechargeOrder(ctx, &CreateRechargeOrderInput{
+		UserID:   userID,
+		Amount:   10.004,
+		Channel:  XunhuPayChannel,
+		Currency: "CNY",
+		Source:   RechargeOrderSourceBalance,
+	})
+	require.NoError(t, err)
+	require.InDelta(t, 10.00, order.Amount, 1e-9)
+	require.InDelta(t, 1000.0, order.CreditedAmount, 1e-9)
+}
+
+func TestReferralService_CreateRechargeOrder_RejectsNonCNYForXunhu(t *testing.T) {
+	svc, client := newReferralServiceSQLiteWithSettings(t, map[string]string{
+		SettingKeyBalanceRechargeRatio: "100",
+	})
+	ctx := context.Background()
+
+	userID := mustCreateReferralTestUser(t, ctx, client, "xunhu-usd@test.com", 0)
+
+	_, err := svc.CreateRechargeOrder(ctx, &CreateRechargeOrderInput{
+		UserID:   userID,
+		Amount:   10,
+		Channel:  XunhuPayChannel,
+		Currency: "USD",
+		Source:   RechargeOrderSourceBalance,
+	})
+	require.ErrorIs(t, err, ErrRechargeOrderCurrencyUnsupported)
+}
+
 func TestReferralService_RecordPaidRecharge_PendingOrderCreditsOnce(t *testing.T) {
 	svc, client := newReferralServiceSQLite(t)
 	ctx := context.Background()
@@ -205,6 +243,154 @@ func TestReferralService_RecordPaidRecharge_RejectsCrossUserOrderRebind(t *testi
 	other, err := client.User.Get(ctx, otherUserID)
 	require.NoError(t, err)
 	require.Equal(t, float64(0), other.Balance)
+}
+
+func TestReferralService_HandlePaymentWebhook_RejectsPaidAmountMismatch(t *testing.T) {
+	svc, client := newReferralServiceSQLite(t)
+	ctx := context.Background()
+
+	userID := mustCreateReferralTestUser(t, ctx, client, "webhook-mismatch-service@test.com", 0)
+	_, err := client.RechargeOrder.Create().
+		SetUserID(userID).
+		SetOrderNo("RC-WEBHOOK-MISMATCH-001").
+		SetChannel("manual").
+		SetSource("payment").
+		SetCurrency("CNY").
+		SetAmount(10).
+		SetCreditedAmount(10).
+		SetStatus(RechargeOrderStatusPending).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, _, err = svc.HandlePaymentWebhook(ctx, &PaymentWebhookInput{
+		OrderNo:  "RC-WEBHOOK-MISMATCH-001",
+		Channel:  "manual",
+		Status:   RechargeOrderStatusPaid,
+		Amount:   8,
+		Currency: "CNY",
+	})
+	require.ErrorIs(t, err, ErrRechargeOrderAmountMismatch)
+
+	user, err := client.User.Get(ctx, userID)
+	require.NoError(t, err)
+	require.Equal(t, float64(0), user.Balance)
+
+	order, err := client.RechargeOrder.Query().
+		Where(rechargeorder.OrderNoEQ("RC-WEBHOOK-MISMATCH-001")).
+		Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, RechargeOrderStatusPending, order.Status)
+}
+
+func TestReferralService_HandlePaymentWebhook_PreservesOrderChannelAndCurrency(t *testing.T) {
+	svc, client := newReferralServiceSQLite(t)
+	ctx := context.Background()
+
+	userID := mustCreateReferralTestUser(t, ctx, client, "webhook-preserve-order@test.com", 0)
+	_, err := client.RechargeOrder.Create().
+		SetUserID(userID).
+		SetOrderNo("RC-WEBHOOK-PRESERVE-001").
+		SetChannel("custom").
+		SetSource("payment").
+		SetCurrency("CNY").
+		SetAmount(10).
+		SetCreditedAmount(10).
+		SetStatus(RechargeOrderStatusPending).
+		Save(ctx)
+	require.NoError(t, err)
+
+	order, _, err := svc.HandlePaymentWebhook(ctx, &PaymentWebhookInput{
+		OrderNo:        "RC-WEBHOOK-PRESERVE-001",
+		Channel:        "malicious-channel",
+		Status:         RechargeOrderStatusPaid,
+		Amount:         10,
+		Currency:       "USD",
+		CreditedAmount: 10,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "custom", order.Channel)
+	require.Equal(t, "CNY", order.Currency)
+
+	entity, err := client.RechargeOrder.Query().
+		Where(rechargeorder.OrderNoEQ("RC-WEBHOOK-PRESERVE-001")).
+		Only(ctx)
+	require.NoError(t, err)
+	require.Equal(t, RechargeOrderStatusPaid, entity.Status)
+	require.Equal(t, "custom", entity.Channel)
+	require.Equal(t, "CNY", entity.Currency)
+}
+
+func TestReferralService_RecordPaidRecharge_StoresCommissionCurrencyAsCNY(t *testing.T) {
+	svc, client := newReferralServiceSQLiteWithSettings(t, map[string]string{
+		SettingKeyAffiliateEnabled:               "true",
+		SettingKeyFirstCommissionEnabled:         "true",
+		SettingKeyRecurringCommissionEnabled:     "false",
+		SettingKeyDefaultFirstCommissionRate:     "50.0000",
+		SettingKeyDefaultRecurringCommissionRate: "0.0000",
+	})
+	ctx := context.Background()
+
+	promoterID := mustCreateReferralTestUser(t, ctx, client, "currency-promoter@test.com", 0)
+	referred, err := client.User.Create().
+		SetEmail("currency-referred@test.com").
+		SetPasswordHash("test-password-hash").
+		SetRole(RoleUser).
+		SetStatus(StatusActive).
+		SetInviterID(promoterID).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, commissions, err := svc.RecordPaidRecharge(ctx, &RecordPaidRechargeInput{
+		UserID:         referred.ID,
+		OrderNo:        "RC-COMMISSION-CURRENCY-001",
+		Channel:        "manual",
+		Amount:         10,
+		CreditedAmount: 10,
+		Currency:       "CNY",
+	})
+	require.NoError(t, err)
+	require.Len(t, commissions, 1)
+	require.Equal(t, "CNY", commissions[0].Currency)
+
+	entity, err := client.ReferralCommission.Get(ctx, commissions[0].ID)
+	require.NoError(t, err)
+	require.Equal(t, "CNY", entity.Currency)
+}
+
+func TestReferralService_RecordPaidRecharge_SkipsCommissionForNonCNYOrder(t *testing.T) {
+	svc, client := newReferralServiceSQLiteWithSettings(t, map[string]string{
+		SettingKeyAffiliateEnabled:               "true",
+		SettingKeyFirstCommissionEnabled:         "true",
+		SettingKeyRecurringCommissionEnabled:     "false",
+		SettingKeyDefaultFirstCommissionRate:     "50.0000",
+		SettingKeyDefaultRecurringCommissionRate: "0.0000",
+	})
+	ctx := context.Background()
+
+	promoterID := mustCreateReferralTestUser(t, ctx, client, "noncny-promoter@test.com", 0)
+	referred, err := client.User.Create().
+		SetEmail("noncny-referred@test.com").
+		SetPasswordHash("test-password-hash").
+		SetRole(RoleUser).
+		SetStatus(StatusActive).
+		SetInviterID(promoterID).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, commissions, err := svc.RecordPaidRecharge(ctx, &RecordPaidRechargeInput{
+		UserID:         referred.ID,
+		OrderNo:        "RC-COMMISSION-NONCNY-001",
+		Channel:        "manual",
+		Amount:         10,
+		CreditedAmount: 10,
+		Currency:       "USD",
+	})
+	require.NoError(t, err)
+	require.Len(t, commissions, 0)
+
+	count, err := client.ReferralCommission.Query().Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
 }
 
 func TestReferralService_RefundRechargeOrder_PaidOrderDebitsOnce(t *testing.T) {
@@ -492,7 +678,7 @@ func TestReferralService_RecordPaidRecharge_ConcurrentCallsCreateOneCommission(t
 
 	promoterAfter, err := client.User.Get(ctx, promoterID)
 	require.NoError(t, err)
-	require.InDelta(t, 5.0, promoterAfter.Balance, 1e-9)
+	require.InDelta(t, 0.0, promoterAfter.Balance, 1e-9)
 
 	commissions, err := client.ReferralCommission.Query().
 		Where(referralcommission.RechargeOrderIDEQ(order.ID)).
@@ -502,6 +688,119 @@ func TestReferralService_RecordPaidRecharge_ConcurrentCallsCreateOneCommission(t
 	require.Equal(t, ReferralCommissionStatusRecorded, commissions[0].Status)
 	require.Equal(t, ReferralCommissionTypeFirst, commissions[0].CommissionType)
 	require.InDelta(t, 5.0, commissions[0].CommissionAmount, 1e-9)
+}
+
+func TestReferralService_RecordPaidRecharge_ConcurrentDifferentOrdersOnlyOneFirstCommission(t *testing.T) {
+	svc, client := newReferralServiceSQLiteWithSettings(t, map[string]string{
+		SettingKeyAffiliateEnabled:               "true",
+		SettingKeyFirstCommissionEnabled:         "true",
+		SettingKeyRecurringCommissionEnabled:     "true",
+		SettingKeyDefaultFirstCommissionRate:     "50.0000",
+		SettingKeyDefaultRecurringCommissionRate: "20.0000",
+	})
+	ctx := context.Background()
+
+	promoterID := mustCreateReferralTestUser(t, ctx, client, "promoter-concurrent-orders@test.com", 0)
+	_, err := client.User.UpdateOneID(promoterID).SetRecurringCommissionEnabled(true).Save(ctx)
+	require.NoError(t, err)
+
+	referred, err := client.User.Create().
+		SetEmail("referred-concurrent-orders@test.com").
+		SetPasswordHash("test-password-hash").
+		SetRole(RoleUser).
+		SetStatus(StatusActive).
+		SetInviterID(promoterID).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, err = client.RechargeOrder.Create().
+		SetUserID(referred.ID).
+		SetOrderNo("RC-CONCURRENT-ORDER-001").
+		SetChannel("manual").
+		SetSource("payment").
+		SetCurrency("CNY").
+		SetAmount(10).
+		SetCreditedAmount(10).
+		SetStatus(RechargeOrderStatusPending).
+		Save(ctx)
+	require.NoError(t, err)
+	_, err = client.RechargeOrder.Create().
+		SetUserID(referred.ID).
+		SetOrderNo("RC-CONCURRENT-ORDER-002").
+		SetChannel("manual").
+		SetSource("payment").
+		SetCurrency("CNY").
+		SetAmount(10).
+		SetCreditedAmount(10).
+		SetStatus(RechargeOrderStatusPending).
+		Save(ctx)
+	require.NoError(t, err)
+
+	orderNos := []string{"RC-CONCURRENT-ORDER-001", "RC-CONCURRENT-ORDER-002"}
+	const workers = 2
+	start := make(chan struct{})
+	errCh := make(chan error, workers)
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		orderNo := orderNos[i]
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			callErr := runWithSQLiteWriteRetry(func() error {
+				_, _, err := svc.RecordPaidRecharge(ctx, &RecordPaidRechargeInput{
+					UserID:         referred.ID,
+					OrderNo:        orderNo,
+					Channel:        "manual",
+					Amount:         10,
+					CreditedAmount: 10,
+					Currency:       "CNY",
+				})
+				return err
+			})
+			errCh <- callErr
+		}()
+	}
+
+	close(start)
+	wg.Wait()
+	close(errCh)
+	for callErr := range errCh {
+		require.NoError(t, callErr)
+	}
+
+	referredAfter, err := client.User.Get(ctx, referred.ID)
+	require.NoError(t, err)
+	require.InDelta(t, 20.0, referredAfter.Balance, 1e-9)
+	require.True(t, referredAfter.HasSuccessfulRecharge)
+
+	commissions, err := client.ReferralCommission.Query().
+		Where(
+			referralcommission.ReferredUserIDEQ(referred.ID),
+			referralcommission.StatusEQ(ReferralCommissionStatusRecorded),
+		).
+		All(ctx)
+	require.NoError(t, err)
+	require.Len(t, commissions, 2)
+
+	firstCount := 0
+	recurringCount := 0
+	firstAmount := 0.0
+	recurringAmount := 0.0
+	for _, item := range commissions {
+		switch item.CommissionType {
+		case ReferralCommissionTypeFirst:
+			firstCount++
+			firstAmount = roundMoney(firstAmount + item.CommissionAmount)
+		case ReferralCommissionTypeRecurring:
+			recurringCount++
+			recurringAmount = roundMoney(recurringAmount + item.CommissionAmount)
+		}
+	}
+	require.Equal(t, 1, firstCount)
+	require.Equal(t, 1, recurringCount)
+	require.InDelta(t, 5.0, firstAmount, 1e-9)
+	require.InDelta(t, 2.0, recurringAmount, 1e-9)
 }
 
 func TestReferralService_RefundRechargeOrder_ConcurrentCallsReverseCommissionOnce(t *testing.T) {
@@ -589,6 +888,64 @@ func TestReferralService_RefundRechargeOrder_ConcurrentCallsReverseCommissionOnc
 	require.Equal(t, ReferralCommissionStatusReversed, commissions[0].Status)
 	require.Equal(t, ReferralCommissionTypeFirst, commissions[0].CommissionType)
 	require.InDelta(t, 5.0, commissions[0].CommissionAmount, 1e-9)
+}
+
+func TestReferralService_RecordPaidRecharge_RefundDoesNotResetFirstRechargeIdentity(t *testing.T) {
+	svc, client := newReferralServiceSQLiteWithSettings(t, map[string]string{
+		SettingKeyAffiliateEnabled:               "true",
+		SettingKeyFirstCommissionEnabled:         "true",
+		SettingKeyRecurringCommissionEnabled:     "true",
+		SettingKeyDefaultFirstCommissionRate:     "50.0000",
+		SettingKeyDefaultRecurringCommissionRate: "20.0000",
+	})
+	ctx := context.Background()
+
+	promoterID := mustCreateReferralTestUser(t, ctx, client, "first-identity-promoter@test.com", 0)
+	_, err := client.User.UpdateOneID(promoterID).SetRecurringCommissionEnabled(true).Save(ctx)
+	require.NoError(t, err)
+	referred, err := client.User.Create().
+		SetEmail("first-identity-referred@test.com").
+		SetPasswordHash("test-password-hash").
+		SetRole(RoleUser).
+		SetStatus(StatusActive).
+		SetInviterID(promoterID).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, firstCommissions, err := svc.RecordPaidRecharge(ctx, &RecordPaidRechargeInput{
+		UserID:         referred.ID,
+		OrderNo:        "RC-FIRST-IDENTITY-001",
+		Channel:        "manual",
+		Amount:         10,
+		CreditedAmount: 10,
+		Currency:       "CNY",
+	})
+	require.NoError(t, err)
+	require.Len(t, firstCommissions, 1)
+	require.Equal(t, ReferralCommissionTypeFirst, firstCommissions[0].CommissionType)
+
+	_, _, err = svc.RefundRechargeOrder(ctx, &RefundRechargeOrderInput{
+		OrderNo: "RC-FIRST-IDENTITY-001",
+		Channel: "manual",
+	})
+	require.NoError(t, err)
+
+	_, secondCommissions, err := svc.RecordPaidRecharge(ctx, &RecordPaidRechargeInput{
+		UserID:         referred.ID,
+		OrderNo:        "RC-FIRST-IDENTITY-002",
+		Channel:        "manual",
+		Amount:         10,
+		CreditedAmount: 10,
+		Currency:       "CNY",
+	})
+	require.NoError(t, err)
+	require.Len(t, secondCommissions, 1)
+	require.Equal(t, ReferralCommissionTypeRecurring, secondCommissions[0].CommissionType)
+	require.InDelta(t, 2.0, secondCommissions[0].CommissionAmount, 1e-9)
+
+	referredAfter, err := client.User.Get(ctx, referred.ID)
+	require.NoError(t, err)
+	require.True(t, referredAfter.HasSuccessfulRecharge)
 }
 
 func runWithSQLiteWriteRetry(fn func() error) error {

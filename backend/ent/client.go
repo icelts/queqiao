@@ -29,6 +29,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
@@ -77,6 +78,8 @@ type Client struct {
 	RedeemCode *RedeemCodeClient
 	// ReferralCommission is the client for interacting with the ReferralCommission builders.
 	ReferralCommission *ReferralCommissionClient
+	// ReferralWithdrawalAllocation is the client for interacting with the ReferralWithdrawalAllocation builders.
+	ReferralWithdrawalAllocation *ReferralWithdrawalAllocationClient
 	// ReferralWithdrawalRequest is the client for interacting with the ReferralWithdrawalRequest builders.
 	ReferralWithdrawalRequest *ReferralWithdrawalRequestClient
 	// SecuritySecret is the client for interacting with the SecuritySecret builders.
@@ -124,6 +127,7 @@ func (c *Client) init() {
 	c.RechargeOrder = NewRechargeOrderClient(c.config)
 	c.RedeemCode = NewRedeemCodeClient(c.config)
 	c.ReferralCommission = NewReferralCommissionClient(c.config)
+	c.ReferralWithdrawalAllocation = NewReferralWithdrawalAllocationClient(c.config)
 	c.ReferralWithdrawalRequest = NewReferralWithdrawalRequestClient(c.config)
 	c.SecuritySecret = NewSecuritySecretClient(c.config)
 	c.Setting = NewSettingClient(c.config)
@@ -225,33 +229,34 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                       ctx,
-		config:                    cfg,
-		APIKey:                    NewAPIKeyClient(cfg),
-		Account:                   NewAccountClient(cfg),
-		AccountGroup:              NewAccountGroupClient(cfg),
-		Announcement:              NewAnnouncementClient(cfg),
-		AnnouncementRead:          NewAnnouncementReadClient(cfg),
-		ErrorPassthroughRule:      NewErrorPassthroughRuleClient(cfg),
-		Group:                     NewGroupClient(cfg),
-		IdempotencyRecord:         NewIdempotencyRecordClient(cfg),
-		PromoCode:                 NewPromoCodeClient(cfg),
-		PromoCodeUsage:            NewPromoCodeUsageClient(cfg),
-		Proxy:                     NewProxyClient(cfg),
-		RechargeOrder:             NewRechargeOrderClient(cfg),
-		RedeemCode:                NewRedeemCodeClient(cfg),
-		ReferralCommission:        NewReferralCommissionClient(cfg),
-		ReferralWithdrawalRequest: NewReferralWithdrawalRequestClient(cfg),
-		SecuritySecret:            NewSecuritySecretClient(cfg),
-		Setting:                   NewSettingClient(cfg),
-		TLSFingerprintProfile:     NewTLSFingerprintProfileClient(cfg),
-		UsageCleanupTask:          NewUsageCleanupTaskClient(cfg),
-		UsageLog:                  NewUsageLogClient(cfg),
-		User:                      NewUserClient(cfg),
-		UserAllowedGroup:          NewUserAllowedGroupClient(cfg),
-		UserAttributeDefinition:   NewUserAttributeDefinitionClient(cfg),
-		UserAttributeValue:        NewUserAttributeValueClient(cfg),
-		UserSubscription:          NewUserSubscriptionClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		APIKey:                       NewAPIKeyClient(cfg),
+		Account:                      NewAccountClient(cfg),
+		AccountGroup:                 NewAccountGroupClient(cfg),
+		Announcement:                 NewAnnouncementClient(cfg),
+		AnnouncementRead:             NewAnnouncementReadClient(cfg),
+		ErrorPassthroughRule:         NewErrorPassthroughRuleClient(cfg),
+		Group:                        NewGroupClient(cfg),
+		IdempotencyRecord:            NewIdempotencyRecordClient(cfg),
+		PromoCode:                    NewPromoCodeClient(cfg),
+		PromoCodeUsage:               NewPromoCodeUsageClient(cfg),
+		Proxy:                        NewProxyClient(cfg),
+		RechargeOrder:                NewRechargeOrderClient(cfg),
+		RedeemCode:                   NewRedeemCodeClient(cfg),
+		ReferralCommission:           NewReferralCommissionClient(cfg),
+		ReferralWithdrawalAllocation: NewReferralWithdrawalAllocationClient(cfg),
+		ReferralWithdrawalRequest:    NewReferralWithdrawalRequestClient(cfg),
+		SecuritySecret:               NewSecuritySecretClient(cfg),
+		Setting:                      NewSettingClient(cfg),
+		TLSFingerprintProfile:        NewTLSFingerprintProfileClient(cfg),
+		UsageCleanupTask:             NewUsageCleanupTaskClient(cfg),
+		UsageLog:                     NewUsageLogClient(cfg),
+		User:                         NewUserClient(cfg),
+		UserAllowedGroup:             NewUserAllowedGroupClient(cfg),
+		UserAttributeDefinition:      NewUserAttributeDefinitionClient(cfg),
+		UserAttributeValue:           NewUserAttributeValueClient(cfg),
+		UserSubscription:             NewUserSubscriptionClient(cfg),
 	}, nil
 }
 
@@ -269,33 +274,34 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                       ctx,
-		config:                    cfg,
-		APIKey:                    NewAPIKeyClient(cfg),
-		Account:                   NewAccountClient(cfg),
-		AccountGroup:              NewAccountGroupClient(cfg),
-		Announcement:              NewAnnouncementClient(cfg),
-		AnnouncementRead:          NewAnnouncementReadClient(cfg),
-		ErrorPassthroughRule:      NewErrorPassthroughRuleClient(cfg),
-		Group:                     NewGroupClient(cfg),
-		IdempotencyRecord:         NewIdempotencyRecordClient(cfg),
-		PromoCode:                 NewPromoCodeClient(cfg),
-		PromoCodeUsage:            NewPromoCodeUsageClient(cfg),
-		Proxy:                     NewProxyClient(cfg),
-		RechargeOrder:             NewRechargeOrderClient(cfg),
-		RedeemCode:                NewRedeemCodeClient(cfg),
-		ReferralCommission:        NewReferralCommissionClient(cfg),
-		ReferralWithdrawalRequest: NewReferralWithdrawalRequestClient(cfg),
-		SecuritySecret:            NewSecuritySecretClient(cfg),
-		Setting:                   NewSettingClient(cfg),
-		TLSFingerprintProfile:     NewTLSFingerprintProfileClient(cfg),
-		UsageCleanupTask:          NewUsageCleanupTaskClient(cfg),
-		UsageLog:                  NewUsageLogClient(cfg),
-		User:                      NewUserClient(cfg),
-		UserAllowedGroup:          NewUserAllowedGroupClient(cfg),
-		UserAttributeDefinition:   NewUserAttributeDefinitionClient(cfg),
-		UserAttributeValue:        NewUserAttributeValueClient(cfg),
-		UserSubscription:          NewUserSubscriptionClient(cfg),
+		ctx:                          ctx,
+		config:                       cfg,
+		APIKey:                       NewAPIKeyClient(cfg),
+		Account:                      NewAccountClient(cfg),
+		AccountGroup:                 NewAccountGroupClient(cfg),
+		Announcement:                 NewAnnouncementClient(cfg),
+		AnnouncementRead:             NewAnnouncementReadClient(cfg),
+		ErrorPassthroughRule:         NewErrorPassthroughRuleClient(cfg),
+		Group:                        NewGroupClient(cfg),
+		IdempotencyRecord:            NewIdempotencyRecordClient(cfg),
+		PromoCode:                    NewPromoCodeClient(cfg),
+		PromoCodeUsage:               NewPromoCodeUsageClient(cfg),
+		Proxy:                        NewProxyClient(cfg),
+		RechargeOrder:                NewRechargeOrderClient(cfg),
+		RedeemCode:                   NewRedeemCodeClient(cfg),
+		ReferralCommission:           NewReferralCommissionClient(cfg),
+		ReferralWithdrawalAllocation: NewReferralWithdrawalAllocationClient(cfg),
+		ReferralWithdrawalRequest:    NewReferralWithdrawalRequestClient(cfg),
+		SecuritySecret:               NewSecuritySecretClient(cfg),
+		Setting:                      NewSettingClient(cfg),
+		TLSFingerprintProfile:        NewTLSFingerprintProfileClient(cfg),
+		UsageCleanupTask:             NewUsageCleanupTaskClient(cfg),
+		UsageLog:                     NewUsageLogClient(cfg),
+		User:                         NewUserClient(cfg),
+		UserAllowedGroup:             NewUserAllowedGroupClient(cfg),
+		UserAttributeDefinition:      NewUserAttributeDefinitionClient(cfg),
+		UserAttributeValue:           NewUserAttributeValueClient(cfg),
+		UserSubscription:             NewUserSubscriptionClient(cfg),
 	}, nil
 }
 
@@ -328,8 +334,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
 		c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord, c.PromoCode,
 		c.PromoCodeUsage, c.Proxy, c.RechargeOrder, c.RedeemCode, c.ReferralCommission,
-		c.ReferralWithdrawalRequest, c.SecuritySecret, c.Setting,
-		c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
+		c.ReferralWithdrawalAllocation, c.ReferralWithdrawalRequest, c.SecuritySecret,
+		c.Setting, c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
 		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
 		c.UserSubscription,
 	} {
@@ -344,8 +350,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
 		c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord, c.PromoCode,
 		c.PromoCodeUsage, c.Proxy, c.RechargeOrder, c.RedeemCode, c.ReferralCommission,
-		c.ReferralWithdrawalRequest, c.SecuritySecret, c.Setting,
-		c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
+		c.ReferralWithdrawalAllocation, c.ReferralWithdrawalRequest, c.SecuritySecret,
+		c.Setting, c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
 		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
 		c.UserSubscription,
 	} {
@@ -384,6 +390,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.RedeemCode.mutate(ctx, m)
 	case *ReferralCommissionMutation:
 		return c.ReferralCommission.mutate(ctx, m)
+	case *ReferralWithdrawalAllocationMutation:
+		return c.ReferralWithdrawalAllocation.mutate(ctx, m)
 	case *ReferralWithdrawalRequestMutation:
 		return c.ReferralWithdrawalRequest.mutate(ctx, m)
 	case *SecuritySecretMutation:
@@ -2703,6 +2711,22 @@ func (c *ReferralCommissionClient) QueryRechargeOrder(_m *ReferralCommission) *R
 	return query
 }
 
+// QueryWithdrawalAllocations queries the withdrawal_allocations edge of a ReferralCommission.
+func (c *ReferralCommissionClient) QueryWithdrawalAllocations(_m *ReferralCommission) *ReferralWithdrawalAllocationQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralcommission.Table, referralcommission.FieldID, id),
+			sqlgraph.To(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, referralcommission.WithdrawalAllocationsTable, referralcommission.WithdrawalAllocationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ReferralCommissionClient) Hooks() []Hook {
 	return c.hooks.ReferralCommission
@@ -2725,6 +2749,187 @@ func (c *ReferralCommissionClient) mutate(ctx context.Context, m *ReferralCommis
 		return (&ReferralCommissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ReferralCommission mutation op: %q", m.Op())
+	}
+}
+
+// ReferralWithdrawalAllocationClient is a client for the ReferralWithdrawalAllocation schema.
+type ReferralWithdrawalAllocationClient struct {
+	config
+}
+
+// NewReferralWithdrawalAllocationClient returns a client for the ReferralWithdrawalAllocation from the given config.
+func NewReferralWithdrawalAllocationClient(c config) *ReferralWithdrawalAllocationClient {
+	return &ReferralWithdrawalAllocationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `referralwithdrawalallocation.Hooks(f(g(h())))`.
+func (c *ReferralWithdrawalAllocationClient) Use(hooks ...Hook) {
+	c.hooks.ReferralWithdrawalAllocation = append(c.hooks.ReferralWithdrawalAllocation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `referralwithdrawalallocation.Intercept(f(g(h())))`.
+func (c *ReferralWithdrawalAllocationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ReferralWithdrawalAllocation = append(c.inters.ReferralWithdrawalAllocation, interceptors...)
+}
+
+// Create returns a builder for creating a ReferralWithdrawalAllocation entity.
+func (c *ReferralWithdrawalAllocationClient) Create() *ReferralWithdrawalAllocationCreate {
+	mutation := newReferralWithdrawalAllocationMutation(c.config, OpCreate)
+	return &ReferralWithdrawalAllocationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ReferralWithdrawalAllocation entities.
+func (c *ReferralWithdrawalAllocationClient) CreateBulk(builders ...*ReferralWithdrawalAllocationCreate) *ReferralWithdrawalAllocationCreateBulk {
+	return &ReferralWithdrawalAllocationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReferralWithdrawalAllocationClient) MapCreateBulk(slice any, setFunc func(*ReferralWithdrawalAllocationCreate, int)) *ReferralWithdrawalAllocationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReferralWithdrawalAllocationCreateBulk{err: fmt.Errorf("calling to ReferralWithdrawalAllocationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReferralWithdrawalAllocationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReferralWithdrawalAllocationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ReferralWithdrawalAllocation.
+func (c *ReferralWithdrawalAllocationClient) Update() *ReferralWithdrawalAllocationUpdate {
+	mutation := newReferralWithdrawalAllocationMutation(c.config, OpUpdate)
+	return &ReferralWithdrawalAllocationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReferralWithdrawalAllocationClient) UpdateOne(_m *ReferralWithdrawalAllocation) *ReferralWithdrawalAllocationUpdateOne {
+	mutation := newReferralWithdrawalAllocationMutation(c.config, OpUpdateOne, withReferralWithdrawalAllocation(_m))
+	return &ReferralWithdrawalAllocationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReferralWithdrawalAllocationClient) UpdateOneID(id int64) *ReferralWithdrawalAllocationUpdateOne {
+	mutation := newReferralWithdrawalAllocationMutation(c.config, OpUpdateOne, withReferralWithdrawalAllocationID(id))
+	return &ReferralWithdrawalAllocationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ReferralWithdrawalAllocation.
+func (c *ReferralWithdrawalAllocationClient) Delete() *ReferralWithdrawalAllocationDelete {
+	mutation := newReferralWithdrawalAllocationMutation(c.config, OpDelete)
+	return &ReferralWithdrawalAllocationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReferralWithdrawalAllocationClient) DeleteOne(_m *ReferralWithdrawalAllocation) *ReferralWithdrawalAllocationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReferralWithdrawalAllocationClient) DeleteOneID(id int64) *ReferralWithdrawalAllocationDeleteOne {
+	builder := c.Delete().Where(referralwithdrawalallocation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReferralWithdrawalAllocationDeleteOne{builder}
+}
+
+// Query returns a query builder for ReferralWithdrawalAllocation.
+func (c *ReferralWithdrawalAllocationClient) Query() *ReferralWithdrawalAllocationQuery {
+	return &ReferralWithdrawalAllocationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReferralWithdrawalAllocation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ReferralWithdrawalAllocation entity by its id.
+func (c *ReferralWithdrawalAllocationClient) Get(ctx context.Context, id int64) (*ReferralWithdrawalAllocation, error) {
+	return c.Query().Where(referralwithdrawalallocation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReferralWithdrawalAllocationClient) GetX(ctx context.Context, id int64) *ReferralWithdrawalAllocation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPromoter queries the promoter edge of a ReferralWithdrawalAllocation.
+func (c *ReferralWithdrawalAllocationClient) QueryPromoter(_m *ReferralWithdrawalAllocation) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralwithdrawalallocation.PromoterTable, referralwithdrawalallocation.PromoterColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWithdrawalRequest queries the withdrawal_request edge of a ReferralWithdrawalAllocation.
+func (c *ReferralWithdrawalAllocationClient) QueryWithdrawalRequest(_m *ReferralWithdrawalAllocation) *ReferralWithdrawalRequestQuery {
+	query := (&ReferralWithdrawalRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID, id),
+			sqlgraph.To(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralwithdrawalallocation.WithdrawalRequestTable, referralwithdrawalallocation.WithdrawalRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommission queries the commission edge of a ReferralWithdrawalAllocation.
+func (c *ReferralWithdrawalAllocationClient) QueryCommission(_m *ReferralWithdrawalAllocation) *ReferralCommissionQuery {
+	query := (&ReferralCommissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID, id),
+			sqlgraph.To(referralcommission.Table, referralcommission.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referralwithdrawalallocation.CommissionTable, referralwithdrawalallocation.CommissionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReferralWithdrawalAllocationClient) Hooks() []Hook {
+	return c.hooks.ReferralWithdrawalAllocation
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReferralWithdrawalAllocationClient) Interceptors() []Interceptor {
+	return c.inters.ReferralWithdrawalAllocation
+}
+
+func (c *ReferralWithdrawalAllocationClient) mutate(ctx context.Context, m *ReferralWithdrawalAllocationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReferralWithdrawalAllocationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReferralWithdrawalAllocationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReferralWithdrawalAllocationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReferralWithdrawalAllocationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ReferralWithdrawalAllocation mutation op: %q", m.Op())
 	}
 }
 
@@ -2861,6 +3066,22 @@ func (c *ReferralWithdrawalRequestClient) QueryReviewer(_m *ReferralWithdrawalRe
 			sqlgraph.From(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, referralwithdrawalrequest.ReviewerTable, referralwithdrawalrequest.ReviewerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAllocations queries the allocations edge of a ReferralWithdrawalRequest.
+func (c *ReferralWithdrawalRequestClient) QueryAllocations(_m *ReferralWithdrawalRequest) *ReferralWithdrawalAllocationQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referralwithdrawalrequest.Table, referralwithdrawalrequest.FieldID, id),
+			sqlgraph.To(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, referralwithdrawalrequest.AllocationsTable, referralwithdrawalrequest.AllocationsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -3986,6 +4207,22 @@ func (c *UserClient) QueryReferralWithdrawalRequests(_m *User) *ReferralWithdraw
 	return query
 }
 
+// QueryReferralWithdrawalAllocations queries the referral_withdrawal_allocations edge of a User.
+func (c *UserClient) QueryReferralWithdrawalAllocations(_m *User) *ReferralWithdrawalAllocationQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReferralWithdrawalAllocationsTable, user.ReferralWithdrawalAllocationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryReviewedReferralWithdrawals queries the reviewed_referral_withdrawals edge of a User.
 func (c *UserClient) QueryReviewedReferralWithdrawals(_m *User) *ReferralWithdrawalRequestQuery {
 	query := (&ReferralWithdrawalRequestClient{config: c.config}).Query()
@@ -4682,17 +4919,19 @@ type (
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
 		ErrorPassthroughRule, Group, IdempotencyRecord, PromoCode, PromoCodeUsage,
 		Proxy, RechargeOrder, RedeemCode, ReferralCommission,
-		ReferralWithdrawalRequest, SecuritySecret, Setting, TLSFingerprintProfile,
-		UsageCleanupTask, UsageLog, User, UserAllowedGroup, UserAttributeDefinition,
-		UserAttributeValue, UserSubscription []ent.Hook
+		ReferralWithdrawalAllocation, ReferralWithdrawalRequest, SecuritySecret,
+		Setting, TLSFingerprintProfile, UsageCleanupTask, UsageLog, User,
+		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
+		UserSubscription []ent.Hook
 	}
 	inters struct {
 		APIKey, Account, AccountGroup, Announcement, AnnouncementRead,
 		ErrorPassthroughRule, Group, IdempotencyRecord, PromoCode, PromoCodeUsage,
 		Proxy, RechargeOrder, RedeemCode, ReferralCommission,
-		ReferralWithdrawalRequest, SecuritySecret, Setting, TLSFingerprintProfile,
-		UsageCleanupTask, UsageLog, User, UserAllowedGroup, UserAttributeDefinition,
-		UserAttributeValue, UserSubscription []ent.Interceptor
+		ReferralWithdrawalAllocation, ReferralWithdrawalRequest, SecuritySecret,
+		Setting, TLSFingerprintProfile, UsageCleanupTask, UsageLog, User,
+		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
+		UserSubscription []ent.Interceptor
 	}
 )
 

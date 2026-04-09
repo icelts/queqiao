@@ -19,6 +19,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
@@ -304,6 +305,41 @@ func (_u *UserUpdate) SetNillableRecurringCommissionEnabled(v *bool) *UserUpdate
 	if v != nil {
 		_u.SetRecurringCommissionEnabled(*v)
 	}
+	return _u
+}
+
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (_u *UserUpdate) SetHasSuccessfulRecharge(v bool) *UserUpdate {
+	_u.mutation.SetHasSuccessfulRecharge(v)
+	return _u
+}
+
+// SetNillableHasSuccessfulRecharge sets the "has_successful_recharge" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableHasSuccessfulRecharge(v *bool) *UserUpdate {
+	if v != nil {
+		_u.SetHasSuccessfulRecharge(*v)
+	}
+	return _u
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (_u *UserUpdate) SetReferralWithdrawalDebt(v float64) *UserUpdate {
+	_u.mutation.ResetReferralWithdrawalDebt()
+	_u.mutation.SetReferralWithdrawalDebt(v)
+	return _u
+}
+
+// SetNillableReferralWithdrawalDebt sets the "referral_withdrawal_debt" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableReferralWithdrawalDebt(v *float64) *UserUpdate {
+	if v != nil {
+		_u.SetReferralWithdrawalDebt(*v)
+	}
+	return _u
+}
+
+// AddReferralWithdrawalDebt adds value to the "referral_withdrawal_debt" field.
+func (_u *UserUpdate) AddReferralWithdrawalDebt(v float64) *UserUpdate {
+	_u.mutation.AddReferralWithdrawalDebt(v)
 	return _u
 }
 
@@ -616,6 +652,21 @@ func (_u *UserUpdate) AddReferralWithdrawalRequests(v ...*ReferralWithdrawalRequ
 		ids[i] = v[i].ID
 	}
 	return _u.AddReferralWithdrawalRequestIDs(ids...)
+}
+
+// AddReferralWithdrawalAllocationIDs adds the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_u *UserUpdate) AddReferralWithdrawalAllocationIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddReferralWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// AddReferralWithdrawalAllocations adds the "referral_withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *UserUpdate) AddReferralWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddReferralWithdrawalAllocationIDs(ids...)
 }
 
 // AddReviewedReferralWithdrawalIDs adds the "reviewed_referral_withdrawals" edge to the ReferralWithdrawalRequest entity by IDs.
@@ -938,6 +989,27 @@ func (_u *UserUpdate) RemoveReferralWithdrawalRequests(v ...*ReferralWithdrawalR
 	return _u.RemoveReferralWithdrawalRequestIDs(ids...)
 }
 
+// ClearReferralWithdrawalAllocations clears all "referral_withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *UserUpdate) ClearReferralWithdrawalAllocations() *UserUpdate {
+	_u.mutation.ClearReferralWithdrawalAllocations()
+	return _u
+}
+
+// RemoveReferralWithdrawalAllocationIDs removes the "referral_withdrawal_allocations" edge to ReferralWithdrawalAllocation entities by IDs.
+func (_u *UserUpdate) RemoveReferralWithdrawalAllocationIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveReferralWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// RemoveReferralWithdrawalAllocations removes "referral_withdrawal_allocations" edges to ReferralWithdrawalAllocation entities.
+func (_u *UserUpdate) RemoveReferralWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveReferralWithdrawalAllocationIDs(ids...)
+}
+
 // ClearReviewedReferralWithdrawals clears all "reviewed_referral_withdrawals" edges to the ReferralWithdrawalRequest entity.
 func (_u *UserUpdate) ClearReviewedReferralWithdrawals() *UserUpdate {
 	_u.mutation.ClearReviewedReferralWithdrawals()
@@ -1113,6 +1185,15 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.RecurringCommissionEnabled(); ok {
 		_spec.SetField(user.FieldRecurringCommissionEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.HasSuccessfulRecharge(); ok {
+		_spec.SetField(user.FieldHasSuccessfulRecharge, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.ReferralWithdrawalDebt(); ok {
+		_spec.SetField(user.FieldReferralWithdrawalDebt, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedReferralWithdrawalDebt(); ok {
+		_spec.AddField(user.FieldReferralWithdrawalDebt, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.TotpSecretEncrypted(); ok {
 		_spec.SetField(user.FieldTotpSecretEncrypted, field.TypeString, value)
@@ -1805,6 +1886,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ReferralWithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedReferralWithdrawalAllocationsIDs(); len(nodes) > 0 && !_u.mutation.ReferralWithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ReferralWithdrawalAllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2145,6 +2271,41 @@ func (_u *UserUpdateOne) SetNillableRecurringCommissionEnabled(v *bool) *UserUpd
 	return _u
 }
 
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (_u *UserUpdateOne) SetHasSuccessfulRecharge(v bool) *UserUpdateOne {
+	_u.mutation.SetHasSuccessfulRecharge(v)
+	return _u
+}
+
+// SetNillableHasSuccessfulRecharge sets the "has_successful_recharge" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableHasSuccessfulRecharge(v *bool) *UserUpdateOne {
+	if v != nil {
+		_u.SetHasSuccessfulRecharge(*v)
+	}
+	return _u
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (_u *UserUpdateOne) SetReferralWithdrawalDebt(v float64) *UserUpdateOne {
+	_u.mutation.ResetReferralWithdrawalDebt()
+	_u.mutation.SetReferralWithdrawalDebt(v)
+	return _u
+}
+
+// SetNillableReferralWithdrawalDebt sets the "referral_withdrawal_debt" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableReferralWithdrawalDebt(v *float64) *UserUpdateOne {
+	if v != nil {
+		_u.SetReferralWithdrawalDebt(*v)
+	}
+	return _u
+}
+
+// AddReferralWithdrawalDebt adds value to the "referral_withdrawal_debt" field.
+func (_u *UserUpdateOne) AddReferralWithdrawalDebt(v float64) *UserUpdateOne {
+	_u.mutation.AddReferralWithdrawalDebt(v)
+	return _u
+}
+
 // SetTotpSecretEncrypted sets the "totp_secret_encrypted" field.
 func (_u *UserUpdateOne) SetTotpSecretEncrypted(v string) *UserUpdateOne {
 	_u.mutation.SetTotpSecretEncrypted(v)
@@ -2454,6 +2615,21 @@ func (_u *UserUpdateOne) AddReferralWithdrawalRequests(v ...*ReferralWithdrawalR
 		ids[i] = v[i].ID
 	}
 	return _u.AddReferralWithdrawalRequestIDs(ids...)
+}
+
+// AddReferralWithdrawalAllocationIDs adds the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_u *UserUpdateOne) AddReferralWithdrawalAllocationIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddReferralWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// AddReferralWithdrawalAllocations adds the "referral_withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *UserUpdateOne) AddReferralWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddReferralWithdrawalAllocationIDs(ids...)
 }
 
 // AddReviewedReferralWithdrawalIDs adds the "reviewed_referral_withdrawals" edge to the ReferralWithdrawalRequest entity by IDs.
@@ -2776,6 +2952,27 @@ func (_u *UserUpdateOne) RemoveReferralWithdrawalRequests(v ...*ReferralWithdraw
 	return _u.RemoveReferralWithdrawalRequestIDs(ids...)
 }
 
+// ClearReferralWithdrawalAllocations clears all "referral_withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_u *UserUpdateOne) ClearReferralWithdrawalAllocations() *UserUpdateOne {
+	_u.mutation.ClearReferralWithdrawalAllocations()
+	return _u
+}
+
+// RemoveReferralWithdrawalAllocationIDs removes the "referral_withdrawal_allocations" edge to ReferralWithdrawalAllocation entities by IDs.
+func (_u *UserUpdateOne) RemoveReferralWithdrawalAllocationIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveReferralWithdrawalAllocationIDs(ids...)
+	return _u
+}
+
+// RemoveReferralWithdrawalAllocations removes "referral_withdrawal_allocations" edges to ReferralWithdrawalAllocation entities.
+func (_u *UserUpdateOne) RemoveReferralWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveReferralWithdrawalAllocationIDs(ids...)
+}
+
 // ClearReviewedReferralWithdrawals clears all "reviewed_referral_withdrawals" edges to the ReferralWithdrawalRequest entity.
 func (_u *UserUpdateOne) ClearReviewedReferralWithdrawals() *UserUpdateOne {
 	_u.mutation.ClearReviewedReferralWithdrawals()
@@ -2981,6 +3178,15 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.RecurringCommissionEnabled(); ok {
 		_spec.SetField(user.FieldRecurringCommissionEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.HasSuccessfulRecharge(); ok {
+		_spec.SetField(user.FieldHasSuccessfulRecharge, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.ReferralWithdrawalDebt(); ok {
+		_spec.SetField(user.FieldReferralWithdrawalDebt, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedReferralWithdrawalDebt(); ok {
+		_spec.AddField(user.FieldReferralWithdrawalDebt, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.TotpSecretEncrypted(); ok {
 		_spec.SetField(user.FieldTotpSecretEncrypted, field.TypeString, value)
@@ -3673,6 +3879,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ReferralWithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedReferralWithdrawalAllocationsIDs(); len(nodes) > 0 && !_u.mutation.ReferralWithdrawalAllocationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ReferralWithdrawalAllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

@@ -177,6 +177,18 @@ func (f ReferralCommissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReferralCommissionMutation", m)
 }
 
+// The ReferralWithdrawalAllocationFunc type is an adapter to allow the use of ordinary
+// function as ReferralWithdrawalAllocation mutator.
+type ReferralWithdrawalAllocationFunc func(context.Context, *ent.ReferralWithdrawalAllocationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReferralWithdrawalAllocationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ReferralWithdrawalAllocationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReferralWithdrawalAllocationMutation", m)
+}
+
 // The ReferralWithdrawalRequestFunc type is an adapter to allow the use of ordinary
 // function as ReferralWithdrawalRequest mutator.
 type ReferralWithdrawalRequestFunc func(context.Context, *ent.ReferralWithdrawalRequestMutation) (ent.Value, error)

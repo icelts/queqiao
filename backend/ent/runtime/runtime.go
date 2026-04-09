@@ -19,6 +19,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/schema"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
@@ -813,6 +814,31 @@ func init() {
 	referralcommissionDescCommissionAmount := referralcommissionFields[7].Descriptor()
 	// referralcommission.DefaultCommissionAmount holds the default value on creation for the commission_amount field.
 	referralcommission.DefaultCommissionAmount = referralcommissionDescCommissionAmount.Default.(float64)
+	// referralcommissionDescCurrency is the schema descriptor for currency field.
+	referralcommissionDescCurrency := referralcommissionFields[8].Descriptor()
+	// referralcommission.DefaultCurrency holds the default value on creation for the currency field.
+	referralcommission.DefaultCurrency = referralcommissionDescCurrency.Default.(string)
+	// referralcommission.CurrencyValidator is a validator for the "currency" field. It is called by the builders before save.
+	referralcommission.CurrencyValidator = referralcommissionDescCurrency.Validators[0].(func(string) error)
+	referralwithdrawalallocationMixin := schema.ReferralWithdrawalAllocation{}.Mixin()
+	referralwithdrawalallocationMixinFields0 := referralwithdrawalallocationMixin[0].Fields()
+	_ = referralwithdrawalallocationMixinFields0
+	referralwithdrawalallocationFields := schema.ReferralWithdrawalAllocation{}.Fields()
+	_ = referralwithdrawalallocationFields
+	// referralwithdrawalallocationDescCreatedAt is the schema descriptor for created_at field.
+	referralwithdrawalallocationDescCreatedAt := referralwithdrawalallocationMixinFields0[0].Descriptor()
+	// referralwithdrawalallocation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referralwithdrawalallocation.DefaultCreatedAt = referralwithdrawalallocationDescCreatedAt.Default.(func() time.Time)
+	// referralwithdrawalallocationDescUpdatedAt is the schema descriptor for updated_at field.
+	referralwithdrawalallocationDescUpdatedAt := referralwithdrawalallocationMixinFields0[1].Descriptor()
+	// referralwithdrawalallocation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	referralwithdrawalallocation.DefaultUpdatedAt = referralwithdrawalallocationDescUpdatedAt.Default.(func() time.Time)
+	// referralwithdrawalallocation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	referralwithdrawalallocation.UpdateDefaultUpdatedAt = referralwithdrawalallocationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// referralwithdrawalallocationDescAmount is the schema descriptor for amount field.
+	referralwithdrawalallocationDescAmount := referralwithdrawalallocationFields[3].Descriptor()
+	// referralwithdrawalallocation.DefaultAmount holds the default value on creation for the amount field.
+	referralwithdrawalallocation.DefaultAmount = referralwithdrawalallocationDescAmount.Default.(float64)
 	referralwithdrawalrequestMixin := schema.ReferralWithdrawalRequest{}.Mixin()
 	referralwithdrawalrequestMixinFields0 := referralwithdrawalrequestMixin[0].Fields()
 	_ = referralwithdrawalrequestMixinFields0
@@ -1224,16 +1250,24 @@ func init() {
 	userDescRecurringCommissionEnabled := userFields[13].Descriptor()
 	// user.DefaultRecurringCommissionEnabled holds the default value on creation for the recurring_commission_enabled field.
 	user.DefaultRecurringCommissionEnabled = userDescRecurringCommissionEnabled.Default.(bool)
+	// userDescHasSuccessfulRecharge is the schema descriptor for has_successful_recharge field.
+	userDescHasSuccessfulRecharge := userFields[14].Descriptor()
+	// user.DefaultHasSuccessfulRecharge holds the default value on creation for the has_successful_recharge field.
+	user.DefaultHasSuccessfulRecharge = userDescHasSuccessfulRecharge.Default.(bool)
+	// userDescReferralWithdrawalDebt is the schema descriptor for referral_withdrawal_debt field.
+	userDescReferralWithdrawalDebt := userFields[15].Descriptor()
+	// user.DefaultReferralWithdrawalDebt holds the default value on creation for the referral_withdrawal_debt field.
+	user.DefaultReferralWithdrawalDebt = userDescReferralWithdrawalDebt.Default.(float64)
 	// userDescTotpEnabled is the schema descriptor for totp_enabled field.
-	userDescTotpEnabled := userFields[15].Descriptor()
+	userDescTotpEnabled := userFields[17].Descriptor()
 	// user.DefaultTotpEnabled holds the default value on creation for the totp_enabled field.
 	user.DefaultTotpEnabled = userDescTotpEnabled.Default.(bool)
 	// userDescSoraStorageQuotaBytes is the schema descriptor for sora_storage_quota_bytes field.
-	userDescSoraStorageQuotaBytes := userFields[17].Descriptor()
+	userDescSoraStorageQuotaBytes := userFields[19].Descriptor()
 	// user.DefaultSoraStorageQuotaBytes holds the default value on creation for the sora_storage_quota_bytes field.
 	user.DefaultSoraStorageQuotaBytes = userDescSoraStorageQuotaBytes.Default.(int64)
 	// userDescSoraStorageUsedBytes is the schema descriptor for sora_storage_used_bytes field.
-	userDescSoraStorageUsedBytes := userFields[18].Descriptor()
+	userDescSoraStorageUsedBytes := userFields[20].Descriptor()
 	// user.DefaultSoraStorageUsedBytes holds the default value on creation for the sora_storage_used_bytes field.
 	user.DefaultSoraStorageUsedBytes = userDescSoraStorageUsedBytes.Default.(int64)
 	userallowedgroupFields := schema.UserAllowedGroup{}.Fields()

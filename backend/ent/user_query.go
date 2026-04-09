@@ -21,6 +21,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
@@ -32,28 +33,29 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                             *QueryContext
-	order                           []user.OrderOption
-	inters                          []Interceptor
-	predicates                      []predicate.User
-	withAPIKeys                     *APIKeyQuery
-	withRedeemCodes                 *RedeemCodeQuery
-	withSubscriptions               *UserSubscriptionQuery
-	withAssignedSubscriptions       *UserSubscriptionQuery
-	withAnnouncementReads           *AnnouncementReadQuery
-	withAllowedGroups               *GroupQuery
-	withUsageLogs                   *UsageLogQuery
-	withAttributeValues             *UserAttributeValueQuery
-	withPromoCodeUsages             *PromoCodeUsageQuery
-	withInvitees                    *UserQuery
-	withInviter                     *UserQuery
-	withRechargeOrders              *RechargeOrderQuery
-	withPromoterCommissions         *ReferralCommissionQuery
-	withReferredCommissions         *ReferralCommissionQuery
-	withReferralWithdrawalRequests  *ReferralWithdrawalRequestQuery
-	withReviewedReferralWithdrawals *ReferralWithdrawalRequestQuery
-	withUserAllowedGroups           *UserAllowedGroupQuery
-	modifiers                       []func(*sql.Selector)
+	ctx                               *QueryContext
+	order                             []user.OrderOption
+	inters                            []Interceptor
+	predicates                        []predicate.User
+	withAPIKeys                       *APIKeyQuery
+	withRedeemCodes                   *RedeemCodeQuery
+	withSubscriptions                 *UserSubscriptionQuery
+	withAssignedSubscriptions         *UserSubscriptionQuery
+	withAnnouncementReads             *AnnouncementReadQuery
+	withAllowedGroups                 *GroupQuery
+	withUsageLogs                     *UsageLogQuery
+	withAttributeValues               *UserAttributeValueQuery
+	withPromoCodeUsages               *PromoCodeUsageQuery
+	withInvitees                      *UserQuery
+	withInviter                       *UserQuery
+	withRechargeOrders                *RechargeOrderQuery
+	withPromoterCommissions           *ReferralCommissionQuery
+	withReferredCommissions           *ReferralCommissionQuery
+	withReferralWithdrawalRequests    *ReferralWithdrawalRequestQuery
+	withReferralWithdrawalAllocations *ReferralWithdrawalAllocationQuery
+	withReviewedReferralWithdrawals   *ReferralWithdrawalRequestQuery
+	withUserAllowedGroups             *UserAllowedGroupQuery
+	modifiers                         []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -420,6 +422,28 @@ func (_q *UserQuery) QueryReferralWithdrawalRequests() *ReferralWithdrawalReques
 	return query
 }
 
+// QueryReferralWithdrawalAllocations chains the current query on the "referral_withdrawal_allocations" edge.
+func (_q *UserQuery) QueryReferralWithdrawalAllocations() *ReferralWithdrawalAllocationQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(referralwithdrawalallocation.Table, referralwithdrawalallocation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReferralWithdrawalAllocationsTable, user.ReferralWithdrawalAllocationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryReviewedReferralWithdrawals chains the current query on the "reviewed_referral_withdrawals" edge.
 func (_q *UserQuery) QueryReviewedReferralWithdrawals() *ReferralWithdrawalRequestQuery {
 	query := (&ReferralWithdrawalRequestClient{config: _q.config}).Query()
@@ -651,28 +675,29 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:                          _q.config,
-		ctx:                             _q.ctx.Clone(),
-		order:                           append([]user.OrderOption{}, _q.order...),
-		inters:                          append([]Interceptor{}, _q.inters...),
-		predicates:                      append([]predicate.User{}, _q.predicates...),
-		withAPIKeys:                     _q.withAPIKeys.Clone(),
-		withRedeemCodes:                 _q.withRedeemCodes.Clone(),
-		withSubscriptions:               _q.withSubscriptions.Clone(),
-		withAssignedSubscriptions:       _q.withAssignedSubscriptions.Clone(),
-		withAnnouncementReads:           _q.withAnnouncementReads.Clone(),
-		withAllowedGroups:               _q.withAllowedGroups.Clone(),
-		withUsageLogs:                   _q.withUsageLogs.Clone(),
-		withAttributeValues:             _q.withAttributeValues.Clone(),
-		withPromoCodeUsages:             _q.withPromoCodeUsages.Clone(),
-		withInvitees:                    _q.withInvitees.Clone(),
-		withInviter:                     _q.withInviter.Clone(),
-		withRechargeOrders:              _q.withRechargeOrders.Clone(),
-		withPromoterCommissions:         _q.withPromoterCommissions.Clone(),
-		withReferredCommissions:         _q.withReferredCommissions.Clone(),
-		withReferralWithdrawalRequests:  _q.withReferralWithdrawalRequests.Clone(),
-		withReviewedReferralWithdrawals: _q.withReviewedReferralWithdrawals.Clone(),
-		withUserAllowedGroups:           _q.withUserAllowedGroups.Clone(),
+		config:                            _q.config,
+		ctx:                               _q.ctx.Clone(),
+		order:                             append([]user.OrderOption{}, _q.order...),
+		inters:                            append([]Interceptor{}, _q.inters...),
+		predicates:                        append([]predicate.User{}, _q.predicates...),
+		withAPIKeys:                       _q.withAPIKeys.Clone(),
+		withRedeemCodes:                   _q.withRedeemCodes.Clone(),
+		withSubscriptions:                 _q.withSubscriptions.Clone(),
+		withAssignedSubscriptions:         _q.withAssignedSubscriptions.Clone(),
+		withAnnouncementReads:             _q.withAnnouncementReads.Clone(),
+		withAllowedGroups:                 _q.withAllowedGroups.Clone(),
+		withUsageLogs:                     _q.withUsageLogs.Clone(),
+		withAttributeValues:               _q.withAttributeValues.Clone(),
+		withPromoCodeUsages:               _q.withPromoCodeUsages.Clone(),
+		withInvitees:                      _q.withInvitees.Clone(),
+		withInviter:                       _q.withInviter.Clone(),
+		withRechargeOrders:                _q.withRechargeOrders.Clone(),
+		withPromoterCommissions:           _q.withPromoterCommissions.Clone(),
+		withReferredCommissions:           _q.withReferredCommissions.Clone(),
+		withReferralWithdrawalRequests:    _q.withReferralWithdrawalRequests.Clone(),
+		withReferralWithdrawalAllocations: _q.withReferralWithdrawalAllocations.Clone(),
+		withReviewedReferralWithdrawals:   _q.withReviewedReferralWithdrawals.Clone(),
+		withUserAllowedGroups:             _q.withUserAllowedGroups.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -844,6 +869,17 @@ func (_q *UserQuery) WithReferralWithdrawalRequests(opts ...func(*ReferralWithdr
 	return _q
 }
 
+// WithReferralWithdrawalAllocations tells the query-builder to eager-load the nodes that are connected to
+// the "referral_withdrawal_allocations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithReferralWithdrawalAllocations(opts ...func(*ReferralWithdrawalAllocationQuery)) *UserQuery {
+	query := (&ReferralWithdrawalAllocationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withReferralWithdrawalAllocations = query
+	return _q
+}
+
 // WithReviewedReferralWithdrawals tells the query-builder to eager-load the nodes that are connected to
 // the "reviewed_referral_withdrawals" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *UserQuery) WithReviewedReferralWithdrawals(opts ...func(*ReferralWithdrawalRequestQuery)) *UserQuery {
@@ -944,7 +980,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [17]bool{
+		loadedTypes = [18]bool{
 			_q.withAPIKeys != nil,
 			_q.withRedeemCodes != nil,
 			_q.withSubscriptions != nil,
@@ -960,6 +996,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withPromoterCommissions != nil,
 			_q.withReferredCommissions != nil,
 			_q.withReferralWithdrawalRequests != nil,
+			_q.withReferralWithdrawalAllocations != nil,
 			_q.withReviewedReferralWithdrawals != nil,
 			_q.withUserAllowedGroups != nil,
 		}
@@ -1093,6 +1130,15 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			func(n *User) { n.Edges.ReferralWithdrawalRequests = []*ReferralWithdrawalRequest{} },
 			func(n *User, e *ReferralWithdrawalRequest) {
 				n.Edges.ReferralWithdrawalRequests = append(n.Edges.ReferralWithdrawalRequests, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withReferralWithdrawalAllocations; query != nil {
+		if err := _q.loadReferralWithdrawalAllocations(ctx, query, nodes,
+			func(n *User) { n.Edges.ReferralWithdrawalAllocations = []*ReferralWithdrawalAllocation{} },
+			func(n *User, e *ReferralWithdrawalAllocation) {
+				n.Edges.ReferralWithdrawalAllocations = append(n.Edges.ReferralWithdrawalAllocations, e)
 			}); err != nil {
 			return nil, err
 		}
@@ -1593,6 +1639,36 @@ func (_q *UserQuery) loadReferralWithdrawalRequests(ctx context.Context, query *
 	}
 	query.Where(predicate.ReferralWithdrawalRequest(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.ReferralWithdrawalRequestsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PromoterUserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "promoter_user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadReferralWithdrawalAllocations(ctx context.Context, query *ReferralWithdrawalAllocationQuery, nodes []*User, init func(*User), assign func(*User, *ReferralWithdrawalAllocation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(referralwithdrawalallocation.FieldPromoterUserID)
+	}
+	query.Where(predicate.ReferralWithdrawalAllocation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ReferralWithdrawalAllocationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 )
@@ -169,6 +170,20 @@ func (_c *ReferralWithdrawalRequestCreate) SetNillableReviewedAt(v *time.Time) *
 	return _c
 }
 
+// SetPaidAt sets the "paid_at" field.
+func (_c *ReferralWithdrawalRequestCreate) SetPaidAt(v time.Time) *ReferralWithdrawalRequestCreate {
+	_c.mutation.SetPaidAt(v)
+	return _c
+}
+
+// SetNillablePaidAt sets the "paid_at" field if the given value is not nil.
+func (_c *ReferralWithdrawalRequestCreate) SetNillablePaidAt(v *time.Time) *ReferralWithdrawalRequestCreate {
+	if v != nil {
+		_c.SetPaidAt(*v)
+	}
+	return _c
+}
+
 // SetNotes sets the "notes" field.
 func (_c *ReferralWithdrawalRequestCreate) SetNotes(v string) *ReferralWithdrawalRequestCreate {
 	_c.mutation.SetNotes(v)
@@ -225,6 +240,21 @@ func (_c *ReferralWithdrawalRequestCreate) SetNillableReviewerID(id *int64) *Ref
 // SetReviewer sets the "reviewer" edge to the User entity.
 func (_c *ReferralWithdrawalRequestCreate) SetReviewer(v *User) *ReferralWithdrawalRequestCreate {
 	return _c.SetReviewerID(v.ID)
+}
+
+// AddAllocationIDs adds the "allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_c *ReferralWithdrawalRequestCreate) AddAllocationIDs(ids ...int64) *ReferralWithdrawalRequestCreate {
+	_c.mutation.AddAllocationIDs(ids...)
+	return _c
+}
+
+// AddAllocations adds the "allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_c *ReferralWithdrawalRequestCreate) AddAllocations(v ...*ReferralWithdrawalAllocation) *ReferralWithdrawalRequestCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAllocationIDs(ids...)
 }
 
 // Mutation returns the ReferralWithdrawalRequestMutation object of the builder.
@@ -397,6 +427,10 @@ func (_c *ReferralWithdrawalRequestCreate) createSpec() (*ReferralWithdrawalRequ
 		_spec.SetField(referralwithdrawalrequest.FieldReviewedAt, field.TypeTime, value)
 		_node.ReviewedAt = &value
 	}
+	if value, ok := _c.mutation.PaidAt(); ok {
+		_spec.SetField(referralwithdrawalrequest.FieldPaidAt, field.TypeTime, value)
+		_node.PaidAt = &value
+	}
 	if value, ok := _c.mutation.Notes(); ok {
 		_spec.SetField(referralwithdrawalrequest.FieldNotes, field.TypeString, value)
 		_node.Notes = &value
@@ -437,6 +471,22 @@ func (_c *ReferralWithdrawalRequestCreate) createSpec() (*ReferralWithdrawalRequ
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ReviewerUserID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   referralwithdrawalrequest.AllocationsTable,
+			Columns: []string{referralwithdrawalrequest.AllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -638,6 +688,24 @@ func (u *ReferralWithdrawalRequestUpsert) UpdateReviewedAt() *ReferralWithdrawal
 // ClearReviewedAt clears the value of the "reviewed_at" field.
 func (u *ReferralWithdrawalRequestUpsert) ClearReviewedAt() *ReferralWithdrawalRequestUpsert {
 	u.SetNull(referralwithdrawalrequest.FieldReviewedAt)
+	return u
+}
+
+// SetPaidAt sets the "paid_at" field.
+func (u *ReferralWithdrawalRequestUpsert) SetPaidAt(v time.Time) *ReferralWithdrawalRequestUpsert {
+	u.Set(referralwithdrawalrequest.FieldPaidAt, v)
+	return u
+}
+
+// UpdatePaidAt sets the "paid_at" field to the value that was provided on create.
+func (u *ReferralWithdrawalRequestUpsert) UpdatePaidAt() *ReferralWithdrawalRequestUpsert {
+	u.SetExcluded(referralwithdrawalrequest.FieldPaidAt)
+	return u
+}
+
+// ClearPaidAt clears the value of the "paid_at" field.
+func (u *ReferralWithdrawalRequestUpsert) ClearPaidAt() *ReferralWithdrawalRequestUpsert {
+	u.SetNull(referralwithdrawalrequest.FieldPaidAt)
 	return u
 }
 
@@ -894,6 +962,27 @@ func (u *ReferralWithdrawalRequestUpsertOne) UpdateReviewedAt() *ReferralWithdra
 func (u *ReferralWithdrawalRequestUpsertOne) ClearReviewedAt() *ReferralWithdrawalRequestUpsertOne {
 	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
 		s.ClearReviewedAt()
+	})
+}
+
+// SetPaidAt sets the "paid_at" field.
+func (u *ReferralWithdrawalRequestUpsertOne) SetPaidAt(v time.Time) *ReferralWithdrawalRequestUpsertOne {
+	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
+		s.SetPaidAt(v)
+	})
+}
+
+// UpdatePaidAt sets the "paid_at" field to the value that was provided on create.
+func (u *ReferralWithdrawalRequestUpsertOne) UpdatePaidAt() *ReferralWithdrawalRequestUpsertOne {
+	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
+		s.UpdatePaidAt()
+	})
+}
+
+// ClearPaidAt clears the value of the "paid_at" field.
+func (u *ReferralWithdrawalRequestUpsertOne) ClearPaidAt() *ReferralWithdrawalRequestUpsertOne {
+	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
+		s.ClearPaidAt()
 	})
 }
 
@@ -1322,6 +1411,27 @@ func (u *ReferralWithdrawalRequestUpsertBulk) UpdateReviewedAt() *ReferralWithdr
 func (u *ReferralWithdrawalRequestUpsertBulk) ClearReviewedAt() *ReferralWithdrawalRequestUpsertBulk {
 	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
 		s.ClearReviewedAt()
+	})
+}
+
+// SetPaidAt sets the "paid_at" field.
+func (u *ReferralWithdrawalRequestUpsertBulk) SetPaidAt(v time.Time) *ReferralWithdrawalRequestUpsertBulk {
+	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
+		s.SetPaidAt(v)
+	})
+}
+
+// UpdatePaidAt sets the "paid_at" field to the value that was provided on create.
+func (u *ReferralWithdrawalRequestUpsertBulk) UpdatePaidAt() *ReferralWithdrawalRequestUpsertBulk {
+	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
+		s.UpdatePaidAt()
+	})
+}
+
+// ClearPaidAt clears the value of the "paid_at" field.
+func (u *ReferralWithdrawalRequestUpsertBulk) ClearPaidAt() *ReferralWithdrawalRequestUpsertBulk {
+	return u.Update(func(s *ReferralWithdrawalRequestUpsert) {
+		s.ClearPaidAt()
 	})
 }
 

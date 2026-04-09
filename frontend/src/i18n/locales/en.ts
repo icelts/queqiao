@@ -548,7 +548,9 @@ export default {
       availableCommission: 'Withdrawable',
       frozenCommission: 'Frozen',
       pendingWithdrawal: 'Pending Review',
-      approvedWithdrawal: 'Withdrawn'
+      approvedWithdrawal: 'Approved Pending Payout',
+      paidWithdrawal: 'Paid Out',
+      withdrawalDebt: 'Recovery Debt'
     },
     invitees: {
       title: 'Invited Users',
@@ -578,6 +580,7 @@ export default {
       reversed: 'Reversed',
       pending: 'Pending',
       approved: 'Approved',
+      paid: 'Paid',
       rejected: 'Rejected',
       canceled: 'Canceled'
     },
@@ -1109,6 +1112,9 @@ export default {
       loadFailed: 'Failed to load withdrawal requests',
       approveSuccess: 'Withdrawal request approved.',
       approveFailed: 'Failed to approve withdrawal request',
+      paySuccess: 'Withdrawal request marked as paid.',
+      payFailed: 'Failed to mark withdrawal request as paid',
+      payConfirm: 'Confirm that payout has been completed for this request?',
       rejectSuccess: 'Withdrawal request rejected.',
       rejectFailed: 'Failed to reject withdrawal request',
       rejectConfirm: 'Reject this withdrawal request?',
@@ -1128,15 +1134,18 @@ export default {
       statuses: {
         pending: 'Pending',
         approved: 'Approved',
+        paid: 'Paid',
         rejected: 'Rejected',
         canceled: 'Canceled'
       },
       actions: {
         approve: 'Approve',
+        pay: 'Mark Paid',
         reject: 'Reject'
       },
       prompts: {
         approve: 'Optional approval note',
+        pay: 'Optional payout note',
         reject: 'Optional rejection reason'
       }
     },
@@ -1790,6 +1799,14 @@ export default {
       failedToCreate: 'Failed to create group',
       failedToUpdate: 'Failed to update group',
       failedToDelete: 'Failed to delete group',
+      purchasePrices: 'Purchase Prices',
+      purchasePricesTitle: 'Group Subscription Prices',
+      defaultPurchasePrice: 'Default Price',
+      addUserPurchasePrice: 'Add User Purchase Price',
+      noPurchasePrices: 'No user purchase prices configured',
+      purchasePriceSaved: 'Purchase prices saved',
+      failedToLoadPurchasePrices: 'Failed to load purchase prices',
+      failedToSavePurchasePrices: 'Failed to save purchase prices',
       nameRequired: 'Please enter group name',
       rateMultipliers: 'Rate Multipliers',
       rateMultipliersTitle: 'Group Rate Multipliers',

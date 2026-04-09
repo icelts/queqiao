@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -14,9 +15,14 @@ import (
 )
 
 var (
-	ErrRechargeOrderNotFound     = infraerrors.NotFound("RECHARGE_ORDER_NOT_FOUND", "recharge order not found")
-	ErrRechargeOrderStateInvalid = infraerrors.BadRequest("RECHARGE_ORDER_STATE_INVALID", "invalid recharge order state")
+	ErrRechargeOrderNotFound            = infraerrors.NotFound("RECHARGE_ORDER_NOT_FOUND", "recharge order not found")
+	ErrRechargeOrderStateInvalid        = infraerrors.BadRequest("RECHARGE_ORDER_STATE_INVALID", "invalid recharge order state")
+	ErrRechargeOrderAmountRequired      = infraerrors.BadRequest("RECHARGE_ORDER_AMOUNT_REQUIRED", "payment amount is required to confirm recharge order")
+	ErrRechargeOrderAmountMismatch      = infraerrors.Conflict("RECHARGE_ORDER_AMOUNT_MISMATCH", "paid amount does not match recharge order")
+	ErrRechargeOrderCurrencyUnsupported = infraerrors.BadRequest("RECHARGE_ORDER_CURRENCY_UNSUPPORTED", "unsupported recharge currency")
 )
+
+const rechargePaidAmountEqualityTolerance = 0.0000001
 
 type CreateRechargeOrderInput struct {
 	UserID         int64
@@ -69,8 +75,18 @@ func (s *ReferralService) CreateRechargeOrder(ctx context.Context, input *Create
 	if input.Currency == "" {
 		input.Currency = "CNY"
 	}
+	if input.Channel == XunhuPayChannel && input.Currency != "CNY" {
+		return nil, ErrRechargeOrderCurrencyUnsupported.WithMetadata(map[string]string{
+			"channel":  input.Channel,
+			"currency": input.Currency,
+		})
+	}
 	if input.Source == "" {
 		input.Source = RechargeOrderSourceBalance
+	}
+	input.Amount = normalizeRechargeAmountForChannel(input.Channel, input.Currency, input.Amount)
+	if input.Amount <= 0 {
+		return nil, ErrRechargeOrderInvalid
 	}
 
 	creditedAmount := roundMoney(input.CreditedAmount)
@@ -109,7 +125,7 @@ func (s *ReferralService) CreateRechargeOrder(ctx context.Context, input *Create
 		SetChannel(input.Channel).
 		SetSource(input.Source).
 		SetCurrency(input.Currency).
-		SetAmount(roundMoney(input.Amount)).
+		SetAmount(input.Amount).
 		SetCreditedAmount(creditedAmount).
 		SetStatus(RechargeOrderStatusPending).
 		SetNillableNotes(nilIfBlank(input.Notes)).
@@ -247,16 +263,26 @@ func (s *ReferralService) HandlePaymentWebhook(ctx context.Context, input *Payme
 	if entity == nil {
 		return nil, nil, ErrRechargeOrderNotFound
 	}
+	if strings.TrimSpace(entity.Channel) != "" {
+		input.Channel = strings.ToLower(strings.TrimSpace(entity.Channel))
+	}
+	if strings.TrimSpace(entity.Currency) != "" {
+		input.Currency = strings.ToUpper(strings.TrimSpace(entity.Currency))
+	}
+	if input.Status == RechargeOrderStatusPaid {
+		validatedAmount, err := validatePaidRechargeAmount(entity, input.Amount)
+		if err != nil {
+			return nil, nil, err
+		}
+		input.Amount = validatedAmount
+	}
 
 	switch input.Status {
 	case RechargeOrderStatusPaid:
 		if entity.Source == RechargeOrderSourceSubscriptionPurchase {
 			return s.completeSubscriptionPurchaseOrder(ctx, entity, input)
 		}
-		amount := roundMoney(input.Amount)
-		if amount <= 0 {
-			amount = roundMoney(entity.Amount)
-		}
+		amount := normalizeRechargeAmountForChannel(entity.Channel, entity.Currency, input.Amount)
 		creditedAmount := roundMoney(input.CreditedAmount)
 		if creditedAmount <= 0 {
 			if entity.CreditedAmount > 0 {
@@ -303,6 +329,48 @@ func (s *ReferralService) HandlePaymentWebhook(ctx context.Context, input *Payme
 		})
 	default:
 		return nil, nil, ErrRechargeOrderInvalid
+	}
+}
+
+func validatePaidRechargeAmount(entity *dbent.RechargeOrder, amount float64) (float64, error) {
+	if entity == nil {
+		return 0, ErrRechargeOrderInvalid
+	}
+
+	externalOrderID := ""
+	if entity.ExternalOrderID != nil {
+		externalOrderID = strings.TrimSpace(*entity.ExternalOrderID)
+	}
+
+	paidAmount := normalizeRechargeAmountForChannel(entity.Channel, entity.Currency, amount)
+	if paidAmount <= 0 {
+		return 0, ErrRechargeOrderAmountRequired
+	}
+
+	expectedAmount := normalizeRechargeAmountForChannel(entity.Channel, entity.Currency, entity.Amount)
+	if math.Abs(paidAmount-expectedAmount) > rechargePaidAmountEqualityTolerance {
+		return 0, ErrRechargeOrderAmountMismatch.WithMetadata(map[string]string{
+			"order_no":          strings.TrimSpace(entity.OrderNo),
+			"expected_amount":   fmt.Sprintf("%.8f", expectedAmount),
+			"received_amount":   fmt.Sprintf("%.8f", paidAmount),
+			"external_order_id": externalOrderID,
+		})
+	}
+
+	return paidAmount, nil
+}
+
+func normalizeRechargeAmountForChannel(channel, currency string, amount float64) float64 {
+	normalized := roundMoney(amount)
+	channel = strings.ToLower(strings.TrimSpace(channel))
+	currency = strings.ToUpper(strings.TrimSpace(currency))
+
+	switch {
+	case channel == XunhuPayChannel && (currency == "" || currency == "CNY"):
+		// XunhuPay currently charges CNY with 2-decimal precision.
+		return math.Round(normalized*100) / 100
+	default:
+		return normalized
 	}
 }
 
@@ -422,10 +490,14 @@ func (s *ReferralService) RefundRechargeOrder(ctx context.Context, input *Refund
 	}
 
 	reversed := make([]ReferralCommission, 0, len(commissionEntities))
-	invalidatedPromoters := map[int64]struct{}{}
 	reversedAt := time.Now()
 	if orderEntity.RefundedAt != nil {
 		reversedAt = *orderEntity.RefundedAt
+	}
+	debtByPromoter := make(map[int64]float64)
+	autoRejectReason := "auto rejected because related recharge was refunded"
+	if strings.TrimSpace(orderEntity.OrderNo) != "" {
+		autoRejectReason = "auto rejected because recharge order " + strings.TrimSpace(orderEntity.OrderNo) + " was refunded"
 	}
 	for _, item := range commissionEntities {
 		if item.Status != ReferralCommissionStatusRecorded {
@@ -442,14 +514,24 @@ func (s *ReferralService) RefundRechargeOrder(ctx context.Context, input *Refund
 		if err != nil {
 			return nil, nil, err
 		}
-
-		if item.CommissionAmount != 0 {
-			if _, err := tx.User.UpdateOneID(item.PromoterUserID).AddBalance(-item.CommissionAmount).Save(ctx); err != nil {
-				return nil, nil, err
-			}
+		debtDelta, err := s.handleWithdrawalAllocationsOnCommissionReversalTx(ctx, tx, item.ID, reversedAt, autoRejectReason)
+		if err != nil {
+			return nil, nil, err
 		}
-		invalidatedPromoters[item.PromoterUserID] = struct{}{}
+		if debtDelta > 0 {
+			debtByPromoter[item.PromoterUserID] = roundMoney(debtByPromoter[item.PromoterUserID] + debtDelta)
+		}
 		reversed = append(reversed, referralCommissionEntityToService(item))
+	}
+	for promoterUserID, debtDelta := range debtByPromoter {
+		if promoterUserID <= 0 || debtDelta <= 0 {
+			continue
+		}
+		if _, err := tx.User.UpdateOneID(promoterUserID).
+			AddReferralWithdrawalDebt(debtDelta).
+			Save(ctx); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -457,9 +539,6 @@ func (s *ReferralService) RefundRechargeOrder(ctx context.Context, input *Refund
 	}
 
 	s.invalidateBalanceCaches(ctx, orderEntity.UserID)
-	for promoterID := range invalidatedPromoters {
-		s.invalidateBalanceCaches(ctx, promoterID)
-	}
 
 	return rechargeOrderEntityToService(orderEntity), reversed, nil
 }

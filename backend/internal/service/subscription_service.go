@@ -44,6 +44,7 @@ var (
 type SubscriptionService struct {
 	groupRepo           GroupRepository
 	userSubRepo         UserSubscriptionRepository
+	purchasePriceRepo   SubscriptionPurchasePriceRepository
 	billingCacheService *BillingCacheService
 	entClient           *dbent.Client
 	now                 func() time.Time
@@ -69,6 +70,15 @@ func NewSubscriptionService(groupRepo GroupRepository, userSubRepo UserSubscript
 	svc.initSubCache(cfg)
 	svc.initMaintenanceQueue(cfg)
 	return svc
+}
+
+// SetSubscriptionPurchasePriceRepository injects the repository for
+// user-specific subscription purchase price overrides.
+func (s *SubscriptionService) SetSubscriptionPurchasePriceRepository(repo SubscriptionPurchasePriceRepository) {
+	if s == nil {
+		return
+	}
+	s.purchasePriceRepo = repo
 }
 
 func (s *SubscriptionService) initMaintenanceQueue(cfg *config.Config) {

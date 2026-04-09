@@ -140,6 +140,16 @@ func RecurringCommissionEnabled(v bool) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldRecurringCommissionEnabled, v))
 }
 
+// HasSuccessfulRecharge applies equality check predicate on the "has_successful_recharge" field. It's identical to HasSuccessfulRechargeEQ.
+func HasSuccessfulRecharge(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldHasSuccessfulRecharge, v))
+}
+
+// ReferralWithdrawalDebt applies equality check predicate on the "referral_withdrawal_debt" field. It's identical to ReferralWithdrawalDebtEQ.
+func ReferralWithdrawalDebt(v float64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldReferralWithdrawalDebt, v))
+}
+
 // TotpSecretEncrypted applies equality check predicate on the "totp_secret_encrypted" field. It's identical to TotpSecretEncryptedEQ.
 func TotpSecretEncrypted(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTotpSecretEncrypted, v))
@@ -980,6 +990,56 @@ func RecurringCommissionEnabledNEQ(v bool) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldRecurringCommissionEnabled, v))
 }
 
+// HasSuccessfulRechargeEQ applies the EQ predicate on the "has_successful_recharge" field.
+func HasSuccessfulRechargeEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldHasSuccessfulRecharge, v))
+}
+
+// HasSuccessfulRechargeNEQ applies the NEQ predicate on the "has_successful_recharge" field.
+func HasSuccessfulRechargeNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldHasSuccessfulRecharge, v))
+}
+
+// ReferralWithdrawalDebtEQ applies the EQ predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtEQ(v float64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldReferralWithdrawalDebt, v))
+}
+
+// ReferralWithdrawalDebtNEQ applies the NEQ predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtNEQ(v float64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldReferralWithdrawalDebt, v))
+}
+
+// ReferralWithdrawalDebtIn applies the In predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtIn(vs ...float64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldReferralWithdrawalDebt, vs...))
+}
+
+// ReferralWithdrawalDebtNotIn applies the NotIn predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtNotIn(vs ...float64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldReferralWithdrawalDebt, vs...))
+}
+
+// ReferralWithdrawalDebtGT applies the GT predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtGT(v float64) predicate.User {
+	return predicate.User(sql.FieldGT(FieldReferralWithdrawalDebt, v))
+}
+
+// ReferralWithdrawalDebtGTE applies the GTE predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtGTE(v float64) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldReferralWithdrawalDebt, v))
+}
+
+// ReferralWithdrawalDebtLT applies the LT predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtLT(v float64) predicate.User {
+	return predicate.User(sql.FieldLT(FieldReferralWithdrawalDebt, v))
+}
+
+// ReferralWithdrawalDebtLTE applies the LTE predicate on the "referral_withdrawal_debt" field.
+func ReferralWithdrawalDebtLTE(v float64) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldReferralWithdrawalDebt, v))
+}
+
 // TotpSecretEncryptedEQ applies the EQ predicate on the "totp_secret_encrypted" field.
 func TotpSecretEncryptedEQ(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldTotpSecretEncrypted, v))
@@ -1532,6 +1592,29 @@ func HasReferralWithdrawalRequests() predicate.User {
 func HasReferralWithdrawalRequestsWith(preds ...predicate.ReferralWithdrawalRequest) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newReferralWithdrawalRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReferralWithdrawalAllocations applies the HasEdge predicate on the "referral_withdrawal_allocations" edge.
+func HasReferralWithdrawalAllocations() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReferralWithdrawalAllocationsTable, ReferralWithdrawalAllocationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReferralWithdrawalAllocationsWith applies the HasEdge predicate on the "referral_withdrawal_allocations" edge with a given conditions (other predicates).
+func HasReferralWithdrawalAllocationsWith(preds ...predicate.ReferralWithdrawalAllocation) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newReferralWithdrawalAllocationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

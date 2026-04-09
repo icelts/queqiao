@@ -48,6 +48,9 @@ type RedeemCode func(*sql.Selector)
 // ReferralCommission is the predicate function for referralcommission builders.
 type ReferralCommission func(*sql.Selector)
 
+// ReferralWithdrawalAllocation is the predicate function for referralwithdrawalallocation builders.
+type ReferralWithdrawalAllocation func(*sql.Selector)
+
 // ReferralWithdrawalRequest is the predicate function for referralwithdrawalrequest builders.
 type ReferralWithdrawalRequest func(*sql.Selector)
 

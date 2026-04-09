@@ -27,6 +27,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
@@ -50,31 +51,32 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAPIKey                    = "APIKey"
-	TypeAccount                   = "Account"
-	TypeAccountGroup              = "AccountGroup"
-	TypeAnnouncement              = "Announcement"
-	TypeAnnouncementRead          = "AnnouncementRead"
-	TypeErrorPassthroughRule      = "ErrorPassthroughRule"
-	TypeGroup                     = "Group"
-	TypeIdempotencyRecord         = "IdempotencyRecord"
-	TypePromoCode                 = "PromoCode"
-	TypePromoCodeUsage            = "PromoCodeUsage"
-	TypeProxy                     = "Proxy"
-	TypeRechargeOrder             = "RechargeOrder"
-	TypeRedeemCode                = "RedeemCode"
-	TypeReferralCommission        = "ReferralCommission"
-	TypeReferralWithdrawalRequest = "ReferralWithdrawalRequest"
-	TypeSecuritySecret            = "SecuritySecret"
-	TypeSetting                   = "Setting"
-	TypeTLSFingerprintProfile     = "TLSFingerprintProfile"
-	TypeUsageCleanupTask          = "UsageCleanupTask"
-	TypeUsageLog                  = "UsageLog"
-	TypeUser                      = "User"
-	TypeUserAllowedGroup          = "UserAllowedGroup"
-	TypeUserAttributeDefinition   = "UserAttributeDefinition"
-	TypeUserAttributeValue        = "UserAttributeValue"
-	TypeUserSubscription          = "UserSubscription"
+	TypeAPIKey                       = "APIKey"
+	TypeAccount                      = "Account"
+	TypeAccountGroup                 = "AccountGroup"
+	TypeAnnouncement                 = "Announcement"
+	TypeAnnouncementRead             = "AnnouncementRead"
+	TypeErrorPassthroughRule         = "ErrorPassthroughRule"
+	TypeGroup                        = "Group"
+	TypeIdempotencyRecord            = "IdempotencyRecord"
+	TypePromoCode                    = "PromoCode"
+	TypePromoCodeUsage               = "PromoCodeUsage"
+	TypeProxy                        = "Proxy"
+	TypeRechargeOrder                = "RechargeOrder"
+	TypeRedeemCode                   = "RedeemCode"
+	TypeReferralCommission           = "ReferralCommission"
+	TypeReferralWithdrawalAllocation = "ReferralWithdrawalAllocation"
+	TypeReferralWithdrawalRequest    = "ReferralWithdrawalRequest"
+	TypeSecuritySecret               = "SecuritySecret"
+	TypeSetting                      = "Setting"
+	TypeTLSFingerprintProfile        = "TLSFingerprintProfile"
+	TypeUsageCleanupTask             = "UsageCleanupTask"
+	TypeUsageLog                     = "UsageLog"
+	TypeUser                         = "User"
+	TypeUserAllowedGroup             = "UserAllowedGroup"
+	TypeUserAttributeDefinition      = "UserAttributeDefinition"
+	TypeUserAttributeValue           = "UserAttributeValue"
+	TypeUserSubscription             = "UserSubscription"
 )
 
 // APIKeyMutation represents an operation that mutates the APIKey nodes in the graph.
@@ -17948,32 +17950,36 @@ func (m *RedeemCodeMutation) ResetEdge(name string) error {
 // ReferralCommissionMutation represents an operation that mutates the ReferralCommission nodes in the graph.
 type ReferralCommissionMutation struct {
 	config
-	op                    Op
-	typ                   string
-	id                    *int64
-	created_at            *time.Time
-	updated_at            *time.Time
-	commission_type       *string
-	status                *string
-	source_amount         *float64
-	addsource_amount      *float64
-	rate_snapshot         *float64
-	addrate_snapshot      *float64
-	commission_amount     *float64
-	addcommission_amount  *float64
-	reversed_at           *time.Time
-	reversed_reason       *string
-	notes                 *string
-	clearedFields         map[string]struct{}
-	promoter              *int64
-	clearedpromoter       bool
-	referred_user         *int64
-	clearedreferred_user  bool
-	recharge_order        *int64
-	clearedrecharge_order bool
-	done                  bool
-	oldValue              func(context.Context) (*ReferralCommission, error)
-	predicates            []predicate.ReferralCommission
+	op                            Op
+	typ                           string
+	id                            *int64
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	commission_type               *string
+	status                        *string
+	source_amount                 *float64
+	addsource_amount              *float64
+	rate_snapshot                 *float64
+	addrate_snapshot              *float64
+	commission_amount             *float64
+	addcommission_amount          *float64
+	currency                      *string
+	reversed_at                   *time.Time
+	reversed_reason               *string
+	notes                         *string
+	clearedFields                 map[string]struct{}
+	promoter                      *int64
+	clearedpromoter               bool
+	referred_user                 *int64
+	clearedreferred_user          bool
+	recharge_order                *int64
+	clearedrecharge_order         bool
+	withdrawal_allocations        map[int64]struct{}
+	removedwithdrawal_allocations map[int64]struct{}
+	clearedwithdrawal_allocations bool
+	done                          bool
+	oldValue                      func(context.Context) (*ReferralCommission, error)
+	predicates                    []predicate.ReferralCommission
 }
 
 var _ ent.Mutation = (*ReferralCommissionMutation)(nil)
@@ -18494,6 +18500,42 @@ func (m *ReferralCommissionMutation) ResetCommissionAmount() {
 	m.addcommission_amount = nil
 }
 
+// SetCurrency sets the "currency" field.
+func (m *ReferralCommissionMutation) SetCurrency(s string) {
+	m.currency = &s
+}
+
+// Currency returns the value of the "currency" field in the mutation.
+func (m *ReferralCommissionMutation) Currency() (r string, exists bool) {
+	v := m.currency
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrency returns the old "currency" field's value of the ReferralCommission entity.
+// If the ReferralCommission object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralCommissionMutation) OldCurrency(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrency is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrency requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrency: %w", err)
+	}
+	return oldValue.Currency, nil
+}
+
+// ResetCurrency resets all changes to the "currency" field.
+func (m *ReferralCommissionMutation) ResetCurrency() {
+	m.currency = nil
+}
+
 // SetReversedAt sets the "reversed_at" field.
 func (m *ReferralCommissionMutation) SetReversedAt(t time.Time) {
 	m.reversed_at = &t
@@ -18735,6 +18777,60 @@ func (m *ReferralCommissionMutation) ResetRechargeOrder() {
 	m.clearedrecharge_order = false
 }
 
+// AddWithdrawalAllocationIDs adds the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by ids.
+func (m *ReferralCommissionMutation) AddWithdrawalAllocationIDs(ids ...int64) {
+	if m.withdrawal_allocations == nil {
+		m.withdrawal_allocations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.withdrawal_allocations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearWithdrawalAllocations clears the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity.
+func (m *ReferralCommissionMutation) ClearWithdrawalAllocations() {
+	m.clearedwithdrawal_allocations = true
+}
+
+// WithdrawalAllocationsCleared reports if the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity was cleared.
+func (m *ReferralCommissionMutation) WithdrawalAllocationsCleared() bool {
+	return m.clearedwithdrawal_allocations
+}
+
+// RemoveWithdrawalAllocationIDs removes the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (m *ReferralCommissionMutation) RemoveWithdrawalAllocationIDs(ids ...int64) {
+	if m.removedwithdrawal_allocations == nil {
+		m.removedwithdrawal_allocations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.withdrawal_allocations, ids[i])
+		m.removedwithdrawal_allocations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedWithdrawalAllocations returns the removed IDs of the "withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity.
+func (m *ReferralCommissionMutation) RemovedWithdrawalAllocationsIDs() (ids []int64) {
+	for id := range m.removedwithdrawal_allocations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// WithdrawalAllocationsIDs returns the "withdrawal_allocations" edge IDs in the mutation.
+func (m *ReferralCommissionMutation) WithdrawalAllocationsIDs() (ids []int64) {
+	for id := range m.withdrawal_allocations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetWithdrawalAllocations resets all changes to the "withdrawal_allocations" edge.
+func (m *ReferralCommissionMutation) ResetWithdrawalAllocations() {
+	m.withdrawal_allocations = nil
+	m.clearedwithdrawal_allocations = false
+	m.removedwithdrawal_allocations = nil
+}
+
 // Where appends a list predicates to the ReferralCommissionMutation builder.
 func (m *ReferralCommissionMutation) Where(ps ...predicate.ReferralCommission) {
 	m.predicates = append(m.predicates, ps...)
@@ -18769,7 +18865,7 @@ func (m *ReferralCommissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ReferralCommissionMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, referralcommission.FieldCreatedAt)
 	}
@@ -18799,6 +18895,9 @@ func (m *ReferralCommissionMutation) Fields() []string {
 	}
 	if m.commission_amount != nil {
 		fields = append(fields, referralcommission.FieldCommissionAmount)
+	}
+	if m.currency != nil {
+		fields = append(fields, referralcommission.FieldCurrency)
 	}
 	if m.reversed_at != nil {
 		fields = append(fields, referralcommission.FieldReversedAt)
@@ -18837,6 +18936,8 @@ func (m *ReferralCommissionMutation) Field(name string) (ent.Value, bool) {
 		return m.RateSnapshot()
 	case referralcommission.FieldCommissionAmount:
 		return m.CommissionAmount()
+	case referralcommission.FieldCurrency:
+		return m.Currency()
 	case referralcommission.FieldReversedAt:
 		return m.ReversedAt()
 	case referralcommission.FieldReversedReason:
@@ -18872,6 +18973,8 @@ func (m *ReferralCommissionMutation) OldField(ctx context.Context, name string) 
 		return m.OldRateSnapshot(ctx)
 	case referralcommission.FieldCommissionAmount:
 		return m.OldCommissionAmount(ctx)
+	case referralcommission.FieldCurrency:
+		return m.OldCurrency(ctx)
 	case referralcommission.FieldReversedAt:
 		return m.OldReversedAt(ctx)
 	case referralcommission.FieldReversedReason:
@@ -18956,6 +19059,13 @@ func (m *ReferralCommissionMutation) SetField(name string, value ent.Value) erro
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCommissionAmount(v)
+		return nil
+	case referralcommission.FieldCurrency:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrency(v)
 		return nil
 	case referralcommission.FieldReversedAt:
 		v, ok := value.(time.Time)
@@ -19117,6 +19227,9 @@ func (m *ReferralCommissionMutation) ResetField(name string) error {
 	case referralcommission.FieldCommissionAmount:
 		m.ResetCommissionAmount()
 		return nil
+	case referralcommission.FieldCurrency:
+		m.ResetCurrency()
+		return nil
 	case referralcommission.FieldReversedAt:
 		m.ResetReversedAt()
 		return nil
@@ -19132,7 +19245,7 @@ func (m *ReferralCommissionMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ReferralCommissionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.promoter != nil {
 		edges = append(edges, referralcommission.EdgePromoter)
 	}
@@ -19141,6 +19254,9 @@ func (m *ReferralCommissionMutation) AddedEdges() []string {
 	}
 	if m.recharge_order != nil {
 		edges = append(edges, referralcommission.EdgeRechargeOrder)
+	}
+	if m.withdrawal_allocations != nil {
+		edges = append(edges, referralcommission.EdgeWithdrawalAllocations)
 	}
 	return edges
 }
@@ -19161,25 +19277,42 @@ func (m *ReferralCommissionMutation) AddedIDs(name string) []ent.Value {
 		if id := m.recharge_order; id != nil {
 			return []ent.Value{*id}
 		}
+	case referralcommission.EdgeWithdrawalAllocations:
+		ids := make([]ent.Value, 0, len(m.withdrawal_allocations))
+		for id := range m.withdrawal_allocations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ReferralCommissionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
+	if m.removedwithdrawal_allocations != nil {
+		edges = append(edges, referralcommission.EdgeWithdrawalAllocations)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ReferralCommissionMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case referralcommission.EdgeWithdrawalAllocations:
+		ids := make([]ent.Value, 0, len(m.removedwithdrawal_allocations))
+		for id := range m.removedwithdrawal_allocations {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ReferralCommissionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedpromoter {
 		edges = append(edges, referralcommission.EdgePromoter)
 	}
@@ -19188,6 +19321,9 @@ func (m *ReferralCommissionMutation) ClearedEdges() []string {
 	}
 	if m.clearedrecharge_order {
 		edges = append(edges, referralcommission.EdgeRechargeOrder)
+	}
+	if m.clearedwithdrawal_allocations {
+		edges = append(edges, referralcommission.EdgeWithdrawalAllocations)
 	}
 	return edges
 }
@@ -19202,6 +19338,8 @@ func (m *ReferralCommissionMutation) EdgeCleared(name string) bool {
 		return m.clearedreferred_user
 	case referralcommission.EdgeRechargeOrder:
 		return m.clearedrecharge_order
+	case referralcommission.EdgeWithdrawalAllocations:
+		return m.clearedwithdrawal_allocations
 	}
 	return false
 }
@@ -19236,8 +19374,802 @@ func (m *ReferralCommissionMutation) ResetEdge(name string) error {
 	case referralcommission.EdgeRechargeOrder:
 		m.ResetRechargeOrder()
 		return nil
+	case referralcommission.EdgeWithdrawalAllocations:
+		m.ResetWithdrawalAllocations()
+		return nil
 	}
 	return fmt.Errorf("unknown ReferralCommission edge %s", name)
+}
+
+// ReferralWithdrawalAllocationMutation represents an operation that mutates the ReferralWithdrawalAllocation nodes in the graph.
+type ReferralWithdrawalAllocationMutation struct {
+	config
+	op                        Op
+	typ                       string
+	id                        *int64
+	created_at                *time.Time
+	updated_at                *time.Time
+	amount                    *float64
+	addamount                 *float64
+	clearedFields             map[string]struct{}
+	promoter                  *int64
+	clearedpromoter           bool
+	withdrawal_request        *int64
+	clearedwithdrawal_request bool
+	commission                *int64
+	clearedcommission         bool
+	done                      bool
+	oldValue                  func(context.Context) (*ReferralWithdrawalAllocation, error)
+	predicates                []predicate.ReferralWithdrawalAllocation
+}
+
+var _ ent.Mutation = (*ReferralWithdrawalAllocationMutation)(nil)
+
+// referralwithdrawalallocationOption allows management of the mutation configuration using functional options.
+type referralwithdrawalallocationOption func(*ReferralWithdrawalAllocationMutation)
+
+// newReferralWithdrawalAllocationMutation creates new mutation for the ReferralWithdrawalAllocation entity.
+func newReferralWithdrawalAllocationMutation(c config, op Op, opts ...referralwithdrawalallocationOption) *ReferralWithdrawalAllocationMutation {
+	m := &ReferralWithdrawalAllocationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeReferralWithdrawalAllocation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withReferralWithdrawalAllocationID sets the ID field of the mutation.
+func withReferralWithdrawalAllocationID(id int64) referralwithdrawalallocationOption {
+	return func(m *ReferralWithdrawalAllocationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ReferralWithdrawalAllocation
+		)
+		m.oldValue = func(ctx context.Context) (*ReferralWithdrawalAllocation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ReferralWithdrawalAllocation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withReferralWithdrawalAllocation sets the old ReferralWithdrawalAllocation of the mutation.
+func withReferralWithdrawalAllocation(node *ReferralWithdrawalAllocation) referralwithdrawalallocationOption {
+	return func(m *ReferralWithdrawalAllocationMutation) {
+		m.oldValue = func(context.Context) (*ReferralWithdrawalAllocation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ReferralWithdrawalAllocationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ReferralWithdrawalAllocationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ReferralWithdrawalAllocationMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ReferralWithdrawalAllocationMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ReferralWithdrawalAllocation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ReferralWithdrawalAllocationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ReferralWithdrawalAllocation entity.
+// If the ReferralWithdrawalAllocation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalAllocationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ReferralWithdrawalAllocationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ReferralWithdrawalAllocationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the ReferralWithdrawalAllocation entity.
+// If the ReferralWithdrawalAllocation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalAllocationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ReferralWithdrawalAllocationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetPromoterUserID sets the "promoter_user_id" field.
+func (m *ReferralWithdrawalAllocationMutation) SetPromoterUserID(i int64) {
+	m.promoter = &i
+}
+
+// PromoterUserID returns the value of the "promoter_user_id" field in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) PromoterUserID() (r int64, exists bool) {
+	v := m.promoter
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPromoterUserID returns the old "promoter_user_id" field's value of the ReferralWithdrawalAllocation entity.
+// If the ReferralWithdrawalAllocation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalAllocationMutation) OldPromoterUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPromoterUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPromoterUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPromoterUserID: %w", err)
+	}
+	return oldValue.PromoterUserID, nil
+}
+
+// ResetPromoterUserID resets all changes to the "promoter_user_id" field.
+func (m *ReferralWithdrawalAllocationMutation) ResetPromoterUserID() {
+	m.promoter = nil
+}
+
+// SetWithdrawalRequestID sets the "withdrawal_request_id" field.
+func (m *ReferralWithdrawalAllocationMutation) SetWithdrawalRequestID(i int64) {
+	m.withdrawal_request = &i
+}
+
+// WithdrawalRequestID returns the value of the "withdrawal_request_id" field in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) WithdrawalRequestID() (r int64, exists bool) {
+	v := m.withdrawal_request
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWithdrawalRequestID returns the old "withdrawal_request_id" field's value of the ReferralWithdrawalAllocation entity.
+// If the ReferralWithdrawalAllocation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalAllocationMutation) OldWithdrawalRequestID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWithdrawalRequestID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWithdrawalRequestID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWithdrawalRequestID: %w", err)
+	}
+	return oldValue.WithdrawalRequestID, nil
+}
+
+// ResetWithdrawalRequestID resets all changes to the "withdrawal_request_id" field.
+func (m *ReferralWithdrawalAllocationMutation) ResetWithdrawalRequestID() {
+	m.withdrawal_request = nil
+}
+
+// SetCommissionID sets the "commission_id" field.
+func (m *ReferralWithdrawalAllocationMutation) SetCommissionID(i int64) {
+	m.commission = &i
+}
+
+// CommissionID returns the value of the "commission_id" field in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) CommissionID() (r int64, exists bool) {
+	v := m.commission
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommissionID returns the old "commission_id" field's value of the ReferralWithdrawalAllocation entity.
+// If the ReferralWithdrawalAllocation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalAllocationMutation) OldCommissionID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommissionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommissionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommissionID: %w", err)
+	}
+	return oldValue.CommissionID, nil
+}
+
+// ResetCommissionID resets all changes to the "commission_id" field.
+func (m *ReferralWithdrawalAllocationMutation) ResetCommissionID() {
+	m.commission = nil
+}
+
+// SetAmount sets the "amount" field.
+func (m *ReferralWithdrawalAllocationMutation) SetAmount(f float64) {
+	m.amount = &f
+	m.addamount = nil
+}
+
+// Amount returns the value of the "amount" field in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) Amount() (r float64, exists bool) {
+	v := m.amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmount returns the old "amount" field's value of the ReferralWithdrawalAllocation entity.
+// If the ReferralWithdrawalAllocation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalAllocationMutation) OldAmount(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmount: %w", err)
+	}
+	return oldValue.Amount, nil
+}
+
+// AddAmount adds f to the "amount" field.
+func (m *ReferralWithdrawalAllocationMutation) AddAmount(f float64) {
+	if m.addamount != nil {
+		*m.addamount += f
+	} else {
+		m.addamount = &f
+	}
+}
+
+// AddedAmount returns the value that was added to the "amount" field in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) AddedAmount() (r float64, exists bool) {
+	v := m.addamount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmount resets all changes to the "amount" field.
+func (m *ReferralWithdrawalAllocationMutation) ResetAmount() {
+	m.amount = nil
+	m.addamount = nil
+}
+
+// SetPromoterID sets the "promoter" edge to the User entity by id.
+func (m *ReferralWithdrawalAllocationMutation) SetPromoterID(id int64) {
+	m.promoter = &id
+}
+
+// ClearPromoter clears the "promoter" edge to the User entity.
+func (m *ReferralWithdrawalAllocationMutation) ClearPromoter() {
+	m.clearedpromoter = true
+	m.clearedFields[referralwithdrawalallocation.FieldPromoterUserID] = struct{}{}
+}
+
+// PromoterCleared reports if the "promoter" edge to the User entity was cleared.
+func (m *ReferralWithdrawalAllocationMutation) PromoterCleared() bool {
+	return m.clearedpromoter
+}
+
+// PromoterID returns the "promoter" edge ID in the mutation.
+func (m *ReferralWithdrawalAllocationMutation) PromoterID() (id int64, exists bool) {
+	if m.promoter != nil {
+		return *m.promoter, true
+	}
+	return
+}
+
+// PromoterIDs returns the "promoter" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PromoterID instead. It exists only for internal usage by the builders.
+func (m *ReferralWithdrawalAllocationMutation) PromoterIDs() (ids []int64) {
+	if id := m.promoter; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPromoter resets all changes to the "promoter" edge.
+func (m *ReferralWithdrawalAllocationMutation) ResetPromoter() {
+	m.promoter = nil
+	m.clearedpromoter = false
+}
+
+// ClearWithdrawalRequest clears the "withdrawal_request" edge to the ReferralWithdrawalRequest entity.
+func (m *ReferralWithdrawalAllocationMutation) ClearWithdrawalRequest() {
+	m.clearedwithdrawal_request = true
+	m.clearedFields[referralwithdrawalallocation.FieldWithdrawalRequestID] = struct{}{}
+}
+
+// WithdrawalRequestCleared reports if the "withdrawal_request" edge to the ReferralWithdrawalRequest entity was cleared.
+func (m *ReferralWithdrawalAllocationMutation) WithdrawalRequestCleared() bool {
+	return m.clearedwithdrawal_request
+}
+
+// WithdrawalRequestIDs returns the "withdrawal_request" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WithdrawalRequestID instead. It exists only for internal usage by the builders.
+func (m *ReferralWithdrawalAllocationMutation) WithdrawalRequestIDs() (ids []int64) {
+	if id := m.withdrawal_request; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWithdrawalRequest resets all changes to the "withdrawal_request" edge.
+func (m *ReferralWithdrawalAllocationMutation) ResetWithdrawalRequest() {
+	m.withdrawal_request = nil
+	m.clearedwithdrawal_request = false
+}
+
+// ClearCommission clears the "commission" edge to the ReferralCommission entity.
+func (m *ReferralWithdrawalAllocationMutation) ClearCommission() {
+	m.clearedcommission = true
+	m.clearedFields[referralwithdrawalallocation.FieldCommissionID] = struct{}{}
+}
+
+// CommissionCleared reports if the "commission" edge to the ReferralCommission entity was cleared.
+func (m *ReferralWithdrawalAllocationMutation) CommissionCleared() bool {
+	return m.clearedcommission
+}
+
+// CommissionIDs returns the "commission" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CommissionID instead. It exists only for internal usage by the builders.
+func (m *ReferralWithdrawalAllocationMutation) CommissionIDs() (ids []int64) {
+	if id := m.commission; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCommission resets all changes to the "commission" edge.
+func (m *ReferralWithdrawalAllocationMutation) ResetCommission() {
+	m.commission = nil
+	m.clearedcommission = false
+}
+
+// Where appends a list predicates to the ReferralWithdrawalAllocationMutation builder.
+func (m *ReferralWithdrawalAllocationMutation) Where(ps ...predicate.ReferralWithdrawalAllocation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ReferralWithdrawalAllocationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ReferralWithdrawalAllocationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ReferralWithdrawalAllocation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ReferralWithdrawalAllocationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ReferralWithdrawalAllocationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ReferralWithdrawalAllocation).
+func (m *ReferralWithdrawalAllocationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ReferralWithdrawalAllocationMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.created_at != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldUpdatedAt)
+	}
+	if m.promoter != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldPromoterUserID)
+	}
+	if m.withdrawal_request != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldWithdrawalRequestID)
+	}
+	if m.commission != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldCommissionID)
+	}
+	if m.amount != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldAmount)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ReferralWithdrawalAllocationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case referralwithdrawalallocation.FieldCreatedAt:
+		return m.CreatedAt()
+	case referralwithdrawalallocation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case referralwithdrawalallocation.FieldPromoterUserID:
+		return m.PromoterUserID()
+	case referralwithdrawalallocation.FieldWithdrawalRequestID:
+		return m.WithdrawalRequestID()
+	case referralwithdrawalallocation.FieldCommissionID:
+		return m.CommissionID()
+	case referralwithdrawalallocation.FieldAmount:
+		return m.Amount()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ReferralWithdrawalAllocationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case referralwithdrawalallocation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case referralwithdrawalallocation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case referralwithdrawalallocation.FieldPromoterUserID:
+		return m.OldPromoterUserID(ctx)
+	case referralwithdrawalallocation.FieldWithdrawalRequestID:
+		return m.OldWithdrawalRequestID(ctx)
+	case referralwithdrawalallocation.FieldCommissionID:
+		return m.OldCommissionID(ctx)
+	case referralwithdrawalallocation.FieldAmount:
+		return m.OldAmount(ctx)
+	}
+	return nil, fmt.Errorf("unknown ReferralWithdrawalAllocation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ReferralWithdrawalAllocationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case referralwithdrawalallocation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case referralwithdrawalallocation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case referralwithdrawalallocation.FieldPromoterUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPromoterUserID(v)
+		return nil
+	case referralwithdrawalallocation.FieldWithdrawalRequestID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWithdrawalRequestID(v)
+		return nil
+	case referralwithdrawalallocation.FieldCommissionID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommissionID(v)
+		return nil
+	case referralwithdrawalallocation.FieldAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ReferralWithdrawalAllocation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ReferralWithdrawalAllocationMutation) AddedFields() []string {
+	var fields []string
+	if m.addamount != nil {
+		fields = append(fields, referralwithdrawalallocation.FieldAmount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ReferralWithdrawalAllocationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case referralwithdrawalallocation.FieldAmount:
+		return m.AddedAmount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ReferralWithdrawalAllocationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case referralwithdrawalallocation.FieldAmount:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ReferralWithdrawalAllocation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ReferralWithdrawalAllocationMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ReferralWithdrawalAllocationMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ReferralWithdrawalAllocation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ReferralWithdrawalAllocationMutation) ResetField(name string) error {
+	switch name {
+	case referralwithdrawalallocation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case referralwithdrawalallocation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case referralwithdrawalallocation.FieldPromoterUserID:
+		m.ResetPromoterUserID()
+		return nil
+	case referralwithdrawalallocation.FieldWithdrawalRequestID:
+		m.ResetWithdrawalRequestID()
+		return nil
+	case referralwithdrawalallocation.FieldCommissionID:
+		m.ResetCommissionID()
+		return nil
+	case referralwithdrawalallocation.FieldAmount:
+		m.ResetAmount()
+		return nil
+	}
+	return fmt.Errorf("unknown ReferralWithdrawalAllocation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.promoter != nil {
+		edges = append(edges, referralwithdrawalallocation.EdgePromoter)
+	}
+	if m.withdrawal_request != nil {
+		edges = append(edges, referralwithdrawalallocation.EdgeWithdrawalRequest)
+	}
+	if m.commission != nil {
+		edges = append(edges, referralwithdrawalallocation.EdgeCommission)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case referralwithdrawalallocation.EdgePromoter:
+		if id := m.promoter; id != nil {
+			return []ent.Value{*id}
+		}
+	case referralwithdrawalallocation.EdgeWithdrawalRequest:
+		if id := m.withdrawal_request; id != nil {
+			return []ent.Value{*id}
+		}
+	case referralwithdrawalallocation.EdgeCommission:
+		if id := m.commission; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedpromoter {
+		edges = append(edges, referralwithdrawalallocation.EdgePromoter)
+	}
+	if m.clearedwithdrawal_request {
+		edges = append(edges, referralwithdrawalallocation.EdgeWithdrawalRequest)
+	}
+	if m.clearedcommission {
+		edges = append(edges, referralwithdrawalallocation.EdgeCommission)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ReferralWithdrawalAllocationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case referralwithdrawalallocation.EdgePromoter:
+		return m.clearedpromoter
+	case referralwithdrawalallocation.EdgeWithdrawalRequest:
+		return m.clearedwithdrawal_request
+	case referralwithdrawalallocation.EdgeCommission:
+		return m.clearedcommission
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ReferralWithdrawalAllocationMutation) ClearEdge(name string) error {
+	switch name {
+	case referralwithdrawalallocation.EdgePromoter:
+		m.ClearPromoter()
+		return nil
+	case referralwithdrawalallocation.EdgeWithdrawalRequest:
+		m.ClearWithdrawalRequest()
+		return nil
+	case referralwithdrawalallocation.EdgeCommission:
+		m.ClearCommission()
+		return nil
+	}
+	return fmt.Errorf("unknown ReferralWithdrawalAllocation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ReferralWithdrawalAllocationMutation) ResetEdge(name string) error {
+	switch name {
+	case referralwithdrawalallocation.EdgePromoter:
+		m.ResetPromoter()
+		return nil
+	case referralwithdrawalallocation.EdgeWithdrawalRequest:
+		m.ResetWithdrawalRequest()
+		return nil
+	case referralwithdrawalallocation.EdgeCommission:
+		m.ResetCommission()
+		return nil
+	}
+	return fmt.Errorf("unknown ReferralWithdrawalAllocation edge %s", name)
 }
 
 // ReferralWithdrawalRequestMutation represents an operation that mutates the ReferralWithdrawalRequest nodes in the graph.
@@ -19256,6 +20188,7 @@ type ReferralWithdrawalRequestMutation struct {
 	account_identifier *string
 	status             *string
 	reviewed_at        *time.Time
+	paid_at            *time.Time
 	notes              *string
 	review_notes       *string
 	clearedFields      map[string]struct{}
@@ -19263,6 +20196,9 @@ type ReferralWithdrawalRequestMutation struct {
 	clearedpromoter    bool
 	reviewer           *int64
 	clearedreviewer    bool
+	allocations        map[int64]struct{}
+	removedallocations map[int64]struct{}
+	clearedallocations bool
 	done               bool
 	oldValue           func(context.Context) (*ReferralWithdrawalRequest, error)
 	predicates         []predicate.ReferralWithdrawalRequest
@@ -19834,6 +20770,55 @@ func (m *ReferralWithdrawalRequestMutation) ResetReviewedAt() {
 	delete(m.clearedFields, referralwithdrawalrequest.FieldReviewedAt)
 }
 
+// SetPaidAt sets the "paid_at" field.
+func (m *ReferralWithdrawalRequestMutation) SetPaidAt(t time.Time) {
+	m.paid_at = &t
+}
+
+// PaidAt returns the value of the "paid_at" field in the mutation.
+func (m *ReferralWithdrawalRequestMutation) PaidAt() (r time.Time, exists bool) {
+	v := m.paid_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPaidAt returns the old "paid_at" field's value of the ReferralWithdrawalRequest entity.
+// If the ReferralWithdrawalRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ReferralWithdrawalRequestMutation) OldPaidAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPaidAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPaidAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPaidAt: %w", err)
+	}
+	return oldValue.PaidAt, nil
+}
+
+// ClearPaidAt clears the value of the "paid_at" field.
+func (m *ReferralWithdrawalRequestMutation) ClearPaidAt() {
+	m.paid_at = nil
+	m.clearedFields[referralwithdrawalrequest.FieldPaidAt] = struct{}{}
+}
+
+// PaidAtCleared returns if the "paid_at" field was cleared in this mutation.
+func (m *ReferralWithdrawalRequestMutation) PaidAtCleared() bool {
+	_, ok := m.clearedFields[referralwithdrawalrequest.FieldPaidAt]
+	return ok
+}
+
+// ResetPaidAt resets all changes to the "paid_at" field.
+func (m *ReferralWithdrawalRequestMutation) ResetPaidAt() {
+	m.paid_at = nil
+	delete(m.clearedFields, referralwithdrawalrequest.FieldPaidAt)
+}
+
 // SetNotes sets the "notes" field.
 func (m *ReferralWithdrawalRequestMutation) SetNotes(s string) {
 	m.notes = &s
@@ -20012,6 +20997,60 @@ func (m *ReferralWithdrawalRequestMutation) ResetReviewer() {
 	m.clearedreviewer = false
 }
 
+// AddAllocationIDs adds the "allocations" edge to the ReferralWithdrawalAllocation entity by ids.
+func (m *ReferralWithdrawalRequestMutation) AddAllocationIDs(ids ...int64) {
+	if m.allocations == nil {
+		m.allocations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.allocations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAllocations clears the "allocations" edge to the ReferralWithdrawalAllocation entity.
+func (m *ReferralWithdrawalRequestMutation) ClearAllocations() {
+	m.clearedallocations = true
+}
+
+// AllocationsCleared reports if the "allocations" edge to the ReferralWithdrawalAllocation entity was cleared.
+func (m *ReferralWithdrawalRequestMutation) AllocationsCleared() bool {
+	return m.clearedallocations
+}
+
+// RemoveAllocationIDs removes the "allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (m *ReferralWithdrawalRequestMutation) RemoveAllocationIDs(ids ...int64) {
+	if m.removedallocations == nil {
+		m.removedallocations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.allocations, ids[i])
+		m.removedallocations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAllocations returns the removed IDs of the "allocations" edge to the ReferralWithdrawalAllocation entity.
+func (m *ReferralWithdrawalRequestMutation) RemovedAllocationsIDs() (ids []int64) {
+	for id := range m.removedallocations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AllocationsIDs returns the "allocations" edge IDs in the mutation.
+func (m *ReferralWithdrawalRequestMutation) AllocationsIDs() (ids []int64) {
+	for id := range m.allocations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAllocations resets all changes to the "allocations" edge.
+func (m *ReferralWithdrawalRequestMutation) ResetAllocations() {
+	m.allocations = nil
+	m.clearedallocations = false
+	m.removedallocations = nil
+}
+
 // Where appends a list predicates to the ReferralWithdrawalRequestMutation builder.
 func (m *ReferralWithdrawalRequestMutation) Where(ps ...predicate.ReferralWithdrawalRequest) {
 	m.predicates = append(m.predicates, ps...)
@@ -20046,7 +21085,7 @@ func (m *ReferralWithdrawalRequestMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ReferralWithdrawalRequestMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, referralwithdrawalrequest.FieldCreatedAt)
 	}
@@ -20079,6 +21118,9 @@ func (m *ReferralWithdrawalRequestMutation) Fields() []string {
 	}
 	if m.reviewed_at != nil {
 		fields = append(fields, referralwithdrawalrequest.FieldReviewedAt)
+	}
+	if m.paid_at != nil {
+		fields = append(fields, referralwithdrawalrequest.FieldPaidAt)
 	}
 	if m.notes != nil {
 		fields = append(fields, referralwithdrawalrequest.FieldNotes)
@@ -20116,6 +21158,8 @@ func (m *ReferralWithdrawalRequestMutation) Field(name string) (ent.Value, bool)
 		return m.Status()
 	case referralwithdrawalrequest.FieldReviewedAt:
 		return m.ReviewedAt()
+	case referralwithdrawalrequest.FieldPaidAt:
+		return m.PaidAt()
 	case referralwithdrawalrequest.FieldNotes:
 		return m.Notes()
 	case referralwithdrawalrequest.FieldReviewNotes:
@@ -20151,6 +21195,8 @@ func (m *ReferralWithdrawalRequestMutation) OldField(ctx context.Context, name s
 		return m.OldStatus(ctx)
 	case referralwithdrawalrequest.FieldReviewedAt:
 		return m.OldReviewedAt(ctx)
+	case referralwithdrawalrequest.FieldPaidAt:
+		return m.OldPaidAt(ctx)
 	case referralwithdrawalrequest.FieldNotes:
 		return m.OldNotes(ctx)
 	case referralwithdrawalrequest.FieldReviewNotes:
@@ -20241,6 +21287,13 @@ func (m *ReferralWithdrawalRequestMutation) SetField(name string, value ent.Valu
 		}
 		m.SetReviewedAt(v)
 		return nil
+	case referralwithdrawalrequest.FieldPaidAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPaidAt(v)
+		return nil
 	case referralwithdrawalrequest.FieldNotes:
 		v, ok := value.(string)
 		if !ok {
@@ -20312,6 +21365,9 @@ func (m *ReferralWithdrawalRequestMutation) ClearedFields() []string {
 	if m.FieldCleared(referralwithdrawalrequest.FieldReviewedAt) {
 		fields = append(fields, referralwithdrawalrequest.FieldReviewedAt)
 	}
+	if m.FieldCleared(referralwithdrawalrequest.FieldPaidAt) {
+		fields = append(fields, referralwithdrawalrequest.FieldPaidAt)
+	}
 	if m.FieldCleared(referralwithdrawalrequest.FieldNotes) {
 		fields = append(fields, referralwithdrawalrequest.FieldNotes)
 	}
@@ -20343,6 +21399,9 @@ func (m *ReferralWithdrawalRequestMutation) ClearField(name string) error {
 		return nil
 	case referralwithdrawalrequest.FieldReviewedAt:
 		m.ClearReviewedAt()
+		return nil
+	case referralwithdrawalrequest.FieldPaidAt:
+		m.ClearPaidAt()
 		return nil
 	case referralwithdrawalrequest.FieldNotes:
 		m.ClearNotes()
@@ -20391,6 +21450,9 @@ func (m *ReferralWithdrawalRequestMutation) ResetField(name string) error {
 	case referralwithdrawalrequest.FieldReviewedAt:
 		m.ResetReviewedAt()
 		return nil
+	case referralwithdrawalrequest.FieldPaidAt:
+		m.ResetPaidAt()
+		return nil
 	case referralwithdrawalrequest.FieldNotes:
 		m.ResetNotes()
 		return nil
@@ -20403,12 +21465,15 @@ func (m *ReferralWithdrawalRequestMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ReferralWithdrawalRequestMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.promoter != nil {
 		edges = append(edges, referralwithdrawalrequest.EdgePromoter)
 	}
 	if m.reviewer != nil {
 		edges = append(edges, referralwithdrawalrequest.EdgeReviewer)
+	}
+	if m.allocations != nil {
+		edges = append(edges, referralwithdrawalrequest.EdgeAllocations)
 	}
 	return edges
 }
@@ -20425,30 +21490,50 @@ func (m *ReferralWithdrawalRequestMutation) AddedIDs(name string) []ent.Value {
 		if id := m.reviewer; id != nil {
 			return []ent.Value{*id}
 		}
+	case referralwithdrawalrequest.EdgeAllocations:
+		ids := make([]ent.Value, 0, len(m.allocations))
+		for id := range m.allocations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ReferralWithdrawalRequestMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
+	if m.removedallocations != nil {
+		edges = append(edges, referralwithdrawalrequest.EdgeAllocations)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *ReferralWithdrawalRequestMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case referralwithdrawalrequest.EdgeAllocations:
+		ids := make([]ent.Value, 0, len(m.removedallocations))
+		for id := range m.removedallocations {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ReferralWithdrawalRequestMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedpromoter {
 		edges = append(edges, referralwithdrawalrequest.EdgePromoter)
 	}
 	if m.clearedreviewer {
 		edges = append(edges, referralwithdrawalrequest.EdgeReviewer)
+	}
+	if m.clearedallocations {
+		edges = append(edges, referralwithdrawalrequest.EdgeAllocations)
 	}
 	return edges
 }
@@ -20461,6 +21546,8 @@ func (m *ReferralWithdrawalRequestMutation) EdgeCleared(name string) bool {
 		return m.clearedpromoter
 	case referralwithdrawalrequest.EdgeReviewer:
 		return m.clearedreviewer
+	case referralwithdrawalrequest.EdgeAllocations:
+		return m.clearedallocations
 	}
 	return false
 }
@@ -20488,6 +21575,9 @@ func (m *ReferralWithdrawalRequestMutation) ResetEdge(name string) error {
 		return nil
 	case referralwithdrawalrequest.EdgeReviewer:
 		m.ResetReviewer()
+		return nil
+	case referralwithdrawalrequest.EdgeAllocations:
+		m.ResetAllocations()
 		return nil
 	}
 	return fmt.Errorf("unknown ReferralWithdrawalRequest edge %s", name)
@@ -27056,6 +28146,9 @@ type UserMutation struct {
 	custom_recurring_commission_rate       *float64
 	addcustom_recurring_commission_rate    *float64
 	recurring_commission_enabled           *bool
+	has_successful_recharge                *bool
+	referral_withdrawal_debt               *float64
+	addreferral_withdrawal_debt            *float64
 	totp_secret_encrypted                  *string
 	totp_enabled                           *bool
 	totp_enabled_at                        *time.Time
@@ -27108,6 +28201,9 @@ type UserMutation struct {
 	referral_withdrawal_requests           map[int64]struct{}
 	removedreferral_withdrawal_requests    map[int64]struct{}
 	clearedreferral_withdrawal_requests    bool
+	referral_withdrawal_allocations        map[int64]struct{}
+	removedreferral_withdrawal_allocations map[int64]struct{}
+	clearedreferral_withdrawal_allocations bool
 	reviewed_referral_withdrawals          map[int64]struct{}
 	removedreviewed_referral_withdrawals   map[int64]struct{}
 	clearedreviewed_referral_withdrawals   bool
@@ -27958,6 +29054,98 @@ func (m *UserMutation) OldRecurringCommissionEnabled(ctx context.Context) (v boo
 // ResetRecurringCommissionEnabled resets all changes to the "recurring_commission_enabled" field.
 func (m *UserMutation) ResetRecurringCommissionEnabled() {
 	m.recurring_commission_enabled = nil
+}
+
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (m *UserMutation) SetHasSuccessfulRecharge(b bool) {
+	m.has_successful_recharge = &b
+}
+
+// HasSuccessfulRecharge returns the value of the "has_successful_recharge" field in the mutation.
+func (m *UserMutation) HasSuccessfulRecharge() (r bool, exists bool) {
+	v := m.has_successful_recharge
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHasSuccessfulRecharge returns the old "has_successful_recharge" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldHasSuccessfulRecharge(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHasSuccessfulRecharge is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHasSuccessfulRecharge requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHasSuccessfulRecharge: %w", err)
+	}
+	return oldValue.HasSuccessfulRecharge, nil
+}
+
+// ResetHasSuccessfulRecharge resets all changes to the "has_successful_recharge" field.
+func (m *UserMutation) ResetHasSuccessfulRecharge() {
+	m.has_successful_recharge = nil
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (m *UserMutation) SetReferralWithdrawalDebt(f float64) {
+	m.referral_withdrawal_debt = &f
+	m.addreferral_withdrawal_debt = nil
+}
+
+// ReferralWithdrawalDebt returns the value of the "referral_withdrawal_debt" field in the mutation.
+func (m *UserMutation) ReferralWithdrawalDebt() (r float64, exists bool) {
+	v := m.referral_withdrawal_debt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReferralWithdrawalDebt returns the old "referral_withdrawal_debt" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldReferralWithdrawalDebt(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReferralWithdrawalDebt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReferralWithdrawalDebt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReferralWithdrawalDebt: %w", err)
+	}
+	return oldValue.ReferralWithdrawalDebt, nil
+}
+
+// AddReferralWithdrawalDebt adds f to the "referral_withdrawal_debt" field.
+func (m *UserMutation) AddReferralWithdrawalDebt(f float64) {
+	if m.addreferral_withdrawal_debt != nil {
+		*m.addreferral_withdrawal_debt += f
+	} else {
+		m.addreferral_withdrawal_debt = &f
+	}
+}
+
+// AddedReferralWithdrawalDebt returns the value that was added to the "referral_withdrawal_debt" field in this mutation.
+func (m *UserMutation) AddedReferralWithdrawalDebt() (r float64, exists bool) {
+	v := m.addreferral_withdrawal_debt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetReferralWithdrawalDebt resets all changes to the "referral_withdrawal_debt" field.
+func (m *UserMutation) ResetReferralWithdrawalDebt() {
+	m.referral_withdrawal_debt = nil
+	m.addreferral_withdrawal_debt = nil
 }
 
 // SetTotpSecretEncrypted sets the "totp_secret_encrypted" field.
@@ -28989,6 +30177,60 @@ func (m *UserMutation) ResetReferralWithdrawalRequests() {
 	m.removedreferral_withdrawal_requests = nil
 }
 
+// AddReferralWithdrawalAllocationIDs adds the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by ids.
+func (m *UserMutation) AddReferralWithdrawalAllocationIDs(ids ...int64) {
+	if m.referral_withdrawal_allocations == nil {
+		m.referral_withdrawal_allocations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.referral_withdrawal_allocations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReferralWithdrawalAllocations clears the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity.
+func (m *UserMutation) ClearReferralWithdrawalAllocations() {
+	m.clearedreferral_withdrawal_allocations = true
+}
+
+// ReferralWithdrawalAllocationsCleared reports if the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity was cleared.
+func (m *UserMutation) ReferralWithdrawalAllocationsCleared() bool {
+	return m.clearedreferral_withdrawal_allocations
+}
+
+// RemoveReferralWithdrawalAllocationIDs removes the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (m *UserMutation) RemoveReferralWithdrawalAllocationIDs(ids ...int64) {
+	if m.removedreferral_withdrawal_allocations == nil {
+		m.removedreferral_withdrawal_allocations = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.referral_withdrawal_allocations, ids[i])
+		m.removedreferral_withdrawal_allocations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReferralWithdrawalAllocations returns the removed IDs of the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity.
+func (m *UserMutation) RemovedReferralWithdrawalAllocationsIDs() (ids []int64) {
+	for id := range m.removedreferral_withdrawal_allocations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ReferralWithdrawalAllocationsIDs returns the "referral_withdrawal_allocations" edge IDs in the mutation.
+func (m *UserMutation) ReferralWithdrawalAllocationsIDs() (ids []int64) {
+	for id := range m.referral_withdrawal_allocations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReferralWithdrawalAllocations resets all changes to the "referral_withdrawal_allocations" edge.
+func (m *UserMutation) ResetReferralWithdrawalAllocations() {
+	m.referral_withdrawal_allocations = nil
+	m.clearedreferral_withdrawal_allocations = false
+	m.removedreferral_withdrawal_allocations = nil
+}
+
 // AddReviewedReferralWithdrawalIDs adds the "reviewed_referral_withdrawals" edge to the ReferralWithdrawalRequest entity by ids.
 func (m *UserMutation) AddReviewedReferralWithdrawalIDs(ids ...int64) {
 	if m.reviewed_referral_withdrawals == nil {
@@ -29077,7 +30319,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 24)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -29128,6 +30370,12 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.recurring_commission_enabled != nil {
 		fields = append(fields, user.FieldRecurringCommissionEnabled)
+	}
+	if m.has_successful_recharge != nil {
+		fields = append(fields, user.FieldHasSuccessfulRecharge)
+	}
+	if m.referral_withdrawal_debt != nil {
+		fields = append(fields, user.FieldReferralWithdrawalDebt)
 	}
 	if m.totp_secret_encrypted != nil {
 		fields = append(fields, user.FieldTotpSecretEncrypted)
@@ -29186,6 +30434,10 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CustomRecurringCommissionRate()
 	case user.FieldRecurringCommissionEnabled:
 		return m.RecurringCommissionEnabled()
+	case user.FieldHasSuccessfulRecharge:
+		return m.HasSuccessfulRecharge()
+	case user.FieldReferralWithdrawalDebt:
+		return m.ReferralWithdrawalDebt()
 	case user.FieldTotpSecretEncrypted:
 		return m.TotpSecretEncrypted()
 	case user.FieldTotpEnabled:
@@ -29239,6 +30491,10 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCustomRecurringCommissionRate(ctx)
 	case user.FieldRecurringCommissionEnabled:
 		return m.OldRecurringCommissionEnabled(ctx)
+	case user.FieldHasSuccessfulRecharge:
+		return m.OldHasSuccessfulRecharge(ctx)
+	case user.FieldReferralWithdrawalDebt:
+		return m.OldReferralWithdrawalDebt(ctx)
 	case user.FieldTotpSecretEncrypted:
 		return m.OldTotpSecretEncrypted(ctx)
 	case user.FieldTotpEnabled:
@@ -29377,6 +30633,20 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRecurringCommissionEnabled(v)
 		return nil
+	case user.FieldHasSuccessfulRecharge:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHasSuccessfulRecharge(v)
+		return nil
+	case user.FieldReferralWithdrawalDebt:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReferralWithdrawalDebt(v)
+		return nil
 	case user.FieldTotpSecretEncrypted:
 		v, ok := value.(string)
 		if !ok {
@@ -29432,6 +30702,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addcustom_recurring_commission_rate != nil {
 		fields = append(fields, user.FieldCustomRecurringCommissionRate)
 	}
+	if m.addreferral_withdrawal_debt != nil {
+		fields = append(fields, user.FieldReferralWithdrawalDebt)
+	}
 	if m.addsora_storage_quota_bytes != nil {
 		fields = append(fields, user.FieldSoraStorageQuotaBytes)
 	}
@@ -29454,6 +30727,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCustomFirstCommissionRate()
 	case user.FieldCustomRecurringCommissionRate:
 		return m.AddedCustomRecurringCommissionRate()
+	case user.FieldReferralWithdrawalDebt:
+		return m.AddedReferralWithdrawalDebt()
 	case user.FieldSoraStorageQuotaBytes:
 		return m.AddedSoraStorageQuotaBytes()
 	case user.FieldSoraStorageUsedBytes:
@@ -29494,6 +30769,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCustomRecurringCommissionRate(v)
+		return nil
+	case user.FieldReferralWithdrawalDebt:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReferralWithdrawalDebt(v)
 		return nil
 	case user.FieldSoraStorageQuotaBytes:
 		v, ok := value.(int64)
@@ -29626,6 +30908,12 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldRecurringCommissionEnabled:
 		m.ResetRecurringCommissionEnabled()
 		return nil
+	case user.FieldHasSuccessfulRecharge:
+		m.ResetHasSuccessfulRecharge()
+		return nil
+	case user.FieldReferralWithdrawalDebt:
+		m.ResetReferralWithdrawalDebt()
+		return nil
 	case user.FieldTotpSecretEncrypted:
 		m.ResetTotpSecretEncrypted()
 		return nil
@@ -29647,7 +30935,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 16)
+	edges := make([]string, 0, 17)
 	if m.api_keys != nil {
 		edges = append(edges, user.EdgeAPIKeys)
 	}
@@ -29692,6 +30980,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.referral_withdrawal_requests != nil {
 		edges = append(edges, user.EdgeReferralWithdrawalRequests)
+	}
+	if m.referral_withdrawal_allocations != nil {
+		edges = append(edges, user.EdgeReferralWithdrawalAllocations)
 	}
 	if m.reviewed_referral_withdrawals != nil {
 		edges = append(edges, user.EdgeReviewedReferralWithdrawals)
@@ -29791,6 +31082,12 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeReferralWithdrawalAllocations:
+		ids := make([]ent.Value, 0, len(m.referral_withdrawal_allocations))
+		for id := range m.referral_withdrawal_allocations {
+			ids = append(ids, id)
+		}
+		return ids
 	case user.EdgeReviewedReferralWithdrawals:
 		ids := make([]ent.Value, 0, len(m.reviewed_referral_withdrawals))
 		for id := range m.reviewed_referral_withdrawals {
@@ -29803,7 +31100,7 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 16)
+	edges := make([]string, 0, 17)
 	if m.removedapi_keys != nil {
 		edges = append(edges, user.EdgeAPIKeys)
 	}
@@ -29845,6 +31142,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedreferral_withdrawal_requests != nil {
 		edges = append(edges, user.EdgeReferralWithdrawalRequests)
+	}
+	if m.removedreferral_withdrawal_allocations != nil {
+		edges = append(edges, user.EdgeReferralWithdrawalAllocations)
 	}
 	if m.removedreviewed_referral_withdrawals != nil {
 		edges = append(edges, user.EdgeReviewedReferralWithdrawals)
@@ -29940,6 +31240,12 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeReferralWithdrawalAllocations:
+		ids := make([]ent.Value, 0, len(m.removedreferral_withdrawal_allocations))
+		for id := range m.removedreferral_withdrawal_allocations {
+			ids = append(ids, id)
+		}
+		return ids
 	case user.EdgeReviewedReferralWithdrawals:
 		ids := make([]ent.Value, 0, len(m.removedreviewed_referral_withdrawals))
 		for id := range m.removedreviewed_referral_withdrawals {
@@ -29952,7 +31258,7 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 16)
+	edges := make([]string, 0, 17)
 	if m.clearedapi_keys {
 		edges = append(edges, user.EdgeAPIKeys)
 	}
@@ -29998,6 +31304,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedreferral_withdrawal_requests {
 		edges = append(edges, user.EdgeReferralWithdrawalRequests)
 	}
+	if m.clearedreferral_withdrawal_allocations {
+		edges = append(edges, user.EdgeReferralWithdrawalAllocations)
+	}
 	if m.clearedreviewed_referral_withdrawals {
 		edges = append(edges, user.EdgeReviewedReferralWithdrawals)
 	}
@@ -30038,6 +31347,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedreferred_commissions
 	case user.EdgeReferralWithdrawalRequests:
 		return m.clearedreferral_withdrawal_requests
+	case user.EdgeReferralWithdrawalAllocations:
+		return m.clearedreferral_withdrawal_allocations
 	case user.EdgeReviewedReferralWithdrawals:
 		return m.clearedreviewed_referral_withdrawals
 	}
@@ -30103,6 +31414,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeReferralWithdrawalRequests:
 		m.ResetReferralWithdrawalRequests()
+		return nil
+	case user.EdgeReferralWithdrawalAllocations:
+		m.ResetReferralWithdrawalAllocations()
 		return nil
 	case user.EdgeReviewedReferralWithdrawals:
 		m.ResetReviewedReferralWithdrawals()

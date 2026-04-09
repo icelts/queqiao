@@ -39,6 +39,8 @@ type ReferralCommission struct {
 	RateSnapshot float64 `json:"rate_snapshot,omitempty"`
 	// CommissionAmount holds the value of the "commission_amount" field.
 	CommissionAmount float64 `json:"commission_amount,omitempty"`
+	// Currency holds the value of the "currency" field.
+	Currency string `json:"currency,omitempty"`
 	// ReversedAt holds the value of the "reversed_at" field.
 	ReversedAt *time.Time `json:"reversed_at,omitempty"`
 	// ReversedReason holds the value of the "reversed_reason" field.
@@ -59,9 +61,11 @@ type ReferralCommissionEdges struct {
 	ReferredUser *User `json:"referred_user,omitempty"`
 	// RechargeOrder holds the value of the recharge_order edge.
 	RechargeOrder *RechargeOrder `json:"recharge_order,omitempty"`
+	// WithdrawalAllocations holds the value of the withdrawal_allocations edge.
+	WithdrawalAllocations []*ReferralWithdrawalAllocation `json:"withdrawal_allocations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // PromoterOrErr returns the Promoter value or an error if the edge
@@ -97,6 +101,15 @@ func (e ReferralCommissionEdges) RechargeOrderOrErr() (*RechargeOrder, error) {
 	return nil, &NotLoadedError{edge: "recharge_order"}
 }
 
+// WithdrawalAllocationsOrErr returns the WithdrawalAllocations value or an error if the edge
+// was not loaded in eager-loading.
+func (e ReferralCommissionEdges) WithdrawalAllocationsOrErr() ([]*ReferralWithdrawalAllocation, error) {
+	if e.loadedTypes[3] {
+		return e.WithdrawalAllocations, nil
+	}
+	return nil, &NotLoadedError{edge: "withdrawal_allocations"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*ReferralCommission) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -106,7 +119,7 @@ func (*ReferralCommission) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case referralcommission.FieldID, referralcommission.FieldPromoterUserID, referralcommission.FieldReferredUserID, referralcommission.FieldRechargeOrderID:
 			values[i] = new(sql.NullInt64)
-		case referralcommission.FieldCommissionType, referralcommission.FieldStatus, referralcommission.FieldReversedReason, referralcommission.FieldNotes:
+		case referralcommission.FieldCommissionType, referralcommission.FieldStatus, referralcommission.FieldCurrency, referralcommission.FieldReversedReason, referralcommission.FieldNotes:
 			values[i] = new(sql.NullString)
 		case referralcommission.FieldCreatedAt, referralcommission.FieldUpdatedAt, referralcommission.FieldReversedAt:
 			values[i] = new(sql.NullTime)
@@ -191,6 +204,12 @@ func (_m *ReferralCommission) assignValues(columns []string, values []any) error
 			} else if value.Valid {
 				_m.CommissionAmount = value.Float64
 			}
+		case referralcommission.FieldCurrency:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field currency", values[i])
+			} else if value.Valid {
+				_m.Currency = value.String
+			}
 		case referralcommission.FieldReversedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field reversed_at", values[i])
@@ -238,6 +257,11 @@ func (_m *ReferralCommission) QueryReferredUser() *UserQuery {
 // QueryRechargeOrder queries the "recharge_order" edge of the ReferralCommission entity.
 func (_m *ReferralCommission) QueryRechargeOrder() *RechargeOrderQuery {
 	return NewReferralCommissionClient(_m.config).QueryRechargeOrder(_m)
+}
+
+// QueryWithdrawalAllocations queries the "withdrawal_allocations" edge of the ReferralCommission entity.
+func (_m *ReferralCommission) QueryWithdrawalAllocations() *ReferralWithdrawalAllocationQuery {
+	return NewReferralCommissionClient(_m.config).QueryWithdrawalAllocations(_m)
 }
 
 // Update returns a builder for updating this ReferralCommission.
@@ -292,6 +316,9 @@ func (_m *ReferralCommission) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("commission_amount=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CommissionAmount))
+	builder.WriteString(", ")
+	builder.WriteString("currency=")
+	builder.WriteString(_m.Currency)
 	builder.WriteString(", ")
 	if v := _m.ReversedAt; v != nil {
 		builder.WriteString("reversed_at=")

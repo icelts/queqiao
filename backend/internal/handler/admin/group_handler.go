@@ -82,18 +82,18 @@ func NewGroupHandler(adminService service.AdminService, dashboardService *servic
 
 // CreateGroupRequest represents create group request
 type CreateGroupRequest struct {
-	Name             string             `json:"name" binding:"required"`
-	Description      string             `json:"description"`
-	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity sora"`
-	RateMultiplier   float64            `json:"rate_multiplier"`
-	IsExclusive      bool               `json:"is_exclusive"`
-	SubscriptionType string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
-	DailyLimitUSD    optionalLimitField `json:"daily_limit_usd"`
-	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
-	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
-	DefaultValidityDays int      `json:"default_validity_days"`
-	PurchaseEnabled     bool     `json:"purchase_enabled"`
-	PurchasePrice       *float64 `json:"purchase_price"`
+	Name                string             `json:"name" binding:"required"`
+	Description         string             `json:"description"`
+	Platform            string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity sora"`
+	RateMultiplier      float64            `json:"rate_multiplier"`
+	IsExclusive         bool               `json:"is_exclusive"`
+	SubscriptionType    string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
+	DailyLimitUSD       optionalLimitField `json:"daily_limit_usd"`
+	WeeklyLimitUSD      optionalLimitField `json:"weekly_limit_usd"`
+	MonthlyLimitUSD     optionalLimitField `json:"monthly_limit_usd"`
+	DefaultValidityDays int                `json:"default_validity_days"`
+	PurchaseEnabled     bool               `json:"purchase_enabled"`
+	PurchasePrice       *float64           `json:"purchase_price"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	ImagePrice1K                    *float64 `json:"image_price_1k"`
 	ImagePrice2K                    *float64 `json:"image_price_2k"`
@@ -124,19 +124,19 @@ type CreateGroupRequest struct {
 
 // UpdateGroupRequest represents update group request
 type UpdateGroupRequest struct {
-	Name             string             `json:"name"`
-	Description      string             `json:"description"`
-	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity sora"`
-	RateMultiplier   *float64           `json:"rate_multiplier"`
-	IsExclusive      *bool              `json:"is_exclusive"`
-	Status           string             `json:"status" binding:"omitempty,oneof=active inactive"`
-	SubscriptionType string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
-	DailyLimitUSD    optionalLimitField `json:"daily_limit_usd"`
-	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
-	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
-	DefaultValidityDays *int     `json:"default_validity_days"`
-	PurchaseEnabled     *bool    `json:"purchase_enabled"`
-	PurchasePrice       *float64 `json:"purchase_price"`
+	Name                string             `json:"name"`
+	Description         string             `json:"description"`
+	Platform            string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity sora"`
+	RateMultiplier      *float64           `json:"rate_multiplier"`
+	IsExclusive         *bool              `json:"is_exclusive"`
+	Status              string             `json:"status" binding:"omitempty,oneof=active inactive"`
+	SubscriptionType    string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
+	DailyLimitUSD       optionalLimitField `json:"daily_limit_usd"`
+	WeeklyLimitUSD      optionalLimitField `json:"weekly_limit_usd"`
+	MonthlyLimitUSD     optionalLimitField `json:"monthly_limit_usd"`
+	DefaultValidityDays *int               `json:"default_validity_days"`
+	PurchaseEnabled     *bool              `json:"purchase_enabled"`
+	PurchasePrice       *float64           `json:"purchase_price"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	ImagePrice1K                    *float64 `json:"image_price_1k"`
 	ImagePrice2K                    *float64 `json:"image_price_2k"`
@@ -503,6 +503,75 @@ func (h *GroupHandler) BatchSetGroupRateMultipliers(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"message": "Rate multipliers updated successfully"})
+}
+
+// GetGroupSubscriptionPurchasePrices handles getting user-specific purchase prices for a subscription group.
+// GET /api/v1/admin/groups/:id/purchase-prices
+func (h *GroupHandler) GetGroupSubscriptionPurchasePrices(c *gin.Context) {
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid group ID")
+		return
+	}
+
+	entries, err := h.adminService.GetGroupSubscriptionPurchasePrices(c.Request.Context(), groupID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	if entries == nil {
+		entries = []service.UserSubscriptionPurchasePriceEntry{}
+	}
+	response.Success(c, entries)
+}
+
+// ClearGroupSubscriptionPurchasePrices handles clearing all user-specific purchase prices for a subscription group.
+// DELETE /api/v1/admin/groups/:id/purchase-prices
+func (h *GroupHandler) ClearGroupSubscriptionPurchasePrices(c *gin.Context) {
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid group ID")
+		return
+	}
+
+	if err := h.adminService.ClearGroupSubscriptionPurchasePrices(c.Request.Context(), groupID); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "Subscription purchase prices cleared successfully"})
+}
+
+// BatchSetGroupSubscriptionPurchasePricesRequest represents batch set user-specific purchase prices request.
+type BatchSetGroupSubscriptionPurchasePricesRequest struct {
+	Entries []service.GroupSubscriptionPurchasePriceInput `json:"entries"`
+}
+
+// BatchSetGroupSubscriptionPurchasePrices handles batch setting user-specific purchase prices for a subscription group.
+// PUT /api/v1/admin/groups/:id/purchase-prices
+func (h *GroupHandler) BatchSetGroupSubscriptionPurchasePrices(c *gin.Context) {
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid group ID")
+		return
+	}
+
+	var req BatchSetGroupSubscriptionPurchasePricesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if req.Entries == nil {
+		req.Entries = []service.GroupSubscriptionPurchasePriceInput{}
+	}
+
+	if err := h.adminService.BatchSetGroupSubscriptionPurchasePrices(c.Request.Context(), groupID, req.Entries); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "Subscription purchase prices updated successfully"})
 }
 
 // UpdateSortOrderRequest represents the request to update group sort orders

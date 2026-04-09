@@ -60,6 +60,10 @@ func (ReferralWithdrawalRequest) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
+		field.Time("paid_at").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
 		field.String("notes").
 			SchemaType(map[string]string{dialect.Postgres: "text"}).
 			Optional().
@@ -82,12 +86,16 @@ func (ReferralWithdrawalRequest) Edges() []ent.Edge {
 			Ref("reviewed_referral_withdrawals").
 			Field("reviewer_user_id").
 			Unique(),
+		edge.To("allocations", ReferralWithdrawalAllocation.Type),
 	}
 }
 
 func (ReferralWithdrawalRequest) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("promoter_user_id"),
+		index.Fields("promoter_user_id").
+			Unique().
+			Annotations(entsql.IndexWhere("status = 'pending'")),
 		index.Fields("reviewer_user_id"),
 		index.Fields("status"),
 		index.Fields("created_at"),

@@ -22,6 +22,7 @@ const (
 const (
 	ReferralWithdrawalStatusPending  = domain.ReferralWithdrawalStatusPending
 	ReferralWithdrawalStatusApproved = domain.ReferralWithdrawalStatusApproved
+	ReferralWithdrawalStatusPaid     = domain.ReferralWithdrawalStatusPaid
 	ReferralWithdrawalStatusRejected = domain.ReferralWithdrawalStatusRejected
 	ReferralWithdrawalStatusCanceled = domain.ReferralWithdrawalStatusCanceled
 )
@@ -36,3 +37,5 @@ const (
 	SettingKeyAffiliateWithdrawMinAmount     = "affiliate_withdraw_min_amount"
 	SettingKeyAffiliateWithdrawMinInvitees   = "affiliate_withdraw_min_invitees"
 )
+
+const ReferralDefaultCurrency = "CNY"

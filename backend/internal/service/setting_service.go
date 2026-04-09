@@ -1190,13 +1190,10 @@ func (s *SettingService) GetIdentityPatchPrompt(ctx context.Context) string {
 
 // GenerateAdminAPIKey 生成新的管理员 API Key
 func (s *SettingService) GenerateAdminAPIKey(ctx context.Context) (string, error) {
-	// 生成 32 字节随机数 = 64 位十六进制字符
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("generate random bytes: %w", err)
+	key, err := generatePrefixedSecretKey(AdminAPIKeyPrefix)
+	if err != nil {
+		return "", err
 	}
-
-	key := AdminAPIKeyPrefix + hex.EncodeToString(bytes)
 
 	// 存储到 settings 表
 	if err := s.settingRepo.Set(ctx, SettingKeyAdminAPIKey, key); err != nil {
@@ -1246,6 +1243,67 @@ func (s *SettingService) GetAdminAPIKey(ctx context.Context) (string, error) {
 // DeleteAdminAPIKey 删除管理员 API Key
 func (s *SettingService) DeleteAdminAPIKey(ctx context.Context) error {
 	return s.settingRepo.Delete(ctx, SettingKeyAdminAPIKey)
+}
+
+// GeneratePaymentWebhookAPIKey generates a dedicated credential for payment webhooks.
+func (s *SettingService) GeneratePaymentWebhookAPIKey(ctx context.Context) (string, error) {
+	key, err := generatePrefixedSecretKey(PaymentWebhookAPIKeyPrefix)
+	if err != nil {
+		return "", err
+	}
+	if err := s.settingRepo.Set(ctx, SettingKeyPaymentWebhookAPIKey, key); err != nil {
+		return "", fmt.Errorf("save payment webhook api key: %w", err)
+	}
+	return key, nil
+}
+
+// GetPaymentWebhookAPIKeyStatus returns masked payment webhook key status.
+func (s *SettingService) GetPaymentWebhookAPIKeyStatus(ctx context.Context) (maskedKey string, exists bool, err error) {
+	return s.getMaskedSecretStatus(ctx, SettingKeyPaymentWebhookAPIKey)
+}
+
+// GetPaymentWebhookAPIKey returns the full payment webhook key for internal verification.
+func (s *SettingService) GetPaymentWebhookAPIKey(ctx context.Context) (string, error) {
+	key, err := s.settingRepo.GetValue(ctx, SettingKeyPaymentWebhookAPIKey)
+	if err != nil {
+		if errors.Is(err, ErrSettingNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+	return key, nil
+}
+
+// DeletePaymentWebhookAPIKey deletes the dedicated payment webhook key.
+func (s *SettingService) DeletePaymentWebhookAPIKey(ctx context.Context) error {
+	return s.settingRepo.Delete(ctx, SettingKeyPaymentWebhookAPIKey)
+}
+
+func (s *SettingService) getMaskedSecretStatus(ctx context.Context, keyName string) (maskedKey string, exists bool, err error) {
+	key, err := s.settingRepo.GetValue(ctx, keyName)
+	if err != nil {
+		if errors.Is(err, ErrSettingNotFound) {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+	if key == "" {
+		return "", false, nil
+	}
+	if len(key) > 14 {
+		maskedKey = key[:10] + "..." + key[len(key)-4:]
+	} else {
+		maskedKey = key
+	}
+	return maskedKey, true, nil
+}
+
+func generatePrefixedSecretKey(prefix string) (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("generate random bytes: %w", err)
+	}
+	return prefix + hex.EncodeToString(bytes), nil
 }
 
 // IsModelFallbackEnabled 检查是否启用模型兜底机制

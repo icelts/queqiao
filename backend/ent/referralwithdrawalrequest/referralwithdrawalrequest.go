@@ -36,6 +36,8 @@ const (
 	FieldStatus = "status"
 	// FieldReviewedAt holds the string denoting the reviewed_at field in the database.
 	FieldReviewedAt = "reviewed_at"
+	// FieldPaidAt holds the string denoting the paid_at field in the database.
+	FieldPaidAt = "paid_at"
 	// FieldNotes holds the string denoting the notes field in the database.
 	FieldNotes = "notes"
 	// FieldReviewNotes holds the string denoting the review_notes field in the database.
@@ -44,6 +46,8 @@ const (
 	EdgePromoter = "promoter"
 	// EdgeReviewer holds the string denoting the reviewer edge name in mutations.
 	EdgeReviewer = "reviewer"
+	// EdgeAllocations holds the string denoting the allocations edge name in mutations.
+	EdgeAllocations = "allocations"
 	// Table holds the table name of the referralwithdrawalrequest in the database.
 	Table = "referral_withdrawal_requests"
 	// PromoterTable is the table that holds the promoter relation/edge.
@@ -60,6 +64,13 @@ const (
 	ReviewerInverseTable = "users"
 	// ReviewerColumn is the table column denoting the reviewer relation/edge.
 	ReviewerColumn = "reviewer_user_id"
+	// AllocationsTable is the table that holds the allocations relation/edge.
+	AllocationsTable = "referral_withdrawal_allocations"
+	// AllocationsInverseTable is the table name for the ReferralWithdrawalAllocation entity.
+	// It exists in this package in order to avoid circular dependency with the "referralwithdrawalallocation" package.
+	AllocationsInverseTable = "referral_withdrawal_allocations"
+	// AllocationsColumn is the table column denoting the allocations relation/edge.
+	AllocationsColumn = "withdrawal_request_id"
 )
 
 // Columns holds all SQL columns for referralwithdrawalrequest fields.
@@ -76,6 +87,7 @@ var Columns = []string{
 	FieldAccountIdentifier,
 	FieldStatus,
 	FieldReviewedAt,
+	FieldPaidAt,
 	FieldNotes,
 	FieldReviewNotes,
 }
@@ -178,6 +190,11 @@ func ByReviewedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReviewedAt, opts...).ToFunc()
 }
 
+// ByPaidAt orders the results by the paid_at field.
+func ByPaidAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPaidAt, opts...).ToFunc()
+}
+
 // ByNotes orders the results by the notes field.
 func ByNotes(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNotes, opts...).ToFunc()
@@ -201,6 +218,20 @@ func ByReviewerField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newReviewerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByAllocationsCount orders the results by allocations count.
+func ByAllocationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAllocationsStep(), opts...)
+	}
+}
+
+// ByAllocations orders the results by allocations terms.
+func ByAllocations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAllocationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPromoterStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -213,5 +244,12 @@ func newReviewerStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ReviewerInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, ReviewerTable, ReviewerColumn),
+	)
+}
+func newAllocationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AllocationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AllocationsTable, AllocationsColumn),
 	)
 }

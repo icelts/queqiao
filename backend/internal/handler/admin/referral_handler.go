@@ -40,6 +40,7 @@ type referralCommissionRecord struct {
 	SourceAmount     float64   `json:"source_amount"`
 	RateSnapshot     float64   `json:"rate_snapshot"`
 	CommissionAmount float64   `json:"commission_amount"`
+	Currency         string    `json:"currency"`
 	CreatedAt        time.Time `json:"created_at"`
 }
 
@@ -57,6 +58,7 @@ type referralWithdrawalRecord struct {
 	AccountIdentifier string     `json:"account_identifier,omitempty"`
 	Status            string     `json:"status"`
 	ReviewedAt        *time.Time `json:"reviewed_at,omitempty"`
+	PaidAt            *time.Time `json:"paid_at,omitempty"`
 	Notes             string     `json:"notes,omitempty"`
 	ReviewNotes       string     `json:"review_notes,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
@@ -147,6 +149,7 @@ func (h *ReferralHandler) RecordPaidRecharge(c *gin.Context) {
 			SourceAmount:     item.SourceAmount,
 			RateSnapshot:     item.RateSnapshot,
 			CommissionAmount: item.CommissionAmount,
+			Currency:         item.Currency,
 			CreatedAt:        item.CreatedAt,
 		})
 	}
@@ -324,6 +327,7 @@ func (h *ReferralHandler) ListWithdrawalRequests(c *gin.Context) {
 			AccountIdentifier: derefString(item.Request.AccountIdentifier),
 			Status:            item.Request.Status,
 			ReviewedAt:        item.Request.ReviewedAt,
+			PaidAt:            item.Request.PaidAt,
 			Notes:             derefString(item.Request.Notes),
 			ReviewNotes:       derefString(item.Request.ReviewNotes),
 			CreatedAt:         item.Request.CreatedAt,
@@ -348,6 +352,54 @@ func (h *ReferralHandler) ApproveWithdrawalRequest(c *gin.Context) {
 
 func (h *ReferralHandler) RejectWithdrawalRequest(c *gin.Context) {
 	h.reviewWithdrawalRequest(c, false)
+}
+
+func (h *ReferralHandler) MarkWithdrawalRequestPaid(c *gin.Context) {
+	requestID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || requestID <= 0 {
+		response.BadRequest(c, "Invalid withdrawal request id")
+		return
+	}
+
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	var req reviewReferralWithdrawalRequest
+	if err := c.ShouldBindJSON(&req); err != nil && err.Error() != "EOF" {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	item, err := h.referralService.MarkWithdrawalRequestPaid(c.Request.Context(), &service.MarkReferralWithdrawalPaidInput{
+		RequestID:      requestID,
+		OperatorUserID: subject.UserID,
+		PaymentNotes:   req.ReviewNotes,
+	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, referralWithdrawalRecord{
+		ID:                item.ID,
+		PromoterUserID:    item.PromoterUserID,
+		ReviewerUserID:    item.ReviewerUserID,
+		Amount:            item.Amount,
+		Currency:          item.Currency,
+		PaymentMethod:     item.PaymentMethod,
+		AccountName:       derefString(item.AccountName),
+		AccountIdentifier: derefString(item.AccountIdentifier),
+		Status:            item.Status,
+		ReviewedAt:        item.ReviewedAt,
+		PaidAt:            item.PaidAt,
+		Notes:             derefString(item.Notes),
+		ReviewNotes:       derefString(item.ReviewNotes),
+		CreatedAt:         item.CreatedAt,
+		UpdatedAt:         item.UpdatedAt,
+	})
 }
 
 func (h *ReferralHandler) reviewWithdrawalRequest(c *gin.Context, approve bool) {
@@ -397,6 +449,7 @@ func (h *ReferralHandler) reviewWithdrawalRequest(c *gin.Context, approve bool) 
 		AccountIdentifier: derefString(item.AccountIdentifier),
 		Status:            item.Status,
 		ReviewedAt:        item.ReviewedAt,
+		PaidAt:            item.PaidAt,
 		Notes:             derefString(item.Notes),
 		ReviewNotes:       derefString(item.ReviewNotes),
 		CreatedAt:         item.CreatedAt,

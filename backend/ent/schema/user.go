@@ -76,6 +76,11 @@ func (User) Fields() []ent.Field {
 			Nillable(),
 		field.Bool("recurring_commission_enabled").
 			Default(false),
+		field.Bool("has_successful_recharge").
+			Default(false),
+		field.Float("referral_withdrawal_debt").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
+			Default(0),
 
 		field.String("totp_secret_encrypted").
 			SchemaType(map[string]string{dialect.Postgres: "text"}).
@@ -115,6 +120,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("promoter_commissions", ReferralCommission.Type),
 		edge.To("referred_commissions", ReferralCommission.Type),
 		edge.To("referral_withdrawal_requests", ReferralWithdrawalRequest.Type),
+		edge.To("referral_withdrawal_allocations", ReferralWithdrawalAllocation.Type),
 		edge.To("reviewed_referral_withdrawals", ReferralWithdrawalRequest.Type),
 	}
 }
@@ -124,6 +130,8 @@ func (User) Indexes() []ent.Index {
 		index.Fields("status"),
 		index.Fields("deleted_at"),
 		index.Fields("inviter_id"),
-		index.Fields("referral_code"),
+		index.Fields("referral_code").
+			Unique().
+			Annotations(entsql.IndexWhere("deleted_at IS NULL AND referral_code <> ''")),
 	}
 }

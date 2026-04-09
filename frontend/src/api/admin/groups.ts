@@ -166,6 +166,18 @@ export interface GroupRateMultiplierEntry {
 }
 
 /**
+ * User-specific subscription purchase price entry for a subscription group.
+ */
+export interface GroupSubscriptionPurchasePriceEntry {
+  user_id: number
+  user_name: string
+  user_email: string
+  user_notes: string
+  user_status: string
+  purchase_price: number
+}
+
+/**
  * Get rate multipliers for users in a group
  * @param id - Group ID
  * @returns List of user rate multiplier entries
@@ -219,6 +231,51 @@ export async function batchSetGroupRateMultipliers(
 }
 
 /**
+ * Get user-specific subscription purchase prices in a group.
+ * @param id - Group ID
+ * @returns List of user-specific subscription purchase price entries
+ */
+export async function getGroupSubscriptionPurchasePrices(
+  id: number
+): Promise<GroupSubscriptionPurchasePriceEntry[]> {
+  const { data } = await apiClient.get<GroupSubscriptionPurchasePriceEntry[]>(
+    `/admin/groups/${id}/purchase-prices`
+  )
+  return data
+}
+
+/**
+ * Clear all user-specific subscription purchase prices in a group.
+ * @param id - Group ID
+ * @returns Success confirmation
+ */
+export async function clearGroupSubscriptionPurchasePrices(
+  id: number
+): Promise<{ message: string }> {
+  const { data } = await apiClient.delete<{ message: string }>(
+    `/admin/groups/${id}/purchase-prices`
+  )
+  return data
+}
+
+/**
+ * Batch set user-specific subscription purchase prices in a group.
+ * @param id - Group ID
+ * @param entries - Array of { user_id, purchase_price }
+ * @returns Success confirmation
+ */
+export async function batchSetGroupSubscriptionPurchasePrices(
+  id: number,
+  entries: Array<{ user_id: number; purchase_price: number }>
+): Promise<{ message: string }> {
+  const { data } = await apiClient.put<{ message: string }>(
+    `/admin/groups/${id}/purchase-prices`,
+    { entries }
+  )
+  return data
+}
+
+/**
  * Get usage summary (today + cumulative cost) for all groups
  * @param timezone - IANA timezone string (e.g. "Asia/Shanghai")
  * @returns Array of group usage summaries
@@ -260,6 +317,9 @@ export const groupsAPI = {
   getGroupRateMultipliers,
   clearGroupRateMultipliers,
   batchSetGroupRateMultipliers,
+  getGroupSubscriptionPurchasePrices,
+  clearGroupSubscriptionPurchasePrices,
+  batchSetGroupSubscriptionPurchasePrices,
   updateSortOrder,
   getUsageSummary,
   getCapacitySummary

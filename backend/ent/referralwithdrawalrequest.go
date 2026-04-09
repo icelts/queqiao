@@ -40,6 +40,8 @@ type ReferralWithdrawalRequest struct {
 	Status string `json:"status,omitempty"`
 	// ReviewedAt holds the value of the "reviewed_at" field.
 	ReviewedAt *time.Time `json:"reviewed_at,omitempty"`
+	// PaidAt holds the value of the "paid_at" field.
+	PaidAt *time.Time `json:"paid_at,omitempty"`
 	// Notes holds the value of the "notes" field.
 	Notes *string `json:"notes,omitempty"`
 	// ReviewNotes holds the value of the "review_notes" field.
@@ -56,9 +58,11 @@ type ReferralWithdrawalRequestEdges struct {
 	Promoter *User `json:"promoter,omitempty"`
 	// Reviewer holds the value of the reviewer edge.
 	Reviewer *User `json:"reviewer,omitempty"`
+	// Allocations holds the value of the allocations edge.
+	Allocations []*ReferralWithdrawalAllocation `json:"allocations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // PromoterOrErr returns the Promoter value or an error if the edge
@@ -83,6 +87,15 @@ func (e ReferralWithdrawalRequestEdges) ReviewerOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "reviewer"}
 }
 
+// AllocationsOrErr returns the Allocations value or an error if the edge
+// was not loaded in eager-loading.
+func (e ReferralWithdrawalRequestEdges) AllocationsOrErr() ([]*ReferralWithdrawalAllocation, error) {
+	if e.loadedTypes[2] {
+		return e.Allocations, nil
+	}
+	return nil, &NotLoadedError{edge: "allocations"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*ReferralWithdrawalRequest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -94,7 +107,7 @@ func (*ReferralWithdrawalRequest) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case referralwithdrawalrequest.FieldCurrency, referralwithdrawalrequest.FieldPaymentMethod, referralwithdrawalrequest.FieldAccountName, referralwithdrawalrequest.FieldAccountIdentifier, referralwithdrawalrequest.FieldStatus, referralwithdrawalrequest.FieldNotes, referralwithdrawalrequest.FieldReviewNotes:
 			values[i] = new(sql.NullString)
-		case referralwithdrawalrequest.FieldCreatedAt, referralwithdrawalrequest.FieldUpdatedAt, referralwithdrawalrequest.FieldReviewedAt:
+		case referralwithdrawalrequest.FieldCreatedAt, referralwithdrawalrequest.FieldUpdatedAt, referralwithdrawalrequest.FieldReviewedAt, referralwithdrawalrequest.FieldPaidAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -187,6 +200,13 @@ func (_m *ReferralWithdrawalRequest) assignValues(columns []string, values []any
 				_m.ReviewedAt = new(time.Time)
 				*_m.ReviewedAt = value.Time
 			}
+		case referralwithdrawalrequest.FieldPaidAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field paid_at", values[i])
+			} else if value.Valid {
+				_m.PaidAt = new(time.Time)
+				*_m.PaidAt = value.Time
+			}
 		case referralwithdrawalrequest.FieldNotes:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field notes", values[i])
@@ -222,6 +242,11 @@ func (_m *ReferralWithdrawalRequest) QueryPromoter() *UserQuery {
 // QueryReviewer queries the "reviewer" edge of the ReferralWithdrawalRequest entity.
 func (_m *ReferralWithdrawalRequest) QueryReviewer() *UserQuery {
 	return NewReferralWithdrawalRequestClient(_m.config).QueryReviewer(_m)
+}
+
+// QueryAllocations queries the "allocations" edge of the ReferralWithdrawalRequest entity.
+func (_m *ReferralWithdrawalRequest) QueryAllocations() *ReferralWithdrawalAllocationQuery {
+	return NewReferralWithdrawalRequestClient(_m.config).QueryAllocations(_m)
 }
 
 // Update returns a builder for updating this ReferralWithdrawalRequest.
@@ -285,6 +310,11 @@ func (_m *ReferralWithdrawalRequest) String() string {
 	builder.WriteString(", ")
 	if v := _m.ReviewedAt; v != nil {
 		builder.WriteString("reviewed_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.PaidAt; v != nil {
+		builder.WriteString("paid_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")

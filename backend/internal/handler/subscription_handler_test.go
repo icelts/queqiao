@@ -5,6 +5,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -25,7 +26,9 @@ type purchaseGroupRepoStub struct {
 	group *service.Group
 }
 
-func (purchaseGroupRepoStub) Create(context.Context, *service.Group) error { panic("unexpected Create call") }
+func (purchaseGroupRepoStub) Create(context.Context, *service.Group) error {
+	panic("unexpected Create call")
+}
 func (s purchaseGroupRepoStub) GetByID(context.Context, int64) (*service.Group, error) {
 	if s.group == nil {
 		return nil, service.ErrGroupNotFound
@@ -35,7 +38,9 @@ func (s purchaseGroupRepoStub) GetByID(context.Context, int64) (*service.Group, 
 func (purchaseGroupRepoStub) GetByIDLite(context.Context, int64) (*service.Group, error) {
 	panic("unexpected GetByIDLite call")
 }
-func (purchaseGroupRepoStub) Update(context.Context, *service.Group) error { panic("unexpected Update call") }
+func (purchaseGroupRepoStub) Update(context.Context, *service.Group) error {
+	panic("unexpected Update call")
+}
 func (purchaseGroupRepoStub) Delete(context.Context, int64) error { panic("unexpected Delete call") }
 func (purchaseGroupRepoStub) DeleteCascade(context.Context, int64) ([]int64, error) {
 	panic("unexpected DeleteCascade call")
@@ -46,11 +51,15 @@ func (purchaseGroupRepoStub) List(context.Context, pagination.PaginationParams) 
 func (purchaseGroupRepoStub) ListWithFilters(context.Context, pagination.PaginationParams, string, string, string, *bool) ([]service.Group, *pagination.PaginationResult, error) {
 	panic("unexpected ListWithFilters call")
 }
-func (purchaseGroupRepoStub) ListActive(context.Context) ([]service.Group, error) { panic("unexpected ListActive call") }
+func (purchaseGroupRepoStub) ListActive(context.Context) ([]service.Group, error) {
+	panic("unexpected ListActive call")
+}
 func (purchaseGroupRepoStub) ListActiveByPlatform(context.Context, string) ([]service.Group, error) {
 	panic("unexpected ListActiveByPlatform call")
 }
-func (purchaseGroupRepoStub) ExistsByName(context.Context, string) (bool, error) { panic("unexpected ExistsByName call") }
+func (purchaseGroupRepoStub) ExistsByName(context.Context, string) (bool, error) {
+	panic("unexpected ExistsByName call")
+}
 func (purchaseGroupRepoStub) GetAccountCount(context.Context, int64) (int64, int64, error) {
 	panic("unexpected GetAccountCount call")
 }
@@ -128,10 +137,62 @@ func (purchaseUserSubRepoStub) BatchUpdateExpiredStatus(context.Context) (int64,
 	panic("unexpected BatchUpdateExpiredStatus call")
 }
 
+type purchasePriceRepoStub struct {
+	byUserGroup map[string]float64
+	byGroup     map[int64]float64
+}
+
+func (s purchasePriceRepoStub) GetByUserID(_ context.Context, userID int64) (map[int64]float64, error) {
+	result := make(map[int64]float64)
+	for groupID, price := range s.byGroup {
+		result[groupID] = price
+	}
+	for key, price := range s.byUserGroup {
+		var entryUserID, entryGroupID int64
+		_, _ = fmt.Sscanf(key, "%d:%d", &entryUserID, &entryGroupID)
+		if entryUserID == userID {
+			result[entryGroupID] = price
+		}
+	}
+	return result, nil
+}
+
+func (s purchasePriceRepoStub) GetByUserAndGroup(_ context.Context, userID, groupID int64) (*float64, error) {
+	if s.byUserGroup == nil {
+		if price, ok := s.byGroup[groupID]; ok {
+			return &price, nil
+		}
+		return nil, nil
+	}
+	if price, ok := s.byUserGroup[fmt.Sprintf("%d:%d", userID, groupID)]; ok {
+		return &price, nil
+	}
+	if price, ok := s.byGroup[groupID]; ok {
+		return &price, nil
+	}
+	return nil, nil
+}
+
+func (purchasePriceRepoStub) GetByGroupID(context.Context, int64) ([]service.UserSubscriptionPurchasePriceEntry, error) {
+	panic("unexpected GetByGroupID call")
+}
+
+func (purchasePriceRepoStub) SyncGroupPurchasePrices(context.Context, int64, []service.GroupSubscriptionPurchasePriceInput) error {
+	panic("unexpected SyncGroupPurchasePrices call")
+}
+
+func (purchasePriceRepoStub) DeleteByGroupID(context.Context, int64) error {
+	panic("unexpected DeleteByGroupID call")
+}
+
+func (purchasePriceRepoStub) DeleteByUserID(context.Context, int64) error {
+	panic("unexpected DeleteByUserID call")
+}
+
 func decodeSubscriptionCreateEnvelope(t *testing.T, body []byte) SubscriptionPurchaseOrderResponse {
 	t.Helper()
 	var envelope struct {
-		Code int                             `json:"code"`
+		Code int                               `json:"code"`
 		Data SubscriptionPurchaseOrderResponse `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal(body, &envelope))
@@ -140,6 +201,16 @@ func decodeSubscriptionCreateEnvelope(t *testing.T, body []byte) SubscriptionPur
 }
 
 func newSubscriptionHandlerForTests(t *testing.T, createResponder http.HandlerFunc) (*SubscriptionHandler, *dbent.Client) {
+	price := 68.0
+	return newSubscriptionHandlerForTestsWithConfig(t, createResponder, &price, nil)
+}
+
+func newSubscriptionHandlerForTestsWithConfig(
+	t *testing.T,
+	createResponder http.HandlerFunc,
+	groupPrice *float64,
+	purchasePriceRepo service.SubscriptionPurchasePriceRepository,
+) (*SubscriptionHandler, *dbent.Client) {
 	t.Helper()
 	client := newRechargeHandlerTestClient(t)
 	createServer := httptest.NewServer(createResponder)
@@ -157,7 +228,6 @@ func newSubscriptionHandlerForTests(t *testing.T, createResponder http.HandlerFu
 	}, &config.Config{})
 
 	referralService := service.NewReferralService(client, settingService, nil, nil, nil)
-	price := 68.0
 	subscriptionService := service.NewSubscriptionService(
 		purchaseGroupRepoStub{group: &service.Group{
 			ID:                  7,
@@ -166,7 +236,7 @@ func newSubscriptionHandlerForTests(t *testing.T, createResponder http.HandlerFu
 			Status:              service.StatusActive,
 			SubscriptionType:    service.SubscriptionTypeSubscription,
 			PurchaseEnabled:     true,
-			PurchasePrice:       &price,
+			PurchasePrice:       groupPrice,
 			DefaultValidityDays: 30,
 		}},
 		purchaseUserSubRepoStub{},
@@ -174,6 +244,7 @@ func newSubscriptionHandlerForTests(t *testing.T, createResponder http.HandlerFu
 		nil,
 		nil,
 	)
+	subscriptionService.SetSubscriptionPurchasePriceRepository(purchasePriceRepo)
 
 	return NewSubscriptionHandler(subscriptionService, referralService, service.NewXunhuPayService(settingService)), client
 }
@@ -259,4 +330,46 @@ func TestSubscriptionHandlerCreatePurchaseOrderMarksFailedWhenPaymentInitializat
 	require.Len(t, orders, 1)
 	require.Equal(t, service.RechargeOrderSourceSubscriptionPurchase, orders[0].Source)
 	require.Equal(t, service.RechargeOrderStatusFailed, orders[0].Status)
+}
+
+func TestSubscriptionHandlerCreatePurchaseOrderUsesUserSpecificPurchasePrice(t *testing.T) {
+	handler, client := newSubscriptionHandlerForTestsWithConfig(
+		t,
+		func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/payment/do.html", r.URL.Path)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(makeXunhuCreateResponse(0, "ok")))
+		},
+		nil,
+		purchasePriceRepoStub{
+			byGroup: map[int64]float64{
+				7: 39.9,
+			},
+		},
+	)
+
+	ctx := context.Background()
+	userID := mustCreateRechargeTestUser(t, ctx, client, "subscription-custom-price@test.com")
+
+	router := gin.New()
+	router.Use(withUserSubject(userID))
+	router.POST("/subscriptions/purchase-orders", handler.CreatePurchaseOrder)
+
+	req := httptest.NewRequest(http.MethodPost, "/subscriptions/purchase-orders", strings.NewReader(`{"group_id":7}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Idempotency-Key", "subscription-custom-price-1")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	result := decodeSubscriptionCreateEnvelope(t, rec.Body.Bytes())
+	require.NotNil(t, result.Product)
+	require.Equal(t, 39.9, result.Product.PurchasePrice)
+	require.Equal(t, 39.9, result.Order.Amount)
+
+	orders, err := client.RechargeOrder.Query().Where(rechargeorder.UserIDEQ(userID)).All(ctx)
+	require.NoError(t, err)
+	require.Len(t, orders, 1)
+	require.Equal(t, 39.9, orders[0].Amount)
 }

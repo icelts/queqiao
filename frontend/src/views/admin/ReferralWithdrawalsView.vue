@@ -17,6 +17,7 @@
               <option value="">{{ t('admin.referralWithdrawals.filters.all') }}</option>
               <option value="pending">{{ t('admin.referralWithdrawals.statuses.pending') }}</option>
               <option value="approved">{{ t('admin.referralWithdrawals.statuses.approved') }}</option>
+              <option value="paid">{{ t('admin.referralWithdrawals.statuses.paid') }}</option>
               <option value="rejected">{{ t('admin.referralWithdrawals.statuses.rejected') }}</option>
               <option value="canceled">{{ t('admin.referralWithdrawals.statuses.canceled') }}</option>
             </select>
@@ -78,8 +79,8 @@
               <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium" :class="statusClass(row.status)">
                 {{ statusLabel(row.status) }}
               </span>
-              <div v-if="row.reviewed_at" class="text-xs text-gray-500 dark:text-gray-400">
-                {{ formatDateTime(row.reviewed_at) }}
+              <div v-if="row.paid_at || row.reviewed_at" class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatDateTime(row.paid_at || row.reviewed_at) }}
               </div>
             </div>
           </template>
@@ -103,6 +104,24 @@
                 @click="approve(row)"
               >
                 {{ t('admin.referralWithdrawals.actions.approve') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                :disabled="operatingId === row.id"
+                @click="reject(row)"
+              >
+                {{ t('admin.referralWithdrawals.actions.reject') }}
+              </button>
+            </div>
+            <div v-else-if="row.status === 'approved'" class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                :disabled="operatingId === row.id"
+                @click="pay(row)"
+              >
+                {{ t('admin.referralWithdrawals.actions.pay') }}
               </button>
               <button
                 type="button"
@@ -169,7 +188,7 @@ const columns = computed<Column[]>(() => [
 ])
 
 function formatMoney(value: number): string {
-  return `$${(value || 0).toFixed(2)}`
+  return `CNY ${(value || 0).toFixed(2)}`
 }
 
 function paymentMethodLabel(method: string): string {
@@ -186,7 +205,7 @@ function paymentMethodLabel(method: string): string {
 }
 
 function statusLabel(status: string): string {
-  if (['pending', 'approved', 'rejected', 'canceled'].includes(status)) {
+  if (['pending', 'approved', 'paid', 'rejected', 'canceled'].includes(status)) {
     return t(`admin.referralWithdrawals.statuses.${status}`)
   }
   return status || '-'
@@ -198,6 +217,8 @@ function statusClass(status: string): string {
       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
     case 'approved':
       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    case 'paid':
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
     case 'rejected':
       return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
     case 'canceled':
@@ -254,6 +275,25 @@ async function reject(item: AdminReferralWithdrawalRequest): Promise<void> {
     await loadRequests()
   } catch (error: any) {
     appStore.showError(error.message || t('admin.referralWithdrawals.rejectFailed'))
+  } finally {
+    operatingId.value = null
+  }
+}
+
+async function pay(item: AdminReferralWithdrawalRequest): Promise<void> {
+  const paymentNotes = window.prompt(t('admin.referralWithdrawals.prompts.pay'), '') || ''
+  if (!window.confirm(t('admin.referralWithdrawals.payConfirm'))) {
+    return
+  }
+  operatingId.value = item.id
+  try {
+    await adminAPI.referralWithdrawals.payReferralWithdrawal(item.id, {
+      review_notes: paymentNotes
+    })
+    appStore.showSuccess(t('admin.referralWithdrawals.paySuccess'))
+    await loadRequests()
+  } catch (error: any) {
+    appStore.showError(error.message || t('admin.referralWithdrawals.payFailed'))
   } finally {
     operatingId.value = null
   }

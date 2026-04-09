@@ -23,6 +23,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
@@ -470,6 +471,33 @@ func (f TraverseReferralCommission) Traverse(ctx context.Context, q ent.Query) e
 	return fmt.Errorf("unexpected query type %T. expect *ent.ReferralCommissionQuery", q)
 }
 
+// The ReferralWithdrawalAllocationFunc type is an adapter to allow the use of ordinary function as a Querier.
+type ReferralWithdrawalAllocationFunc func(context.Context, *ent.ReferralWithdrawalAllocationQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f ReferralWithdrawalAllocationFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.ReferralWithdrawalAllocationQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.ReferralWithdrawalAllocationQuery", q)
+}
+
+// The TraverseReferralWithdrawalAllocation type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseReferralWithdrawalAllocation func(context.Context, *ent.ReferralWithdrawalAllocationQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseReferralWithdrawalAllocation) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseReferralWithdrawalAllocation) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ReferralWithdrawalAllocationQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.ReferralWithdrawalAllocationQuery", q)
+}
+
 // The ReferralWithdrawalRequestFunc type is an adapter to allow the use of ordinary function as a Querier.
 type ReferralWithdrawalRequestFunc func(context.Context, *ent.ReferralWithdrawalRequestQuery) (ent.Value, error)
 
@@ -798,6 +826,8 @@ func NewQuery(q ent.Query) (Query, error) {
 		return &query[*ent.RedeemCodeQuery, predicate.RedeemCode, redeemcode.OrderOption]{typ: ent.TypeRedeemCode, tq: q}, nil
 	case *ent.ReferralCommissionQuery:
 		return &query[*ent.ReferralCommissionQuery, predicate.ReferralCommission, referralcommission.OrderOption]{typ: ent.TypeReferralCommission, tq: q}, nil
+	case *ent.ReferralWithdrawalAllocationQuery:
+		return &query[*ent.ReferralWithdrawalAllocationQuery, predicate.ReferralWithdrawalAllocation, referralwithdrawalallocation.OrderOption]{typ: ent.TypeReferralWithdrawalAllocation, tq: q}, nil
 	case *ent.ReferralWithdrawalRequestQuery:
 		return &query[*ent.ReferralWithdrawalRequestQuery, predicate.ReferralWithdrawalRequest, referralwithdrawalrequest.OrderOption]{typ: ent.TypeReferralWithdrawalRequest, tq: q}, nil
 	case *ent.SecuritySecretQuery:

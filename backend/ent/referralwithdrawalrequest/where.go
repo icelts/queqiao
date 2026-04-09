@@ -110,6 +110,11 @@ func ReviewedAt(v time.Time) predicate.ReferralWithdrawalRequest {
 	return predicate.ReferralWithdrawalRequest(sql.FieldEQ(FieldReviewedAt, v))
 }
 
+// PaidAt applies equality check predicate on the "paid_at" field. It's identical to PaidAtEQ.
+func PaidAt(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldEQ(FieldPaidAt, v))
+}
+
 // Notes applies equality check predicate on the "notes" field. It's identical to NotesEQ.
 func Notes(v string) predicate.ReferralWithdrawalRequest {
 	return predicate.ReferralWithdrawalRequest(sql.FieldEQ(FieldNotes, v))
@@ -685,6 +690,56 @@ func ReviewedAtNotNil() predicate.ReferralWithdrawalRequest {
 	return predicate.ReferralWithdrawalRequest(sql.FieldNotNull(FieldReviewedAt))
 }
 
+// PaidAtEQ applies the EQ predicate on the "paid_at" field.
+func PaidAtEQ(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldEQ(FieldPaidAt, v))
+}
+
+// PaidAtNEQ applies the NEQ predicate on the "paid_at" field.
+func PaidAtNEQ(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldNEQ(FieldPaidAt, v))
+}
+
+// PaidAtIn applies the In predicate on the "paid_at" field.
+func PaidAtIn(vs ...time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldIn(FieldPaidAt, vs...))
+}
+
+// PaidAtNotIn applies the NotIn predicate on the "paid_at" field.
+func PaidAtNotIn(vs ...time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldNotIn(FieldPaidAt, vs...))
+}
+
+// PaidAtGT applies the GT predicate on the "paid_at" field.
+func PaidAtGT(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldGT(FieldPaidAt, v))
+}
+
+// PaidAtGTE applies the GTE predicate on the "paid_at" field.
+func PaidAtGTE(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldGTE(FieldPaidAt, v))
+}
+
+// PaidAtLT applies the LT predicate on the "paid_at" field.
+func PaidAtLT(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldLT(FieldPaidAt, v))
+}
+
+// PaidAtLTE applies the LTE predicate on the "paid_at" field.
+func PaidAtLTE(v time.Time) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldLTE(FieldPaidAt, v))
+}
+
+// PaidAtIsNil applies the IsNil predicate on the "paid_at" field.
+func PaidAtIsNil() predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldIsNull(FieldPaidAt))
+}
+
+// PaidAtNotNil applies the NotNil predicate on the "paid_at" field.
+func PaidAtNotNil() predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(sql.FieldNotNull(FieldPaidAt))
+}
+
 // NotesEQ applies the EQ predicate on the "notes" field.
 func NotesEQ(v string) predicate.ReferralWithdrawalRequest {
 	return predicate.ReferralWithdrawalRequest(sql.FieldEQ(FieldNotes, v))
@@ -873,6 +928,29 @@ func HasReviewer() predicate.ReferralWithdrawalRequest {
 func HasReviewerWith(preds ...predicate.User) predicate.ReferralWithdrawalRequest {
 	return predicate.ReferralWithdrawalRequest(func(s *sql.Selector) {
 		step := newReviewerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAllocations applies the HasEdge predicate on the "allocations" edge.
+func HasAllocations() predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AllocationsTable, AllocationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAllocationsWith applies the HasEdge predicate on the "allocations" edge with a given conditions (other predicates).
+func HasAllocationsWith(preds ...predicate.ReferralWithdrawalAllocation) predicate.ReferralWithdrawalRequest {
+	return predicate.ReferralWithdrawalRequest(func(s *sql.Selector) {
+		step := newAllocationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

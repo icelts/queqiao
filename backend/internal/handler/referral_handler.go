@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"context"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
@@ -27,11 +30,15 @@ type referralSummaryResponse struct {
 	WithdrawEnabled          bool       `json:"withdraw_enabled"`
 	WithdrawMinAmount        float64    `json:"withdraw_min_amount"`
 	WithdrawMinInvitees      int64      `json:"withdraw_min_invitees"`
+	CommissionCurrency       string     `json:"commission_currency"`
+	HasMixedCurrencies       bool       `json:"has_mixed_currencies"`
 	AvailableCommission      float64    `json:"available_commission"`
 	FrozenCommission         float64    `json:"frozen_commission"`
 	NextUnlockAt             *time.Time `json:"next_unlock_at,omitempty"`
 	PendingWithdrawalAmount  float64    `json:"pending_withdrawal_amount"`
 	ApprovedWithdrawalAmount float64    `json:"approved_withdrawal_amount"`
+	PaidWithdrawalAmount     float64    `json:"paid_withdrawal_amount"`
+	WithdrawalDebt           float64    `json:"withdrawal_debt"`
 	CanWithdraw              bool       `json:"can_withdraw"`
 }
 
@@ -55,6 +62,7 @@ type referralCommissionResponse struct {
 	SourceAmount     float64    `json:"source_amount"`
 	RateSnapshot     float64    `json:"rate_snapshot"`
 	CommissionAmount float64    `json:"commission_amount"`
+	Currency         string     `json:"currency"`
 	CreatedAt        time.Time  `json:"created_at"`
 	ReferredUserID   int64      `json:"referred_user_id"`
 	ReferredEmail    string     `json:"referred_email,omitempty"`
@@ -82,6 +90,7 @@ type referralWithdrawalRequestResponse struct {
 	AccountIdentifier string     `json:"account_identifier,omitempty"`
 	Status            string     `json:"status"`
 	ReviewedAt        *time.Time `json:"reviewed_at,omitempty"`
+	PaidAt            *time.Time `json:"paid_at,omitempty"`
 	Notes             string     `json:"notes,omitempty"`
 	ReviewNotes       string     `json:"review_notes,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
@@ -131,11 +140,15 @@ func (h *ReferralHandler) GetSummary(c *gin.Context) {
 		WithdrawEnabled:          summary.WithdrawEnabled,
 		WithdrawMinAmount:        summary.WithdrawMinAmount,
 		WithdrawMinInvitees:      summary.WithdrawMinInvitees,
+		CommissionCurrency:       summary.CommissionCurrency,
+		HasMixedCurrencies:       summary.HasMixedCommissionCurrencies,
 		AvailableCommission:      summary.AvailableCommission,
 		FrozenCommission:         summary.FrozenCommission,
 		NextUnlockAt:             summary.NextUnlockAt,
 		PendingWithdrawalAmount:  summary.PendingWithdrawalAmount,
 		ApprovedWithdrawalAmount: summary.ApprovedWithdrawalAmount,
+		PaidWithdrawalAmount:     summary.PaidWithdrawalAmount,
+		WithdrawalDebt:           summary.WithdrawalDebt,
 		CanWithdraw:              summary.CanWithdraw,
 	})
 }
@@ -178,28 +191,57 @@ func (h *ReferralHandler) CreateWithdrawalRequest(c *gin.Context) {
 		response.Unauthorized(c, "User not authenticated")
 		return
 	}
+	if !requireIdempotencyKey(c) {
+		return
+	}
 
 	var req createReferralWithdrawalRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if maxErr, ok := extractMaxBytesError(err); ok {
+			response.Error(c, http.StatusRequestEntityTooLarge, buildBodyTooLargeMessage(maxErr.Limit))
+			return
+		}
 		response.BadRequest(c, "Invalid request: "+err.Error())
 		return
 	}
 
-	item, err := h.referralService.CreateWithdrawalRequest(c.Request.Context(), &service.CreateReferralWithdrawalInput{
-		UserID:            subject.UserID,
+	payload := struct {
+		Amount            float64 `json:"amount"`
+		Currency          string  `json:"currency"`
+		PaymentMethod     string  `json:"payment_method"`
+		AccountName       string  `json:"account_name"`
+		AccountIdentifier string  `json:"account_identifier"`
+		Notes             string  `json:"notes"`
+	}{
 		Amount:            req.Amount,
-		Currency:          req.Currency,
-		PaymentMethod:     req.PaymentMethod,
-		AccountName:       req.AccountName,
-		AccountIdentifier: req.AccountIdentifier,
-		Notes:             req.Notes,
-	})
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
+		Currency:          strings.TrimSpace(req.Currency),
+		PaymentMethod:     strings.TrimSpace(req.PaymentMethod),
+		AccountName:       strings.TrimSpace(req.AccountName),
+		AccountIdentifier: strings.TrimSpace(req.AccountIdentifier),
+		Notes:             strings.TrimSpace(req.Notes),
 	}
 
-	response.Success(c, toReferralWithdrawalRequestResponse(item))
+	executeUserIdempotentJSON(
+		c,
+		"user.referral.create_withdrawal",
+		payload,
+		service.DefaultWriteIdempotencyTTL(),
+		func(ctx context.Context) (any, error) {
+			item, err := h.referralService.CreateWithdrawalRequest(ctx, &service.CreateReferralWithdrawalInput{
+				UserID:            subject.UserID,
+				Amount:            req.Amount,
+				Currency:          req.Currency,
+				PaymentMethod:     req.PaymentMethod,
+				AccountName:       req.AccountName,
+				AccountIdentifier: req.AccountIdentifier,
+				Notes:             req.Notes,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return toReferralWithdrawalRequestResponse(item), nil
+		},
+	)
 }
 
 func (h *ReferralHandler) ListWithdrawalRequests(c *gin.Context) {
@@ -259,6 +301,7 @@ func toReferralWithdrawalRequestResponse(item *service.ReferralWithdrawalRequest
 		AccountIdentifier: derefString(item.AccountIdentifier),
 		Status:            item.Status,
 		ReviewedAt:        item.ReviewedAt,
+		PaidAt:            item.PaidAt,
 		Notes:             derefString(item.Notes),
 		ReviewNotes:       derefString(item.ReviewNotes),
 		CreatedAt:         item.CreatedAt,
@@ -296,6 +339,7 @@ func (h *ReferralHandler) ListCommissions(c *gin.Context) {
 			SourceAmount:     item.Commission.SourceAmount,
 			RateSnapshot:     item.Commission.RateSnapshot,
 			CommissionAmount: item.Commission.CommissionAmount,
+			Currency:         item.Commission.Currency,
 			CreatedAt:        item.Commission.CreatedAt,
 			ReferredUserID:   item.Commission.ReferredUserID,
 			RechargeOrderID:  item.Commission.RechargeOrderID,

@@ -13,8 +13,9 @@ export interface AdminReferralWithdrawalRequest {
   payment_method: string
   account_name?: string
   account_identifier?: string
-  status: 'pending' | 'approved' | 'rejected' | 'canceled' | string
+  status: 'pending' | 'approved' | 'paid' | 'rejected' | 'canceled' | string
   reviewed_at?: string
+  paid_at?: string
   notes?: string
   review_notes?: string
   created_at: string
@@ -65,10 +66,22 @@ export async function rejectReferralWithdrawal(
   return data
 }
 
+export async function payReferralWithdrawal(
+  id: number,
+  payload: ReviewReferralWithdrawalPayload = {}
+): Promise<AdminReferralWithdrawalRequest> {
+  const { data } = await apiClient.post<AdminReferralWithdrawalRequest>(
+    `/admin/referrals/withdrawals/${id}/pay`,
+    payload
+  )
+  return data
+}
+
 export const referralWithdrawalsAPI = {
   listReferralWithdrawals,
   approveReferralWithdrawal,
-  rejectReferralWithdrawal
+  rejectReferralWithdrawal,
+  payReferralWithdrawal
 }
 
 export default referralWithdrawalsAPI

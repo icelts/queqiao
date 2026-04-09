@@ -51,6 +51,10 @@ type User struct {
 	CustomRecurringCommissionRate *float64 `json:"custom_recurring_commission_rate,omitempty"`
 	// RecurringCommissionEnabled holds the value of the "recurring_commission_enabled" field.
 	RecurringCommissionEnabled bool `json:"recurring_commission_enabled,omitempty"`
+	// HasSuccessfulRecharge holds the value of the "has_successful_recharge" field.
+	HasSuccessfulRecharge bool `json:"has_successful_recharge,omitempty"`
+	// ReferralWithdrawalDebt holds the value of the "referral_withdrawal_debt" field.
+	ReferralWithdrawalDebt float64 `json:"referral_withdrawal_debt,omitempty"`
 	// TotpSecretEncrypted holds the value of the "totp_secret_encrypted" field.
 	TotpSecretEncrypted *string `json:"totp_secret_encrypted,omitempty"`
 	// TotpEnabled holds the value of the "totp_enabled" field.
@@ -99,13 +103,15 @@ type UserEdges struct {
 	ReferredCommissions []*ReferralCommission `json:"referred_commissions,omitempty"`
 	// ReferralWithdrawalRequests holds the value of the referral_withdrawal_requests edge.
 	ReferralWithdrawalRequests []*ReferralWithdrawalRequest `json:"referral_withdrawal_requests,omitempty"`
+	// ReferralWithdrawalAllocations holds the value of the referral_withdrawal_allocations edge.
+	ReferralWithdrawalAllocations []*ReferralWithdrawalAllocation `json:"referral_withdrawal_allocations,omitempty"`
 	// ReviewedReferralWithdrawals holds the value of the reviewed_referral_withdrawals edge.
 	ReviewedReferralWithdrawals []*ReferralWithdrawalRequest `json:"reviewed_referral_withdrawals,omitempty"`
 	// UserAllowedGroups holds the value of the user_allowed_groups edge.
 	UserAllowedGroups []*UserAllowedGroup `json:"user_allowed_groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [17]bool
+	loadedTypes [18]bool
 }
 
 // APIKeysOrErr returns the APIKeys value or an error if the edge
@@ -245,10 +251,19 @@ func (e UserEdges) ReferralWithdrawalRequestsOrErr() ([]*ReferralWithdrawalReque
 	return nil, &NotLoadedError{edge: "referral_withdrawal_requests"}
 }
 
+// ReferralWithdrawalAllocationsOrErr returns the ReferralWithdrawalAllocations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReferralWithdrawalAllocationsOrErr() ([]*ReferralWithdrawalAllocation, error) {
+	if e.loadedTypes[15] {
+		return e.ReferralWithdrawalAllocations, nil
+	}
+	return nil, &NotLoadedError{edge: "referral_withdrawal_allocations"}
+}
+
 // ReviewedReferralWithdrawalsOrErr returns the ReviewedReferralWithdrawals value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) ReviewedReferralWithdrawalsOrErr() ([]*ReferralWithdrawalRequest, error) {
-	if e.loadedTypes[15] {
+	if e.loadedTypes[16] {
 		return e.ReviewedReferralWithdrawals, nil
 	}
 	return nil, &NotLoadedError{edge: "reviewed_referral_withdrawals"}
@@ -257,7 +272,7 @@ func (e UserEdges) ReviewedReferralWithdrawalsOrErr() ([]*ReferralWithdrawalRequ
 // UserAllowedGroupsOrErr returns the UserAllowedGroups value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) UserAllowedGroupsOrErr() ([]*UserAllowedGroup, error) {
-	if e.loadedTypes[16] {
+	if e.loadedTypes[17] {
 		return e.UserAllowedGroups, nil
 	}
 	return nil, &NotLoadedError{edge: "user_allowed_groups"}
@@ -268,9 +283,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldSubscriptionLimitFallbackToBalance, user.FieldRecurringCommissionEnabled, user.FieldTotpEnabled:
+		case user.FieldSubscriptionLimitFallbackToBalance, user.FieldRecurringCommissionEnabled, user.FieldHasSuccessfulRecharge, user.FieldTotpEnabled:
 			values[i] = new(sql.NullBool)
-		case user.FieldBalance, user.FieldCustomFirstCommissionRate, user.FieldCustomRecurringCommissionRate:
+		case user.FieldBalance, user.FieldCustomFirstCommissionRate, user.FieldCustomRecurringCommissionRate, user.FieldReferralWithdrawalDebt:
 			values[i] = new(sql.NullFloat64)
 		case user.FieldID, user.FieldConcurrency, user.FieldInviterID, user.FieldSoraStorageQuotaBytes, user.FieldSoraStorageUsedBytes:
 			values[i] = new(sql.NullInt64)
@@ -405,6 +420,18 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.RecurringCommissionEnabled = value.Bool
 			}
+		case user.FieldHasSuccessfulRecharge:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field has_successful_recharge", values[i])
+			} else if value.Valid {
+				_m.HasSuccessfulRecharge = value.Bool
+			}
+		case user.FieldReferralWithdrawalDebt:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field referral_withdrawal_debt", values[i])
+			} else if value.Valid {
+				_m.ReferralWithdrawalDebt = value.Float64
+			}
 		case user.FieldTotpSecretEncrypted:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field totp_secret_encrypted", values[i])
@@ -525,6 +552,11 @@ func (_m *User) QueryReferralWithdrawalRequests() *ReferralWithdrawalRequestQuer
 	return NewUserClient(_m.config).QueryReferralWithdrawalRequests(_m)
 }
 
+// QueryReferralWithdrawalAllocations queries the "referral_withdrawal_allocations" edge of the User entity.
+func (_m *User) QueryReferralWithdrawalAllocations() *ReferralWithdrawalAllocationQuery {
+	return NewUserClient(_m.config).QueryReferralWithdrawalAllocations(_m)
+}
+
 // QueryReviewedReferralWithdrawals queries the "reviewed_referral_withdrawals" edge of the User entity.
 func (_m *User) QueryReviewedReferralWithdrawals() *ReferralWithdrawalRequestQuery {
 	return NewUserClient(_m.config).QueryReviewedReferralWithdrawals(_m)
@@ -616,6 +648,12 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("recurring_commission_enabled=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RecurringCommissionEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("has_successful_recharge=")
+	builder.WriteString(fmt.Sprintf("%v", _m.HasSuccessfulRecharge))
+	builder.WriteString(", ")
+	builder.WriteString("referral_withdrawal_debt=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ReferralWithdrawalDebt))
 	builder.WriteString(", ")
 	if v := _m.TotpSecretEncrypted; v != nil {
 		builder.WriteString("totp_secret_encrypted=")

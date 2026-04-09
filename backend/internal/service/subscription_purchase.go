@@ -67,13 +67,25 @@ func (s *SubscriptionService) ListPurchaseOptions(ctx context.Context, userID in
 		subscriptionByGroupID[sub.GroupID] = &copySub
 	}
 
+	userPurchasePrices := map[int64]float64{}
+	if s.purchasePriceRepo != nil {
+		userPurchasePrices, err = s.purchasePriceRepo.GetByUserID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	options := make([]SubscriptionPurchaseOption, 0)
 	for i := range groups {
 		group := groups[i]
-		if !group.IsSubscriptionType() || !group.PurchaseEnabled || group.PurchasePrice == nil || *group.PurchasePrice <= 0 {
+		if !group.IsSubscriptionType() || !group.PurchaseEnabled {
 			continue
 		}
-		option := buildSubscriptionPurchaseOption(&group, subscriptionByGroupID[group.ID])
+		resolvedPrice := resolveSubscriptionPurchasePrice(group.PurchasePrice, userPurchasePrices[group.ID])
+		if resolvedPrice <= 0 {
+			continue
+		}
+		option := buildSubscriptionPurchaseOption(&group, subscriptionByGroupID[group.ID], resolvedPrice)
 		options = append(options, option)
 	}
 
@@ -85,7 +97,22 @@ func (s *SubscriptionService) GetPurchaseOption(ctx context.Context, userID, gro
 	if err != nil {
 		return nil, err
 	}
-	if !group.IsActive() || !group.IsSubscriptionType() || !group.PurchaseEnabled || group.PurchasePrice == nil || *group.PurchasePrice <= 0 {
+	if !group.IsActive() || !group.IsSubscriptionType() || !group.PurchaseEnabled {
+		return nil, ErrSubscriptionPurchaseUnavailable
+	}
+
+	var userPurchasePrice float64
+	if s.purchasePriceRepo != nil {
+		overridePrice, repoErr := s.purchasePriceRepo.GetByUserAndGroup(ctx, userID, groupID)
+		if repoErr != nil {
+			return nil, repoErr
+		}
+		if overridePrice != nil {
+			userPurchasePrice = *overridePrice
+		}
+	}
+	resolvedPrice := resolveSubscriptionPurchasePrice(group.PurchasePrice, userPurchasePrice)
+	if resolvedPrice <= 0 {
 		return nil, ErrSubscriptionPurchaseUnavailable
 	}
 
@@ -96,7 +123,7 @@ func (s *SubscriptionService) GetPurchaseOption(ctx context.Context, userID, gro
 		return nil, err
 	}
 
-	option := buildSubscriptionPurchaseOption(group, currentSubscription)
+	option := buildSubscriptionPurchaseOption(group, currentSubscription, resolvedPrice)
 	return &option, nil
 }
 
@@ -195,7 +222,7 @@ func ParseSubscriptionPurchaseMetadata(raw string) (*SubscriptionPurchaseMetadat
 	return &payload, nil
 }
 
-func buildSubscriptionPurchaseOption(group *Group, currentSubscription *UserSubscription) SubscriptionPurchaseOption {
+func buildSubscriptionPurchaseOption(group *Group, currentSubscription *UserSubscription, purchasePrice float64) SubscriptionPurchaseOption {
 	option := SubscriptionPurchaseOption{
 		GroupID:         group.ID,
 		GroupName:       strings.TrimSpace(group.Name),
@@ -208,9 +235,7 @@ func buildSubscriptionPurchaseOption(group *Group, currentSubscription *UserSubs
 		DailyLimitUSD:   group.DailyLimitUSD,
 		WeeklyLimitUSD:  group.WeeklyLimitUSD,
 		MonthlyLimitUSD: group.MonthlyLimitUSD,
-	}
-	if group.PurchasePrice != nil {
-		option.PurchasePrice = roundMoney(*group.PurchasePrice)
+		PurchasePrice:   roundMoney(purchasePrice),
 	}
 	if currentSubscription != nil {
 		copySub := *currentSubscription
@@ -218,4 +243,14 @@ func buildSubscriptionPurchaseOption(group *Group, currentSubscription *UserSubs
 		option.IsRenewal = true
 	}
 	return option
+}
+
+func resolveSubscriptionPurchasePrice(defaultPrice *float64, userOverridePrice float64) float64 {
+	if userOverridePrice > 0 {
+		return roundMoney(userOverridePrice)
+	}
+	if defaultPrice != nil && *defaultPrice > 0 {
+		return roundMoney(*defaultPrice)
+	}
+	return 0
 }

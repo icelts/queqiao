@@ -187,6 +187,18 @@ func (s *stubAdminService) BatchSetGroupRateMultipliers(_ context.Context, _ int
 	return nil
 }
 
+func (s *stubAdminService) GetGroupSubscriptionPurchasePrices(_ context.Context, _ int64) ([]service.UserSubscriptionPurchasePriceEntry, error) {
+	return nil, nil
+}
+
+func (s *stubAdminService) ClearGroupSubscriptionPurchasePrices(_ context.Context, _ int64) error {
+	return nil
+}
+
+func (s *stubAdminService) BatchSetGroupSubscriptionPurchasePrices(_ context.Context, _ int64, _ []service.GroupSubscriptionPurchasePriceInput) error {
+	return nil
+}
+
 func (s *stubAdminService) ListAccounts(ctx context.Context, page, pageSize int, platform, accountType, status, search string, groupID int64, privacyMode string) ([]service.Account, int64, error) {
 	return s.accounts, int64(len(s.accounts)), nil
 }

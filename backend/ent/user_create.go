@@ -18,6 +18,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/rechargeorder"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/referralcommission"
+	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalallocation"
 	"github.com/Wei-Shaw/sub2api/ent/referralwithdrawalrequest"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
@@ -251,6 +252,34 @@ func (_c *UserCreate) SetRecurringCommissionEnabled(v bool) *UserCreate {
 func (_c *UserCreate) SetNillableRecurringCommissionEnabled(v *bool) *UserCreate {
 	if v != nil {
 		_c.SetRecurringCommissionEnabled(*v)
+	}
+	return _c
+}
+
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (_c *UserCreate) SetHasSuccessfulRecharge(v bool) *UserCreate {
+	_c.mutation.SetHasSuccessfulRecharge(v)
+	return _c
+}
+
+// SetNillableHasSuccessfulRecharge sets the "has_successful_recharge" field if the given value is not nil.
+func (_c *UserCreate) SetNillableHasSuccessfulRecharge(v *bool) *UserCreate {
+	if v != nil {
+		_c.SetHasSuccessfulRecharge(*v)
+	}
+	return _c
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (_c *UserCreate) SetReferralWithdrawalDebt(v float64) *UserCreate {
+	_c.mutation.SetReferralWithdrawalDebt(v)
+	return _c
+}
+
+// SetNillableReferralWithdrawalDebt sets the "referral_withdrawal_debt" field if the given value is not nil.
+func (_c *UserCreate) SetNillableReferralWithdrawalDebt(v *float64) *UserCreate {
+	if v != nil {
+		_c.SetReferralWithdrawalDebt(*v)
 	}
 	return _c
 }
@@ -540,6 +569,21 @@ func (_c *UserCreate) AddReferralWithdrawalRequests(v ...*ReferralWithdrawalRequ
 	return _c.AddReferralWithdrawalRequestIDs(ids...)
 }
 
+// AddReferralWithdrawalAllocationIDs adds the "referral_withdrawal_allocations" edge to the ReferralWithdrawalAllocation entity by IDs.
+func (_c *UserCreate) AddReferralWithdrawalAllocationIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddReferralWithdrawalAllocationIDs(ids...)
+	return _c
+}
+
+// AddReferralWithdrawalAllocations adds the "referral_withdrawal_allocations" edges to the ReferralWithdrawalAllocation entity.
+func (_c *UserCreate) AddReferralWithdrawalAllocations(v ...*ReferralWithdrawalAllocation) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddReferralWithdrawalAllocationIDs(ids...)
+}
+
 // AddReviewedReferralWithdrawalIDs adds the "reviewed_referral_withdrawals" edge to the ReferralWithdrawalRequest entity by IDs.
 func (_c *UserCreate) AddReviewedReferralWithdrawalIDs(ids ...int64) *UserCreate {
 	_c.mutation.AddReviewedReferralWithdrawalIDs(ids...)
@@ -642,6 +686,14 @@ func (_c *UserCreate) defaults() error {
 		v := user.DefaultRecurringCommissionEnabled
 		_c.mutation.SetRecurringCommissionEnabled(v)
 	}
+	if _, ok := _c.mutation.HasSuccessfulRecharge(); !ok {
+		v := user.DefaultHasSuccessfulRecharge
+		_c.mutation.SetHasSuccessfulRecharge(v)
+	}
+	if _, ok := _c.mutation.ReferralWithdrawalDebt(); !ok {
+		v := user.DefaultReferralWithdrawalDebt
+		_c.mutation.SetReferralWithdrawalDebt(v)
+	}
 	if _, ok := _c.mutation.TotpEnabled(); !ok {
 		v := user.DefaultTotpEnabled
 		_c.mutation.SetTotpEnabled(v)
@@ -727,6 +779,12 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.RecurringCommissionEnabled(); !ok {
 		return &ValidationError{Name: "recurring_commission_enabled", err: errors.New(`ent: missing required field "User.recurring_commission_enabled"`)}
+	}
+	if _, ok := _c.mutation.HasSuccessfulRecharge(); !ok {
+		return &ValidationError{Name: "has_successful_recharge", err: errors.New(`ent: missing required field "User.has_successful_recharge"`)}
+	}
+	if _, ok := _c.mutation.ReferralWithdrawalDebt(); !ok {
+		return &ValidationError{Name: "referral_withdrawal_debt", err: errors.New(`ent: missing required field "User.referral_withdrawal_debt"`)}
 	}
 	if _, ok := _c.mutation.TotpEnabled(); !ok {
 		return &ValidationError{Name: "totp_enabled", err: errors.New(`ent: missing required field "User.totp_enabled"`)}
@@ -827,6 +885,14 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RecurringCommissionEnabled(); ok {
 		_spec.SetField(user.FieldRecurringCommissionEnabled, field.TypeBool, value)
 		_node.RecurringCommissionEnabled = value
+	}
+	if value, ok := _c.mutation.HasSuccessfulRecharge(); ok {
+		_spec.SetField(user.FieldHasSuccessfulRecharge, field.TypeBool, value)
+		_node.HasSuccessfulRecharge = value
+	}
+	if value, ok := _c.mutation.ReferralWithdrawalDebt(); ok {
+		_spec.SetField(user.FieldReferralWithdrawalDebt, field.TypeFloat64, value)
+		_node.ReferralWithdrawalDebt = value
 	}
 	if value, ok := _c.mutation.TotpSecretEncrypted(); ok {
 		_spec.SetField(user.FieldTotpSecretEncrypted, field.TypeString, value)
@@ -1086,6 +1152,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ReferralWithdrawalAllocationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReferralWithdrawalAllocationsTable,
+			Columns: []string{user.ReferralWithdrawalAllocationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referralwithdrawalallocation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1398,6 +1480,36 @@ func (u *UserUpsert) SetRecurringCommissionEnabled(v bool) *UserUpsert {
 // UpdateRecurringCommissionEnabled sets the "recurring_commission_enabled" field to the value that was provided on create.
 func (u *UserUpsert) UpdateRecurringCommissionEnabled() *UserUpsert {
 	u.SetExcluded(user.FieldRecurringCommissionEnabled)
+	return u
+}
+
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (u *UserUpsert) SetHasSuccessfulRecharge(v bool) *UserUpsert {
+	u.Set(user.FieldHasSuccessfulRecharge, v)
+	return u
+}
+
+// UpdateHasSuccessfulRecharge sets the "has_successful_recharge" field to the value that was provided on create.
+func (u *UserUpsert) UpdateHasSuccessfulRecharge() *UserUpsert {
+	u.SetExcluded(user.FieldHasSuccessfulRecharge)
+	return u
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (u *UserUpsert) SetReferralWithdrawalDebt(v float64) *UserUpsert {
+	u.Set(user.FieldReferralWithdrawalDebt, v)
+	return u
+}
+
+// UpdateReferralWithdrawalDebt sets the "referral_withdrawal_debt" field to the value that was provided on create.
+func (u *UserUpsert) UpdateReferralWithdrawalDebt() *UserUpsert {
+	u.SetExcluded(user.FieldReferralWithdrawalDebt)
+	return u
+}
+
+// AddReferralWithdrawalDebt adds v to the "referral_withdrawal_debt" field.
+func (u *UserUpsert) AddReferralWithdrawalDebt(v float64) *UserUpsert {
+	u.Add(user.FieldReferralWithdrawalDebt, v)
 	return u
 }
 
@@ -1807,6 +1919,41 @@ func (u *UserUpsertOne) SetRecurringCommissionEnabled(v bool) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateRecurringCommissionEnabled() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateRecurringCommissionEnabled()
+	})
+}
+
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (u *UserUpsertOne) SetHasSuccessfulRecharge(v bool) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetHasSuccessfulRecharge(v)
+	})
+}
+
+// UpdateHasSuccessfulRecharge sets the "has_successful_recharge" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateHasSuccessfulRecharge() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateHasSuccessfulRecharge()
+	})
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (u *UserUpsertOne) SetReferralWithdrawalDebt(v float64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetReferralWithdrawalDebt(v)
+	})
+}
+
+// AddReferralWithdrawalDebt adds v to the "referral_withdrawal_debt" field.
+func (u *UserUpsertOne) AddReferralWithdrawalDebt(v float64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.AddReferralWithdrawalDebt(v)
+	})
+}
+
+// UpdateReferralWithdrawalDebt sets the "referral_withdrawal_debt" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateReferralWithdrawalDebt() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateReferralWithdrawalDebt()
 	})
 }
 
@@ -2396,6 +2543,41 @@ func (u *UserUpsertBulk) SetRecurringCommissionEnabled(v bool) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateRecurringCommissionEnabled() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateRecurringCommissionEnabled()
+	})
+}
+
+// SetHasSuccessfulRecharge sets the "has_successful_recharge" field.
+func (u *UserUpsertBulk) SetHasSuccessfulRecharge(v bool) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetHasSuccessfulRecharge(v)
+	})
+}
+
+// UpdateHasSuccessfulRecharge sets the "has_successful_recharge" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateHasSuccessfulRecharge() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateHasSuccessfulRecharge()
+	})
+}
+
+// SetReferralWithdrawalDebt sets the "referral_withdrawal_debt" field.
+func (u *UserUpsertBulk) SetReferralWithdrawalDebt(v float64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetReferralWithdrawalDebt(v)
+	})
+}
+
+// AddReferralWithdrawalDebt adds v to the "referral_withdrawal_debt" field.
+func (u *UserUpsertBulk) AddReferralWithdrawalDebt(v float64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.AddReferralWithdrawalDebt(v)
+	})
+}
+
+// UpdateReferralWithdrawalDebt sets the "referral_withdrawal_debt" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateReferralWithdrawalDebt() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateReferralWithdrawalDebt()
 	})
 }
 

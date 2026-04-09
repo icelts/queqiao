@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import type { PaginatedResponse } from '@/types'
+import { createIdempotencyKey } from '@/utils/idempotency'
 
 export interface ReferralSummary {
   referral_code: string
@@ -18,6 +19,8 @@ export interface ReferralSummary {
   next_unlock_at?: string
   pending_withdrawal_amount: number
   approved_withdrawal_amount: number
+  paid_withdrawal_amount: number
+  withdrawal_debt: number
   can_withdraw: boolean
 }
 
@@ -57,8 +60,9 @@ export interface ReferralWithdrawalRequest {
   payment_method: string
   account_name?: string
   account_identifier?: string
-  status: 'pending' | 'approved' | 'rejected' | 'canceled' | string
+  status: 'pending' | 'approved' | 'paid' | 'rejected' | 'canceled' | string
   reviewed_at?: string
+  paid_at?: string
   notes?: string
   review_notes?: string
   created_at: string
@@ -132,7 +136,11 @@ export async function listWithdrawalRequests(
 export async function createWithdrawalRequest(
   payload: CreateReferralWithdrawalPayload
 ): Promise<ReferralWithdrawalRequest> {
-  const { data } = await apiClient.post<ReferralWithdrawalRequest>('/referral/withdrawals', payload)
+  const { data } = await apiClient.post<ReferralWithdrawalRequest>('/referral/withdrawals', payload, {
+    headers: {
+      'Idempotency-Key': createIdempotencyKey('referral-withdrawal')
+    }
+  })
   return data
 }
 

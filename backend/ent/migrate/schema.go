@@ -721,6 +721,7 @@ var (
 		{Name: "source_amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "rate_snapshot", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
 		{Name: "commission_amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "currency", Type: field.TypeString, Size: 16, Default: "CNY"},
 		{Name: "reversed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "reversed_reason", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
@@ -736,19 +737,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "referral_commissions_recharge_orders_referral_commissions",
-				Columns:    []*schema.Column{ReferralCommissionsColumns[11]},
+				Columns:    []*schema.Column{ReferralCommissionsColumns[12]},
 				RefColumns: []*schema.Column{RechargeOrdersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "referral_commissions_users_promoter_commissions",
-				Columns:    []*schema.Column{ReferralCommissionsColumns[12]},
+				Columns:    []*schema.Column{ReferralCommissionsColumns[13]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "referral_commissions_users_referred_commissions",
-				Columns:    []*schema.Column{ReferralCommissionsColumns[13]},
+				Columns:    []*schema.Column{ReferralCommissionsColumns[14]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -757,17 +758,17 @@ var (
 			{
 				Name:    "referralcommission_promoter_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReferralCommissionsColumns[12]},
+				Columns: []*schema.Column{ReferralCommissionsColumns[13]},
 			},
 			{
 				Name:    "referralcommission_referred_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReferralCommissionsColumns[13]},
+				Columns: []*schema.Column{ReferralCommissionsColumns[14]},
 			},
 			{
 				Name:    "referralcommission_recharge_order_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReferralCommissionsColumns[11]},
+				Columns: []*schema.Column{ReferralCommissionsColumns[12]},
 			},
 			{
 				Name:    "referralcommission_commission_type",
@@ -782,7 +783,65 @@ var (
 			{
 				Name:    "referralcommission_recharge_order_id_commission_type",
 				Unique:  true,
-				Columns: []*schema.Column{ReferralCommissionsColumns[11], ReferralCommissionsColumns[3]},
+				Columns: []*schema.Column{ReferralCommissionsColumns[12], ReferralCommissionsColumns[3]},
+			},
+		},
+	}
+	// ReferralWithdrawalAllocationsColumns holds the columns for the "referral_withdrawal_allocations" table.
+	ReferralWithdrawalAllocationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "amount", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
+		{Name: "commission_id", Type: field.TypeInt64},
+		{Name: "withdrawal_request_id", Type: field.TypeInt64},
+		{Name: "promoter_user_id", Type: field.TypeInt64},
+	}
+	// ReferralWithdrawalAllocationsTable holds the schema information for the "referral_withdrawal_allocations" table.
+	ReferralWithdrawalAllocationsTable = &schema.Table{
+		Name:       "referral_withdrawal_allocations",
+		Columns:    ReferralWithdrawalAllocationsColumns,
+		PrimaryKey: []*schema.Column{ReferralWithdrawalAllocationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "referral_withdrawal_allocations_referral_commissions_withdrawal_allocations",
+				Columns:    []*schema.Column{ReferralWithdrawalAllocationsColumns[4]},
+				RefColumns: []*schema.Column{ReferralCommissionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "referral_withdrawal_allocations_referral_withdrawal_requests_allocations",
+				Columns:    []*schema.Column{ReferralWithdrawalAllocationsColumns[5]},
+				RefColumns: []*schema.Column{ReferralWithdrawalRequestsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "referral_withdrawal_allocations_users_referral_withdrawal_allocations",
+				Columns:    []*schema.Column{ReferralWithdrawalAllocationsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "referralwithdrawalallocation_promoter_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalAllocationsColumns[6]},
+			},
+			{
+				Name:    "referralwithdrawalallocation_withdrawal_request_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalAllocationsColumns[5]},
+			},
+			{
+				Name:    "referralwithdrawalallocation_commission_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralWithdrawalAllocationsColumns[4]},
+			},
+			{
+				Name:    "referralwithdrawalallocation_withdrawal_request_id_commission_id",
+				Unique:  true,
+				Columns: []*schema.Column{ReferralWithdrawalAllocationsColumns[5], ReferralWithdrawalAllocationsColumns[4]},
 			},
 		},
 	}
@@ -798,6 +857,7 @@ var (
 		{Name: "account_identifier", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "pending"},
 		{Name: "reviewed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "paid_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "review_notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "promoter_user_id", Type: field.TypeInt64},
@@ -811,13 +871,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "referral_withdrawal_requests_users_referral_withdrawal_requests",
-				Columns:    []*schema.Column{ReferralWithdrawalRequestsColumns[12]},
+				Columns:    []*schema.Column{ReferralWithdrawalRequestsColumns[13]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "referral_withdrawal_requests_users_reviewed_referral_withdrawals",
-				Columns:    []*schema.Column{ReferralWithdrawalRequestsColumns[13]},
+				Columns:    []*schema.Column{ReferralWithdrawalRequestsColumns[14]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -826,12 +886,12 @@ var (
 			{
 				Name:    "referralwithdrawalrequest_promoter_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[12]},
+				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[13]},
 			},
 			{
 				Name:    "referralwithdrawalrequest_reviewer_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[13]},
+				Columns: []*schema.Column{ReferralWithdrawalRequestsColumns[14]},
 			},
 			{
 				Name:    "referralwithdrawalrequest_status",
@@ -1091,6 +1151,8 @@ var (
 		{Name: "custom_first_commission_rate", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
 		{Name: "custom_recurring_commission_rate", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(10,4)"}},
 		{Name: "recurring_commission_enabled", Type: field.TypeBool, Default: false},
+		{Name: "has_successful_recharge", Type: field.TypeBool, Default: false},
+		{Name: "referral_withdrawal_debt", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "totp_secret_encrypted", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "totp_enabled", Type: field.TypeBool, Default: false},
 		{Name: "totp_enabled_at", Type: field.TypeTime, Nullable: true},
@@ -1106,7 +1168,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_users_invitees",
-				Columns:    []*schema.Column{UsersColumns[22]},
+				Columns:    []*schema.Column{UsersColumns[24]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -1125,7 +1187,7 @@ var (
 			{
 				Name:    "user_inviter_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[22]},
+				Columns: []*schema.Column{UsersColumns[24]},
 			},
 			{
 				Name:    "user_referral_code",
@@ -1358,6 +1420,7 @@ var (
 		RechargeOrdersTable,
 		RedeemCodesTable,
 		ReferralCommissionsTable,
+		ReferralWithdrawalAllocationsTable,
 		ReferralWithdrawalRequestsTable,
 		SecuritySecretsTable,
 		SettingsTable,
@@ -1429,6 +1492,12 @@ func init() {
 	ReferralCommissionsTable.ForeignKeys[2].RefTable = UsersTable
 	ReferralCommissionsTable.Annotation = &entsql.Annotation{
 		Table: "referral_commissions",
+	}
+	ReferralWithdrawalAllocationsTable.ForeignKeys[0].RefTable = ReferralCommissionsTable
+	ReferralWithdrawalAllocationsTable.ForeignKeys[1].RefTable = ReferralWithdrawalRequestsTable
+	ReferralWithdrawalAllocationsTable.ForeignKeys[2].RefTable = UsersTable
+	ReferralWithdrawalAllocationsTable.Annotation = &entsql.Annotation{
+		Table: "referral_withdrawal_allocations",
 	}
 	ReferralWithdrawalRequestsTable.ForeignKeys[0].RefTable = UsersTable
 	ReferralWithdrawalRequestsTable.ForeignKeys[1].RefTable = UsersTable

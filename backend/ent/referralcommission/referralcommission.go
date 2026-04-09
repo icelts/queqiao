@@ -34,6 +34,8 @@ const (
 	FieldRateSnapshot = "rate_snapshot"
 	// FieldCommissionAmount holds the string denoting the commission_amount field in the database.
 	FieldCommissionAmount = "commission_amount"
+	// FieldCurrency holds the string denoting the currency field in the database.
+	FieldCurrency = "currency"
 	// FieldReversedAt holds the string denoting the reversed_at field in the database.
 	FieldReversedAt = "reversed_at"
 	// FieldReversedReason holds the string denoting the reversed_reason field in the database.
@@ -46,6 +48,8 @@ const (
 	EdgeReferredUser = "referred_user"
 	// EdgeRechargeOrder holds the string denoting the recharge_order edge name in mutations.
 	EdgeRechargeOrder = "recharge_order"
+	// EdgeWithdrawalAllocations holds the string denoting the withdrawal_allocations edge name in mutations.
+	EdgeWithdrawalAllocations = "withdrawal_allocations"
 	// Table holds the table name of the referralcommission in the database.
 	Table = "referral_commissions"
 	// PromoterTable is the table that holds the promoter relation/edge.
@@ -69,6 +73,13 @@ const (
 	RechargeOrderInverseTable = "recharge_orders"
 	// RechargeOrderColumn is the table column denoting the recharge_order relation/edge.
 	RechargeOrderColumn = "recharge_order_id"
+	// WithdrawalAllocationsTable is the table that holds the withdrawal_allocations relation/edge.
+	WithdrawalAllocationsTable = "referral_withdrawal_allocations"
+	// WithdrawalAllocationsInverseTable is the table name for the ReferralWithdrawalAllocation entity.
+	// It exists in this package in order to avoid circular dependency with the "referralwithdrawalallocation" package.
+	WithdrawalAllocationsInverseTable = "referral_withdrawal_allocations"
+	// WithdrawalAllocationsColumn is the table column denoting the withdrawal_allocations relation/edge.
+	WithdrawalAllocationsColumn = "commission_id"
 )
 
 // Columns holds all SQL columns for referralcommission fields.
@@ -84,6 +95,7 @@ var Columns = []string{
 	FieldSourceAmount,
 	FieldRateSnapshot,
 	FieldCommissionAmount,
+	FieldCurrency,
 	FieldReversedAt,
 	FieldReversedReason,
 	FieldNotes,
@@ -120,6 +132,10 @@ var (
 	DefaultRateSnapshot float64
 	// DefaultCommissionAmount holds the default value on creation for the "commission_amount" field.
 	DefaultCommissionAmount float64
+	// DefaultCurrency holds the default value on creation for the "currency" field.
+	DefaultCurrency string
+	// CurrencyValidator is a validator for the "currency" field. It is called by the builders before save.
+	CurrencyValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the ReferralCommission queries.
@@ -180,6 +196,11 @@ func ByCommissionAmount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCommissionAmount, opts...).ToFunc()
 }
 
+// ByCurrency orders the results by the currency field.
+func ByCurrency(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCurrency, opts...).ToFunc()
+}
+
 // ByReversedAt orders the results by the reversed_at field.
 func ByReversedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReversedAt, opts...).ToFunc()
@@ -215,6 +236,20 @@ func ByRechargeOrderField(field string, opts ...sql.OrderTermOption) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newRechargeOrderStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByWithdrawalAllocationsCount orders the results by withdrawal_allocations count.
+func ByWithdrawalAllocationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWithdrawalAllocationsStep(), opts...)
+	}
+}
+
+// ByWithdrawalAllocations orders the results by withdrawal_allocations terms.
+func ByWithdrawalAllocations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWithdrawalAllocationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPromoterStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -234,5 +269,12 @@ func newRechargeOrderStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(RechargeOrderInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, RechargeOrderTable, RechargeOrderColumn),
+	)
+}
+func newWithdrawalAllocationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WithdrawalAllocationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WithdrawalAllocationsTable, WithdrawalAllocationsColumn),
 	)
 }

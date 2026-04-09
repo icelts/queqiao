@@ -50,6 +50,9 @@ func (ReferralCommission) Fields() []ent.Field {
 		field.Float("commission_amount").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
 			Default(0),
+		field.String("currency").
+			MaxLen(16).
+			Default("CNY"),
 		field.Time("reversed_at").
 			Optional().
 			Nillable().
@@ -82,6 +85,7 @@ func (ReferralCommission) Edges() []ent.Edge {
 			Field("recharge_order_id").
 			Unique().
 			Required(),
+		edge.To("withdrawal_allocations", ReferralWithdrawalAllocation.Type),
 	}
 }
 
@@ -93,5 +97,8 @@ func (ReferralCommission) Indexes() []ent.Index {
 		index.Fields("commission_type"),
 		index.Fields("status"),
 		index.Fields("recharge_order_id", "commission_type").Unique(),
+		index.Fields("referred_user_id").
+			Unique().
+			Annotations(entsql.IndexWhere("commission_type = 'first'")),
 	}
 }
